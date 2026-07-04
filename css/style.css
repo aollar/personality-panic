@@ -429,3 +429,10 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
 
 /* debug */
 .debug-box { font-family: Consolas, monospace; font-size: .78em; white-space: pre-wrap; background: #10131a; color: #9fe08a; padding: .8em; border-radius: .5em; max-height: 22em; overflow: auto; }
+
+/* ---------- living Regret Burger mascot layer ---------- */
+#regret-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.regret-anim {
+  position: absolute; height: auto; display: block; pointer-events: none;
+  filter: drop-shadow(0 6px 6px rgba(0,0,0,.22));
+}

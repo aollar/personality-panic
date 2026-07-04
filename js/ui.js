@@ -537,6 +537,7 @@
   }
 
   function openScene(id) {
+    if (window.PPRegretScene && id !== "regretBurger") window.PPRegretScene.unmount();
     UI.inScene = id;
     var b = DATA.buildings[id];
     var sv = $("#scene-view");
@@ -553,7 +554,13 @@
       vid.pause(); vid.style.display = "none";
       frame.style.display = "none";
       bd.style.display = "";
-      bd.style.backgroundImage = "url('assets/scenes/" + b.scene + "')";
+      var sceneSrc = b.scene;
+      // living Regret Burger: clean-diner backdrop + animated mascot layer
+      if (id === "regretBurger" && window.PPRegretScene && window.PP_REGRET_MANIFEST) {
+        sceneSrc = "regret_burger_live.jpg";
+        window.PPRegretScene.mount(sv);
+      }
+      bd.style.backgroundImage = "url('assets/scenes/" + sceneSrc + "')";
     }
     $("#scene-title").textContent = b.name;
     $("#fallback-panel").style.display = (painted || b.video) ? "none" : "";
@@ -563,6 +570,7 @@
     renderSceneUI();
   }
   function closeScene() {
+    if (window.PPRegretScene) window.PPRegretScene.unmount();
     UI.inScene = null;
     $("#scene-video").pause();
     $("#scene-view").classList.remove("show");
@@ -727,13 +735,18 @@
         if (a.fx.some(function (f) { return f.kind === "openJobDialog"; })) { openJobs(id); return; }
         if (a.fx.some(function (f) { return f.kind === "adoptPet"; })) { openPetChoice(id); return; }
       }
-      dispatch("action", { id: id, choice: choice }); return;
+      var annG = annFor(id);
+      if (annG && !annG.ok) { toast(annG.why, "bad"); return; }
+      dispatch("action", { id: id, choice: choice });
+      if (UI.inScene === "regretBurger" && window.PPRegretScene) window.PPRegretScene.onAction(id);
+      return;
     }
     var r = E.perform(UI.state, id, choice);
     if (!r.ok) { toast(r.why, "bad"); return; }
     if (r.needsChoice === "shop") { openShop(r.group, id); return; }
     if (r.needsChoice === "job") { openJobs(id); return; }
     if (r.needsChoice === "pet") { openPetChoice(id); return; }
+    if (UI.inScene === "regretBurger" && window.PPRegretScene) window.PPRegretScene.onAction(id);
     afterDispatch("action", { id: id }, r);
     var last = UI.state.log[UI.state.log.length - 1];
     if (last && last.who === activeP().name) toast(last.text, last.cls);
