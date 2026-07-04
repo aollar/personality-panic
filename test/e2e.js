@@ -19,11 +19,13 @@ var os = require("os");
   if (!fs.existsSync(SHOTS)) fs.mkdirSync(SHOTS, { recursive: true });
   var browser = await puppeteer.launch({
     executablePath: CHROME, headless: true,
-    userDataDir: path.join(os.tmpdir(), "pp-e2e-profile"),
+    // Fresh profile each run so we never test a stale cached copy of the CSS/JS.
+    userDataDir: path.join(os.tmpdir(), "pp-e2e-profile-" + Date.now()),
     args: ["--window-size=1700,1000", "--autoplay-policy=no-user-gesture-required", "--mute-audio",
            "--no-first-run", "--disable-features=Translate"]
   });
   var page = await browser.newPage();
+  await page.setCacheEnabled(false); // always load current assets, not the HTTP cache
   await page.setViewport({ width: 1700, height: 1000 });
   var errors = [];
   page.on("console", function (m) { if (m.type() === "error") errors.push(m.text()); });
@@ -32,6 +34,19 @@ var os = require("os");
   async function shot(name) { await page.screenshot({ path: path.join(SHOTS, name + ".png") }); }
   async function domClick(sel) { await page.evaluate(function (s) { document.querySelector(s).click(); }, sel); }
   function fail(msg) { console.error("E2E FAIL:", msg); console.error("console errors:", errors); process.exit(1); }
+  // Guard: exactly one .screen may be visibly displayed at a time (catches opaque
+  // screens stuck on top of others — the settings-overlay bug that hid the map).
+  async function assertOneScreen(expected) {
+    var info = await page.evaluate(function () {
+      return Array.prototype.map.call(document.querySelectorAll(".screen"), function (s) {
+        return { id: s.id, display: getComputedStyle(s).display };
+      });
+    });
+    var vis = info.filter(function (s) { return s.display !== "none"; }).map(function (s) { return s.id; });
+    if (vis.length !== 1 || vis[0] !== "screen-" + expected) {
+      fail("expected only #screen-" + expected + " visible, got " + JSON.stringify(vis));
+    }
+  }
 
   await page.goto(URL, { waitUntil: "networkidle2", timeout: 30000 });
   await page.waitForSelector("#btn-single", { timeout: 10000 });
@@ -40,6 +55,7 @@ var os = require("os");
   // start screen -> setup
   await domClick("#btn-single");
   await page.waitForSelector("#screen-setup.show", { timeout: 5000 });
+  await assertOneScreen("setup");
   await shot("02-setup");
 
   // pick characters for both slots (P1 + CPU)
@@ -60,6 +76,7 @@ var os = require("os");
   await domClick("#btn-start-game");
   await page.waitForSelector("#screen-game.show", { timeout: 5000 });
   await page.waitForSelector("#dlg-turncard.show", { timeout: 5000 });
+  await assertOneScreen("game");
   await shot("04-turncard");
   await domClick("#btn-begin-turn");
   await new Promise(r => setTimeout(r, 500));
