@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Personality Panic! — MVP</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎭</text></svg>">
+  <!-- PeerJS for internet multiplayer (host/join). Loads from CDN; single-player works without it. -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
+</head>
+<body>
+<div class="stage-shell">
+  <div class="stage" id="stage">
+
+    <!-- ============ START ============ -->
+    <div class="screen show" id="screen-start">
+      <div class="veil"></div>
+      <div class="start-wrap">
+        <div class="game-logo">
+          <h1>Personality<br>Panic<span class="bang">!</span></h1>
+          <div class="tagline">Be you. Play you. Party together.</div>
+        </div>
+        <div class="start-buttons">
+          <button class="btn" id="btn-continue" style="display:none">▶ Continue Game</button>
+          <button class="btn" id="btn-single">Single Player</button>
+          <button class="btn" id="btn-multi">Multiplayer</button>
+          <button class="btn secondary" id="btn-settings">Settings</button>
+        </div>
+        <div class="version-label">MVP v1.0 — Claude Fable build · Balance Lock v2-2</div>
+      </div>
+    </div>
+
+    <!-- ============ SETUP ============ -->
+    <div class="screen" id="screen-setup">
+      <div class="setup-wrap">
+        <div class="setup-col">
+          <div class="paper-card setup-sheet">
+            <h2>Game Setup</h2>
+            <div id="setup-options"></div>
+            <div style="margin-top:.8em;display:flex;gap:.5em">
+              <button class="btn secondary" id="btn-setup-back">◀ Back</button>
+              <button class="btn" id="btn-start-game">Start Game ▶</button>
+            </div>
+            <div id="setup-hint" style="margin-top:.5em;font-size:.85em;font-weight:800;color:#7a1010"></div>
+          </div>
+        </div>
+        <div class="setup-col">
+          <div class="paper-card" style="padding:.7em .9em">
+            <b>Who's playing?</b> Tap a slot, then tap a card. Tap your own active slot again to rename.
+            <div class="picker-tabs" id="picker-tabs" style="margin-top:.4em"></div>
+          </div>
+          <div class="paper-card char-grid" id="char-grid" style="flex:1"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SETTINGS ============ -->
+    <div class="screen" id="screen-settings">
+      <div class="paper-card settings-sheet">
+        <h2>Settings</h2>
+        <div class="group-title">Audio</div>
+        <div class="opt-row"><label>Master Volume</label><input type="range" id="set-master" min="0" max="100"></div>
+        <div class="opt-row"><label>Music Volume</label><input type="range" id="set-music" min="0" max="100"></div>
+        <div class="opt-row"><label>SFX Volume</label><input type="range" id="set-sfx" min="0" max="100"></div>
+        <div class="opt-row"><label>Music Mode</label>
+          <select id="set-mode">
+            <option value="full">Full (building music)</option>
+            <option value="overmapOnly">Overmap Only</option>
+          </select>
+        </div>
+        <div class="opt-row"><label>Mute All</label><input type="checkbox" id="set-mute"></div>
+        <div class="group-title">Video</div>
+        <div class="opt-row"><label>Display Mode</label><button class="btn small" id="set-fullscreen">Toggle Fullscreen</button></div>
+        <div class="group-title">Gameplay</div>
+        <div class="opt-row"><label>Timer Warning Sound</label><input type="checkbox" id="set-timerwarn"></div>
+        <div style="margin-top:1em"><button class="btn" id="btn-settings-back">Done</button></div>
+      </div>
+    </div>
+
+    <!-- ============ GAME ============ -->
+    <div class="screen" id="screen-game">
+      <div class="map-view" id="map-view"></div>
+      <div class="hud" id="hud"></div>
+      <div class="scoreboard" id="scoreboard"></div>
+      <div class="turn-timer" id="turn-timer" style="display:none">
+        <div><div class="t">60</div><div class="lbl">your turn</div></div>
+      </div>
+
+      <!-- building scene: painted menus in the art are clipped into live buttons -->
+      <div class="scene-view" id="scene-view">
+        <div class="backdrop" id="scene-backdrop"></div>
+        <video class="backdrop" id="scene-video" style="display:none" loop muted playsinline></video>
+        <iframe class="menu-frame" id="bdc-frame" title="Choose Your Bad Decision" allowtransparency="true" style="display:none"></iframe>
+        <div id="paint-layer"></div>
+        <div id="paint-tip" class="paper-card" style="display:none"></div>
+        <div class="action-panel" id="fallback-panel" style="display:none">
+          <h2 class="panel-title" id="scene-title">Building</h2>
+          <div class="action-list" id="action-list"></div>
+        </div>
+        <button class="btn secondary floating-back" id="btn-leave-scene">🗺 Map</button>
+        <button class="btn floating-more" id="btn-more">✚ More</button>
+        <div class="paper-card scene-hud-chip" id="scene-tu"></div>
+      </div>
+    </div>
+
+    <!-- ============ PODIUM ============ -->
+    <div class="screen" id="screen-podium">
+      <div class="podium-wrap">
+        <h1 class="podium-title">🏆 Final Podium</h1>
+        <div class="podium-row" id="podium-row"></div>
+        <table class="breakdown-table" id="podium-table"></table>
+        <div style="display:flex;gap:.7em">
+          <button class="btn" id="btn-rematch">Rematch</button>
+          <button class="btn secondary" id="btn-back-setup">Back to Setup</button>
+          <button class="btn secondary" id="btn-back-title">Back to Title</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ dialogs ============ -->
+    <div class="dialog-veil" id="dlg-turncard"><div class="paper-card dialog"><div class="turncard-body"></div></div></div>
+
+    <div class="dialog-veil" id="dlg-shop"><div class="paper-card dialog">
+      <button class="close-x">✕</button><h3 id="shop-title">Shop</h3><div class="shop-grid" id="shop-grid"></div>
+    </div></div>
+
+    <div class="dialog-veil" id="dlg-jobs"><div class="paper-card dialog">
+      <button class="close-x">✕</button><h3>Corporate Soul Exchange — Job Board</h3><div class="job-list" id="job-list"></div>
+    </div></div>
+
+    <div class="dialog-veil" id="dlg-pets"><div class="paper-card dialog">
+      <button class="close-x">✕</button><h3>Adopt, Attach, Regret Later</h3>
+      <div style="font-size:.85em;margin-bottom:.5em">Each pet boosts two stats (+10% neutral, +5% on a strength, halves a weakness). Feed it or face the consequences.</div>
+      <div class="pet-grid" id="pet-grid"></div>
+    </div></div>
+
+    <div class="dialog-veil" id="dlg-stats"><div class="paper-card dialog">
+      <button class="close-x">✕</button><h3>Scoreboard</h3><div id="stats-body"></div>
+    </div></div>
+
+    <div class="dialog-veil" id="dlg-log"><div class="paper-card dialog">
+      <button class="close-x">✕</button><h3>Action Results Log</h3><div id="log-body"></div>
+    </div></div>
+
+    <div class="dialog-veil" id="dlg-menu"><div class="paper-card dialog" style="width:24em">
+      <button class="close-x">✕</button><h3>Menu</h3><div id="menu-body"></div>
+    </div></div>
+
+    <div class="dialog-veil" id="dlg-debug"><div class="paper-card dialog">
+      <button class="close-x">✕</button><h3>Balance Debug Panel</h3>
+      <div style="margin-bottom:.5em"><button class="btn small" id="btn-copy-log">📋 Copy full playtest log</button></div>
+      <div class="debug-box" id="debug-body"></div>
+    </div></div>
+
+    <div class="dialog-veil" id="dlg-multi"><div class="paper-card dialog" style="width:30em">
+      <button class="close-x">✕</button><h3>Multiplayer</h3><div id="multi-body"></div>
+    </div></div>
+
+    <div class="dialog-veil" id="dlg-more"><div class="paper-card dialog" style="width:40em">
+      <button class="close-x">✕</button><h3 id="more-title">More Actions</h3>
+      <div class="action-list" id="more-list" style="overflow:visible"></div>
+    </div></div>
+
+    <div class="dialog-veil" id="dlg-lobby"><div class="paper-card dialog" style="width:62em">
+      <button class="close-x">✕</button><h3>Room Lobby</h3><div id="lobby-body"></div>
+    </div></div>
+
+    <div class="toast-stack" id="toasts"></div>
+  </div>
+</div>
+
+<script src="js/store.js"></script>
+<script src="assets/data/gamedata.js"></script>
+<script src="assets/data/scene_hotspots.js"></script>
+<script src="js/assumptions.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/bots.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/walker.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/net.js"></script>
+</body>
+</html>

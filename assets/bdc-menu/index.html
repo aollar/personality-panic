@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bad Decisions Club — Choose Your Bad Decision</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ============================================================= -->
+  <!--  BDC "Choose Your Bad Decision" side menu                     -->
+  <!--  Real sliced art (base_plate + per-card / robot / WORK PNGs)  -->
+  <!--  composited under an HTML/CSS animation layer.                -->
+  <!--  Everything is tunable via the CSS vars in :root.             -->
+  <!-- ============================================================= -->
+
+  <div class="menu-stage" id="menuStage">
+
+    <!-- Six decision cards. data-card = id, data-cost = price (placeholder hook). -->
+    <button class="decision-card card--dance"    data-card="dance"    data-cost="0"  style="--l:4.294%;  --t:12.434%; --w:43.354%; --h:21.148%;" aria-label="Dance — Free">
+      <img class="card-art" src="assets/dance.png" alt="Dance" draggable="false" />
+      <span class="icon-idle"></span>
+    </button>
+
+    <button class="decision-card card--flirt"    data-card="flirt"    data-cost="15" style="--l:51.329%; --t:12.434%; --w:43.967%; --h:21.148%;" aria-label="Flirt Recklessly — $15">
+      <img class="card-art" src="assets/flirt.png" alt="Flirt Recklessly" draggable="false" />
+      <span class="icon-idle"></span>
+    </button>
+
+    <button class="decision-card card--digits"   data-card="digits"   data-cost="5"  style="--l:4.294%;  --t:34.006%; --w:43.354%; --h:20.829%;" aria-label="Get Digits — $5">
+      <img class="card-art" src="assets/digits.png" alt="Get Digits" draggable="false" />
+      <span class="icon-idle"></span>
+    </button>
+
+    <button class="decision-card card--shots"    data-card="shots"    data-cost="25" style="--l:51.329%; --t:34.006%; --w:43.967%; --h:20.829%;" aria-label="Order Shots — $25">
+      <img class="card-art" src="assets/shots.png" alt="Order Shots" draggable="false" />
+      <span class="icon-idle"></span>
+    </button>
+
+    <button class="decision-card card--vip"      data-card="vip"      data-cost="40" style="--l:4.294%;  --t:55.260%; --w:43.354%; --h:20.510%;" aria-label="VIP Lounge — $40">
+      <img class="card-art" src="assets/vip.png" alt="VIP Lounge" draggable="false" />
+      <span class="icon-idle"></span>
+    </button>
+
+    <button class="decision-card card--stranger" data-card="stranger" data-cost="0"  style="--l:51.329%; --t:55.260%; --w:43.967%; --h:20.510%;" aria-label="Go Home With Stranger — Free">
+      <img class="card-art" src="assets/stranger.png" alt="Go Home With Stranger" draggable="false" />
+      <span class="icon-idle"></span>
+    </button>
+
+    <!-- Result / message box (overlays the empty rectangle in the art) -->
+    <div class="result-box" id="resultBox">
+      <div class="result-scanline" aria-hidden="true"></div>
+      <div class="result-sweep" aria-hidden="true"></div>
+      <div class="result-text" id="resultText">Select a bad decision.</div>
+    </div>
+
+    <!-- Robot: placeholder container for a future sprite sheet.
+         The robot art is currently baked into base_plate (the frame). When a
+         real sprite sheet exists, drop its <img>/<canvas> in here (positioned
+         over the baked robot) and erase the baked one from base_plate. -->
+    <div class="robot-container" id="robotContainer"
+         style="--l:8%; --t:86.5%; --w:30%; --h:13%;"></div>
+
+    <!-- WORK — primary call to action -->
+    <button class="work-button glowing" id="workButton"
+            style="--l:50.100%; --t:89.373%; --w:42.740%; --h:8.395%;" aria-label="Work">
+      <img class="work-art" src="assets/work.png" alt="Work" draggable="false" />
+    </button>
+
+  </div>
+
+  <!-- Compact debug settings (enable with ?debug=1) -->
+  <button class="settings-gear" id="settingsGear" aria-label="Settings" hidden>⚙</button>
+  <div class="settings-panel" id="settingsPanel" hidden>
+    <label><input type="checkbox" id="toggleIdle" checked /> Idle icon glow</label>
+    <label><input type="checkbox" id="toggleMessages" checked /> Result-box messages</label>
+    <label><input type="checkbox" id="toggleScanline" checked /> Result-box scanline</label>
+    <label><input type="checkbox" id="toggleReduced" /> Force reduced motion</label>
+    <label><input type="checkbox" id="toggleDisableVip" /> Demo: disable VIP card</label>
+  </div>
+
+  <script src="menu.js"></script>
+
+<script>
+/* PP bridge: forward menu events to the game (added for Personality Panic MVP) */
+(function () {
+  var stage = document.getElementById("menuStage");
+  stage.addEventListener("bdc:cardselect", function (e) {
+    parent.postMessage({ pp: "bdc", type: "card", card: e.detail.id || e.detail.card || (e.detail + "") }, "*");
+  });
+  stage.addEventListener("bdc:work", function (e) {
+    parent.postMessage({ pp: "bdc", type: "work" }, "*");
+  });
+  window.addEventListener("message", function (ev) {
+    var m = ev.data;
+    if (!m || m.pp !== "bdc-ctl") return;
+    if (m.op === "setMessage" && window.BDCMenu) window.BDCMenu.setMessage(m.text);
+    if (m.op === "setDisabled" && window.BDCMenu) window.BDCMenu.setDisabled(m.card, m.disabled);
+  });
+})();
+</script>
+</body>
+</html>
