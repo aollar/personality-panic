@@ -429,3 +429,75 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
 
 /* debug */
 .debug-box { font-family: Consolas, monospace; font-size: .78em; white-space: pre-wrap; background: #10131a; color: #9fe08a; padding: .8em; border-radius: .5em; max-height: 22em; overflow: auto; }
+
+/* ---------- TTTTT demo polish ---------- */
+/* left panel = the real Casey card art with live overlays */
+.hud { padding: 0; background: none; border: none; box-shadow: none; overflow: visible; }
+.hud-card-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  border-radius: .9em; border: .22em solid var(--stroke); box-shadow: .3em .4em 0 rgba(0,0,0,.45); }
+.hud-ov { position: absolute; display: grid; place-items: center; text-align: center; }
+.hud-turnbox { left: 7%; top: 1.6%; width: 86%; height: 7%; background: #223318;
+  border: .14em solid var(--stroke); border-radius: .45em; color: #ffe08a; line-height: 1.15; }
+.hud-turnbox #hud-turn1 { font-weight: 900; font-size: .92em; letter-spacing: .02em; }
+.hud-turnbox #hud-turn2 { font-weight: 800; font-size: .8em; color: #cfe3a8; }
+.hud-moneybox { left: 28%; top: 18.6%; width: 69%; height: 5.1%; background: #15270f;
+  border: .14em solid var(--stroke); border-radius: .45em; color: #ffe08a;
+  font-weight: 900; font-size: 1.05em; }
+.hud-flags { position: absolute; left: 3%; top: 56.2%; width: 94%; height: 7%;
+  display: flex; flex-wrap: wrap; gap: .25em; align-content: flex-end; justify-content: center; }
+.hud-flags .flag-chip { font-size: .72em; border-width: .12em; cursor: default; }
+.hud-flags button.flag-chip { cursor: pointer; }
+.hud-bar { position: absolute; left: 45.5%; width: 52.5%; height: 3.1%; }
+.hud-bar .hb-track { position: absolute; left: 0; top: 0; height: 100%; width: 71%;
+  background: #2b2416; border-radius: .3em; border: .12em solid var(--stroke); overflow: hidden; }
+.hud-bar .hb-track i { display: block; height: 100%; border-radius: .2em; }
+.hud-bar .hb-num { position: absolute; right: 0; top: -12%; width: 26%; height: 124%;
+  background: var(--paper); border: .12em solid var(--stroke); border-radius: .35em;
+  display: grid; place-items: center; color: var(--ink); font-weight: 900; font-size: .82em; }
+.hud-coinval { position: absolute; top: 89.2%; width: 16%; height: 3.6%;
+  background: rgba(15,10,6,.88); border: .13em solid var(--gold); border-radius: 999px;
+  color: #ffe08a; font-weight: 900; font-size: .8em; display: grid; place-items: center; }
+.hud .hud-buttons { position: absolute; left: 2%; bottom: .8%; width: 96%;
+  margin: 0; display: flex; gap: .3em; justify-content: center; }
+.hud .hud-buttons .btn.small { font-size: .78em; padding: .28em .6em; }
+
+/* persistent CPU skip + music mute on the map */
+#skip-cpu { position: absolute; left: 50%; transform: translateX(-50%); bottom: 12%;
+  z-index: 30; font-size: 1.05em; }
+.map-round-btn { position: absolute; right: 13%; top: 1.6%; z-index: 20;
+  width: 2.6em; height: 2.6em; border-radius: 50%; font-size: 1.1em;
+  background: linear-gradient(180deg, var(--paper), var(--paper-dark));
+  border: .18em solid var(--stroke); box-shadow: .2em .25em 0 rgba(0,0,0,.4); }
+
+/* toasts: top-right so they never cover characters mid-scene */
+.toast-stack { left: auto; right: 1%; top: 8.5%; transform: none; align-items: flex-end; }
+
+/* mall RIDES tab: styled to sit with the painted tabs */
+.mall-rides-tab { position: absolute; left: 70.2%; top: 2.6%; width: 9.2%; height: 4.6%;
+  background: linear-gradient(180deg, var(--gold), var(--orange));
+  border: .16em solid var(--stroke); border-radius: .5em .5em 0 0;
+  font-weight: 900; font-size: .9em; color: var(--ink); z-index: 6; }
+.mall-rides-tab:hover { filter: brightness(1.1); }
+
+/* bigger, simpler item/action text (TTTTT 13) */
+.shop-item .s-name { font-size: 1.15em; }
+.shop-item .s-fx { font-size: .95em; opacity: .95; }
+.shop-item .s-cost { font-size: 1.05em; }
+#paint-tip { width: 20em; font-size: 1.05em; }
+#paint-tip .t-fx { font-size: .95em; }
+.action-item .a-name { font-size: 1.05em; }
+.action-item .a-fx { font-size: .85em; }
+
+/* wide Casey chip (activates when assets/cards/casey_chip_wide.png exists) */
+.scene-hud-chip.wide-chip { background: none; border: none; box-shadow: none;
+  padding: 0; display: block; width: 24%; aspect-ratio: 1.79; }
+.wide-chip-art { position: absolute; inset: 0; width: 100%; height: 100%; }
+.wc-money { position: absolute; left: 65%; top: 5.5%; width: 27%; height: 17%;
+  background: #15270f; border: .12em solid var(--stroke); border-radius: .4em;
+  color: #ffe08a; font-weight: 900; font-size: .95em; display: grid; place-items: center; }
+.wc-tu { position: absolute; left: 2.5%; top: 80%; width: 34%; height: 15%;
+  background: rgba(15,10,6,.85); border-radius: 999px; border: .12em solid var(--gold);
+  color: #ffe08a; font-weight: 800; font-size: .7em; display: grid; place-items: center; }
+.wc-bar { position: absolute; width: 25.5%; height: 5%; background: #2b2416;
+  border-radius: .25em; border: .1em solid var(--stroke); overflow: hidden; }
+.wc-bar i { display: block; height: 100%; }

@@ -156,6 +156,8 @@
       UI.state = E.deserialize(msg.state);
       if (UI.state.over) { UI.openPodium(); return; }
       UI.renderAll();
+      // keep every client's music in sync with the rent cycle (TTTTT item 4)
+      window.PPAudio.setScene(UI.inScene || "overmap", E.isRentTurn(UI.state));
       var nowMyTurn = UI.mySlots.indexOf(UI.state.activeIdx) !== -1;
       if (nowMyTurn && !wasMyTurn) UI.turnIntro();
     }

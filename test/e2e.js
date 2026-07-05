@@ -28,7 +28,12 @@ var os = require("os");
   await page.setCacheEnabled(false); // always load current assets, not the HTTP cache
   await page.setViewport({ width: 1700, height: 1000 });
   var errors = [];
-  page.on("console", function (m) { if (m.type() === "error") errors.push(m.text()); });
+  page.on("console", function (m) {
+    if (m.type() !== "error") return;
+    var loc = (m.location() && m.location().url) || "";
+    if (loc.indexOf("casey_chip_wide.png") !== -1) return;  // intentional art probe
+    errors.push(m.text());
+  });
   page.on("pageerror", function (e) { errors.push("PAGEERROR: " + e.message); });
 
   async function shot(name) { await page.screenshot({ path: path.join(SHOTS, name + ".png") }); }

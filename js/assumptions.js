@@ -11,6 +11,10 @@
 var PP_ASSUMPTIONS = {
   // --- Economy ---
   startingMoneyPct: 0.30,     // mirrors the Homeless Support Cheque (casual clothes + low rent)
+  startingItems: ["Casual Clothes"],  // TTTTT: start dressed; low-tier jobs open from turn 1
+
+  // --- Bad Decisions Club door policy (TTTTT: bouncer checks Coolness) ---
+  clubEntryCoolnessPct: 0.08, // need Coolness >= 8% of T to get in (8 at Short)
 
   // --- Upkeep penalties (Manual says "lose time", never how much) ---
   hungerTuPenalty: 2,         // TUs lost next turn if you didn't eat this turn

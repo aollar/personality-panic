@@ -56,9 +56,26 @@
       if (onArrive) onArrive(); return;
     }
     var duration = Math.max(450, (total / WALK_SPEED) * 1000);
+    // arrive exactly ONCE no matter what finishes first. rAF stalls in hidden
+    // tabs (this froze CPU turns mid-walk): hidden = skip the animation, and a
+    // watchdog guarantees arrival even if rAF stops halfway through.
+    var arrived = false;
+    var done = function () {
+      if (arrived) return;
+      arrived = true;
+      if (self.raf) { cancelAnimationFrame(self.raf); self.raf = null; }
+      if (self.watchdog) { clearTimeout(self.watchdog); self.watchdog = null; }
+      self.img.src = IDLE_SRC;
+      self.setPos(pts[pts.length - 1][0], pts[pts.length - 1][1]);
+      if (onArrive) onArrive();
+    };
+    if (this.watchdog) clearTimeout(this.watchdog);
+    if (document.hidden) { done(); return; }
+    this.watchdog = setTimeout(done, duration + 1200);
     var t0 = performance.now();
     this.img.src = WALK_SRC;
     function frame(now) {
+      if (arrived) return;
       var p = Math.min(1, (now - t0) / duration);
       var target = p * total, acc = 0, i = 0;
       while (i < segs.length - 1 && acc + segs[i] < target) { acc += segs[i]; i++; }
@@ -69,11 +86,7 @@
       else if (b[0] - a[0] > 0.05) self.flip.classList.remove("face-left");
       self.setPos(x, y);
       if (p < 1) { self.raf = requestAnimationFrame(frame); }
-      else {
-        self.raf = null;
-        self.img.src = IDLE_SRC;
-        if (onArrive) onArrive();
-      }
+      else done();
     }
     this.raf = requestAnimationFrame(frame);
   };

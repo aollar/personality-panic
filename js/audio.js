@@ -8,6 +8,7 @@
   var MUSIC_DIR = "assets/audio/music/", SFX_DIR = "assets/audio/sfx/";
   var st = {
     master: 0.8, music: 0.7, sfx: 0.8, muted: false,
+    musicMuted: false,          // map mute button: music only, SFX untouched
     musicMode: "full",          // "full" | "overmapOnly"
     unlocked: false,
     currentTrack: null, musicEl: null,
@@ -17,19 +18,20 @@
   function load() {
     try {
       var s = JSON.parse(window.PPStore.get("pp_audio") || "{}");
-      ["master", "music", "sfx", "muted", "musicMode"].forEach(function (k) {
+      ["master", "music", "sfx", "muted", "musicMuted", "musicMode"].forEach(function (k) {
         if (s[k] !== undefined) st[k] = s[k];
       });
     } catch (e) {}
   }
   function save() {
     window.PPStore.set("pp_audio", JSON.stringify({
-      master: st.master, music: st.music, sfx: st.sfx, muted: st.muted, musicMode: st.musicMode
+      master: st.master, music: st.music, sfx: st.sfx, muted: st.muted,
+      musicMuted: st.musicMuted, musicMode: st.musicMode
     }));
   }
   load();
 
-  function musicVol() { return st.muted ? 0 : st.master * st.music; }
+  function musicVol() { return (st.muted || st.musicMuted) ? 0 : st.master * st.music; }
   function sfxVol() { return st.muted ? 0 : st.master * st.sfx; }
 
   function playMusic(file) {
@@ -97,7 +99,19 @@
     save();
   }
 
+  // one-shot footstep burst (e.g. the "Take a Walk" park action)
+  function footsteps(ms) {
+    var f = window.PP_DATA.sfx.walk;
+    if (!f || !st.unlocked) return;
+    var el = new Audio(SFX_DIR + f);
+    el.loop = true; el.volume = sfxVol();
+    el.onerror = function () {};
+    el.play().catch(function () {});
+    setTimeout(function () { try { el.pause(); } catch (e) {} }, ms || 1600);
+  }
+
   window.PPAudio = {
+    footsteps: footsteps,
     state: st, setScene: setScene, playMusic: playMusic, stopMusic: stopMusic,
     sfx: sfx, startMove: startMove, stopMove: stopMove, applyVolumes: applyVolumes,
     set: function (k, v) { st[k] = v; applyVolumes(); }

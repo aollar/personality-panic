@@ -5744,7 +5744,7 @@ var PP_DATA = {
   "luxury": "PP-LuxuryApartment.mp3",
   "lowCost": "PP-LowCostHousing.mp3",
   "mall": "PP-Mall.mp3",
-  "temple": null
+  "temple": "PP-Temple.mp3"
  },
  "sfx": {
   "walk": "PP-Walking.wav",

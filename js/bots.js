@@ -271,6 +271,7 @@
     });
     Object.keys(DATA.buildings).forEach(function (b) {
       if (b === p.location) return;
+      if (b === "club" && E.clubGate(state, p)) return;   // bouncer would turn the bot away
       var mc = E.moveCost(state, p, b);
       if (mc.tu >= p.tu) return;
       var fake = Object.assign({}, p, { location: b, tu: p.tu - mc.tu });

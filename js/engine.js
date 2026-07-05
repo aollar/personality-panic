@@ -128,6 +128,7 @@
     };
     state.players.forEach(function (p) {
       p.stats.money = Math.round(ASSUME.startingMoneyPct * state.T);
+      (ASSUME.startingItems || []).forEach(function (it) { p.items.push(it); });
     });
     log(state, null, "Game start — " + state.players.map(function (p) { return p.name + " (" + p.code + ")"; }).join(", ") +
       " · T=" + state.T);
@@ -486,10 +487,19 @@
   }
 
   // ---------- Movement ----------
+  function clubGate(state, p) {
+    var need = Math.round((ASSUME.clubEntryCoolnessPct || 0) * state.T);
+    if (p.stats.coolness >= need) return null;
+    return "The bouncer looks you over… need Coolness " + need + "+ to get in";
+  }
   function moveTo(state, toId) {
     var p = active(state);
     if (state.over) return { ok: false, why: "Game over" };
     if (!DATA.buildings[toId]) return { ok: false, why: "Unknown place" };
+    if (toId === "club") {
+      var whyC = clubGate(state, p);
+      if (whyC) return { ok: false, why: whyC };
+    }
     var mc = moveCost(state, p, toId);
     if (mc.tu > p.tu) return { ok: false, why: "Not enough Time Units to travel" };
     p.tu -= mc.tu;
@@ -644,7 +654,7 @@
     DATA: DATA, ASSUME: ASSUME, ACTIONS: ACTIONS, ITEMS: ITEMS,
     newGame: newGame, active: active, actionsAt: actionsAt, perform: perform,
     moveTo: moveTo, moveCost: moveCost, endTurn: endTurn, startTurn: startTurn,
-    score: score, podium: podium, isRentTurn: isRentTurn, petState: petState,
+    score: score, podium: podium, isRentTurn: isRentTurn, petState: petState, clubGate: clubGate,
     jobsWithStatus: jobsWithStatus, bestPromotion: bestPromotion, statName: statName,
     personalityMult: personalityMult, totalMult: totalMult, transportOf: transportOf,
     shortestPath: shortestPath, PATHS: PATHS, NODE_POS: NODE_POS, log: log,

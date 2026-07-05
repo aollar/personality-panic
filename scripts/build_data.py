@@ -295,7 +295,7 @@ def main():
         "park": "PP-Park.mp3", "airport": "PP-EmotionalBaggageAirport.mp3",
         "debtstreet": "PP-DebtStreetCapital.mp3", "club": "PP-BadDecisionsClub.mp3",
         "luxury": "PP-LuxuryApartment.mp3", "lowCost": "PP-LowCostHousing.mp3",
-        "mall": "PP-Mall.mp3", "temple": None,  # GAP per manual: fall back to overmap
+        "mall": "PP-Mall.mp3", "temple": "PP-Temple.mp3",  # track delivered 2026-07 (gap closed)
     }
     sfx = {
         "walk": "PP-Walking.wav", "bike": "PP-BicycleBell.mp3", "car": "PP-CarAcceleration.mp3",
