@@ -286,10 +286,22 @@
     if (p.location === id) { openScene(id); return; }
     var mc = E.moveCost(UI.state, p, id);
     if (mc.tu > p.tu) { toast("Not enough Time Units to travel (" + mc.tu + " TU)", "bad"); return; }
-    if (UI.mode === "guest") { dispatch("move", { to: id }); return; }
+    if (id === "club") {
+      var whyClub = E.clubGate(UI.state, p);
+      if (whyClub) { toast("\ud83d\udeab " + whyClub, "bad"); return; }
+    }
+    if (UI.mode === "guest") {
+      // optimistic walk so it feels alive; the host's state confirms the arrival
+      var fromG = p.location;
+      A.startMove(E.transportOf(p));
+      UI.walker.walkTo(id, fromG, function () { A.stopMove(); });
+      dispatch("move", { to: id });
+      return;
+    }
     var from = p.location;
     var r = dispatchNoRender("move", { to: id });
     if (!r.ok) { toast(r.why, "bad"); return; }
+    if (UI.mode === "host") window.PPNet.relayWalk(r.from, id);
     A.startMove(r.transport);
     renderHud();
     UI.walker.walkTo(id, from, function () {
@@ -372,10 +384,10 @@
   function dayClock(p) {
     var total = DATA.settings.timeUnitsPerTurn;
     var spent = Math.max(0, Math.min(total, total - p.tu));
-    var hour = 9 + spent * (12 / total);           // 6 TU day: 9 AM -> 9 PM
-    var h12 = ((Math.round(hour) + 11) % 12) + 1;
-    var ampm = hour < 12 ? "AM" : "PM";
-    return h12 + ":00 " + ampm;
+    var mins = Math.round(spent * (12 * 60 / total) / 5) * 5;   // day = 9 AM -> 9 PM
+    var h24 = 9 + Math.floor(mins / 60), m = mins % 60;
+    var h12 = ((h24 + 11) % 12) + 1;
+    return h12 + ":" + (m < 10 ? "0" : "") + m + " " + (h24 < 12 ? "AM" : "PM");
   }
   function ensureHud() {
     if (UI._hudBuilt) return;
@@ -489,15 +501,17 @@
     // otherwise the clock face shows the in-game time of day (TTTTT item 2)
     el.style.display = "";
     el.classList.remove("warn");
-    el.querySelector(".t").textContent = dayClock(p).replace(":00", "");
-    el.querySelector(".lbl").textContent = p.tu + " TU left";
+    var tod = dayClock(p);
+    el.querySelector(".t").textContent = tod.replace(" AM", "").replace(" PM", "");
+    el.querySelector(".t").style.fontSize = "1.9em";
+    el.querySelector(".lbl").textContent = (tod.indexOf("AM") !== -1 ? "AM" : "PM") + " · " + p.tu + " TU";
   }
 
   // ---------------- turn flow ----------------
   function turnIntro() {
     var p = activeP();
     if (p.isBot) { renderAll(); maybeRunBot(); startTimer(); return; }
-    if (UI.mode !== "guest" || isMyTurn()) openTurnCard();
+    if (isMyTurn()) openTurnCard();          // spectators just watch the map + feed
     renderAll();
   }
   function openTurnCard() {
@@ -546,6 +560,7 @@
       if (!cur.isBot) { UI.botRunning = false; saveGame(); renderAll(); turnIntro(); return; }
       var s = B.botStep(UI.state);
       if (s.type === "end") {
+        UI.spectateScene(null);
         E.endTurn(UI.state);
         UI._botSteps = 0;
         saveGame();
@@ -559,10 +574,18 @@
         var from = activeP().location;
         var r = E.moveTo(UI.state, s.to);
         if (!r.ok) { E.endTurn(UI.state); setTimeout(step, stepDelay()); return; }
+        if (!UI.botFast) UI.spectateScene(null);            // step outside to walk
+        if (UI.mode === "host") window.PPNet.relayWalk(from, s.to);
         renderAll();
         if (UI.botFast) { setTimeout(step, 0); }
         else UI.walker.walkTo(s.to, from, function () { setTimeout(step, 120); });
         return;
+      }
+      // watching mode: open the building the bot is acting in
+      if (!UI.botFast) {
+        var loc = activeP().location;
+        var a2 = E.ACTIONS[s.id];
+        if (a2 && a2.building !== "anywhere" && UI.inScene !== loc) UI.spectateScene(loc);
       }
       var r2 = E.perform(UI.state, s.id, s.choice);
       if (!r2.ok || r2.needsChoice) { E.endTurn(UI.state); }
@@ -581,7 +604,8 @@
     return (PAINT[id] || []).map(function (h) { return h.a; });
   }
 
-  function openScene(id) {
+  function openScene(id, spectate) {
+    if (!spectate && isMyTurn()) window.PPNet && window.PPNet.sendView(id);
     UI.inScene = id;
     var b = DATA.buildings[id];
     var sv = $("#scene-view");
@@ -607,7 +631,8 @@
     A.setScene(id, E.isRentTurn(UI.state));
     renderSceneUI();
   }
-  function closeScene() {
+  function closeScene(spectate) {
+    if (!spectate && isMyTurn()) window.PPNet && window.PPNet.sendView(null);
     UI.inScene = null;
     $("#scene-video").pause();
     $("#scene-view").classList.remove("show");
@@ -817,6 +842,13 @@
     var last = UI.state.log[UI.state.log.length - 1];
     if (last && last.who === activeP().name) toast(last.text, last.cls);
   }
+
+  // remote/CPU player entered or left a building: mirror it on this screen
+  UI.spectateScene = function (id) {
+    if (isMyTurn() && UI.mode !== "local") return;   // never override my own play
+    if (id && UI.inScene !== id) openScene(id, true);
+    else if (!id && UI.inScene) closeScene(true);
+  };
 
   // ---------------- dialogs ----------------
   function openDialog(name) { $("#dlg-" + name).classList.add("show"); }

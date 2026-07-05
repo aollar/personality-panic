@@ -34,6 +34,10 @@
   });
   var ITEMS = {}; DATA.items.forEach(function (i) { ITEMS[i.name] = i; });
   var MAIN = DATA.settings.mainStats, UPKEEP = DATA.settings.upkeepStats;
+  // All sheet TU costs are authored against a 6-TU day; the playable turn is
+  // now 40 TU, so every cost scales by the same factor (economy unchanged).
+  var TU_SCALE = DATA.settings.timeUnitsPerTurn / (DATA.settings.baseTimeUnits || 6);
+  function tuCost(a) { return a.tu === 0 ? 0 : Math.max(1, Math.floor(a.tu * TU_SCALE)); }
   var ALL_STATS = MAIN.concat(UPKEEP);
 
   // ---------- Road graph: pairwise building walk distances ----------
@@ -95,7 +99,8 @@
     var path = PATHS[p.location + "|" + toId];
     var far = path.length > ASSUME.nearPathPx;
     var costs = ASSUME.moveCost[transportOf(p)];
-    return { tu: costs[far ? 1 : 0], far: far, path: path };
+    var raw = costs[far ? 1 : 0];
+    return { tu: raw === 0 ? 0 : Math.max(1, Math.floor(raw * TU_SCALE)), far: far, path: path };
   }
 
   // ---------- Player / game construction ----------
@@ -317,10 +322,11 @@
   }
   function annotate(state, p, a) {
     var cost = Math.round(a.costPct * state.T);
+    var tu = tuCost(a);
     var why = checkReq(state, p, a.req, a);
-    if (!why && p.tu < a.tu) why = "Not enough Time Units";
+    if (!why && p.tu < tu) why = "Not enough Time Units";
     if (!why && money(p) < cost) why = "Not enough money ($" + cost + ")";
-    return { action: a, id: a.id, name: a.name, tu: a.tu, cost: cost, ok: !why, why: why };
+    return { action: a, id: a.id, name: a.name, tu: tu, cost: cost, ok: !why, why: why };
   }
 
   function perform(state, actionId, choice) {
@@ -342,7 +348,7 @@
     if (needsPet && !choice) return { ok: true, needsChoice: "pet" };
 
     // pay the bill
-    p.tu -= a.tu;
+    p.tu -= ann.tu;
     if (ann.cost) { addStat(state, p, "money", -ann.cost); }
 
     var summary = [];
@@ -469,7 +475,7 @@
       }
     });
     if (!result.ok) { // refund a failed choice-action (job req failed etc.)
-      p.tu += a.tu; if (ann.cost) addStat(state, p, "money", ann.cost);
+      p.tu += ann.tu; if (ann.cost) addStat(state, p, "money", ann.cost);
       return result;
     }
 
@@ -524,7 +530,7 @@
       return true;
     });
     if (p.tuPenaltyNext > 0) {
-      p.tu = Math.max(1, p.tu - p.tuPenaltyNext);
+      p.tu = Math.max(Math.floor(TU_SCALE), p.tu - p.tuPenaltyNext);
       p.warnings.push("Lost " + p.tuPenaltyNext + " Time Units (" + p.penaltyReason + ")");
       log(state, p, "Starts the turn with only " + p.tu + " TU (" + p.penaltyReason + ")", "bad");
       p.tuPenaltyNext = 0; p.penaltyReason = "";
@@ -550,7 +556,7 @@
     var p = active(state), events = [];
     // 1) hunger
     if (!p.ate) {
-      p.tuPenaltyNext += ASSUME.hungerTuPenalty;
+      p.tuPenaltyNext += Math.floor(ASSUME.hungerTuPenalty * TU_SCALE);
       p.penaltyReason = "hunger";
       events.push(p.name + " didn't eat — will lose " + ASSUME.hungerTuPenalty + " TU next turn");
       log(state, p, "Didn't eat this turn! Hunger penalty next turn.", "bad");
@@ -559,7 +565,7 @@
     // 2) stress
     p.turnsSinceRelax += 1;
     if (p.turnsSinceRelax > 2) {
-      p.tuPenaltyNext += ASSUME.stressTuPenalty;
+      p.tuPenaltyNext += Math.floor(ASSUME.stressTuPenalty * TU_SCALE);
       p.penaltyReason = (p.penaltyReason ? p.penaltyReason + " + " : "") + "stress";
       events.push(p.name + " is stressed out — will lose " + ASSUME.stressTuPenalty + " TU next turn");
       log(state, p, "Too stressed (no relaxing for " + p.turnsSinceRelax + " turns).", "bad");
@@ -652,6 +658,7 @@
   // ---------- Public API ----------
   var API = {
     DATA: DATA, ASSUME: ASSUME, ACTIONS: ACTIONS, ITEMS: ITEMS,
+    TU_SCALE: TU_SCALE, tuCost: tuCost,
     newGame: newGame, active: active, actionsAt: actionsAt, perform: perform,
     moveTo: moveTo, moveCost: moveCost, endTurn: endTurn, startTurn: startTurn,
     score: score, podium: podium, isRentTurn: isRentTurn, petState: petState, clubGate: clubGate,

@@ -43,7 +43,7 @@
     if (!p.ate && a.fx.some(function (f) { return f.kind === "eat"; })) v += state.T * 0.08;
     if (p.turnsSinceRelax >= 1 && a.fx.some(function (f) { return f.kind === "relax"; })) v += state.T * 0.05 * p.turnsSinceRelax;
     if (a.fx.some(function (f) { return f.kind === "degreeProgress" || f.kind === "grantDegree"; })) v += state.T * 0.03;
-    var tu = a.tu + (extraTu || 0);
+    var tu = ann.tu + (extraTu || 0);
     return v / Math.max(1, tu);
   }
 
@@ -54,7 +54,7 @@
       var a = E.ACTIONS[id];
       if (!a.fx.some(function (f) { return f.kind === "eat"; })) return;
       var mc = a.building === p.location ? { tu: 0 } : E.moveCost(state, p, a.building === "anywhere" ? p.location : a.building);
-      var totalTu = a.tu + mc.tu, cost = Math.round(a.costPct * state.T);
+      var totalTu = E.tuCost(a) + mc.tu, cost = Math.round(a.costPct * state.T);
       if (totalTu > p.tu || cost > p.stats.money) return;
       // requirements that don't depend on being there yet
       var fake = Object.assign({}, p, { location: a.building });
@@ -137,7 +137,7 @@
         var feedNow = findHere(function (x) { return (x.id === "A007" || x.id === "A105" || x.id === "X008") && x.ok; });
         if (feedNow) return { type: "perform", id: feedNow.id };
         var dest0 = (p.petFoodLeft > 0 && !p.homeless) ? (p.housing === "lux" ? "luxury" : "lowCost") : "petShop";
-        if (p.location !== dest0 && E.moveCost(state, p, dest0).tu + 1 <= p.tu) return { type: "move", to: dest0 };
+        if (p.location !== dest0 && E.moveCost(state, p, dest0).tu + Math.round(E.TU_SCALE) <= p.tu) return { type: "move", to: dest0 };
       }
     }
     // 1) rent due -> pay it (payable anywhere)
@@ -169,7 +169,7 @@
         if (bulk && p.stats.money >= Math.round(0.28 * T) + Math.round(0.2 * T)) return { type: "perform", id: bulk.id };
         var wk = findHere(function (x) { return x.id === "A026"; });
         if (wk) return { type: "perform", id: wk.id };
-      } else if (E.moveCost(state, p, "airOne").tu + 1 <= p.tu) {
+      } else if (E.moveCost(state, p, "airOne").tu + Math.round(E.TU_SCALE) <= p.tu) {
         return { type: "move", to: "airOne" };
       }
     }
@@ -193,7 +193,7 @@
       var needTrip = (!p.pet.fedThisTurn && (band === "Hungry" || band === "Sick" || band === "Critical"));
       if (needTrip && p.location !== "petShop" && p.location !== "lowCost") {
         var dest = p.petFoodLeft > 0 && !p.homeless ? "lowCost" : "petShop";
-        if (E.moveCost(state, p, dest).tu + 1 <= p.tu) return { type: "move", to: dest };
+        if (E.moveCost(state, p, dest).tu + Math.round(E.TU_SCALE) <= p.tu) return { type: "move", to: dest };
       }
       if (p.pet.happiness < 0.5 * T && p.location === "petShop") {
         var play = findHere(function (x) { return x.id === "A107" && x.ok; });
@@ -215,7 +215,7 @@
       if (p.location === "university") {
         var cls = findHere(function (x) { return x.id === "A067" && x.ok; });
         if (cls) return { type: "perform", id: cls.id };
-      } else if (E.moveCost(state, p, "university").tu + 2 <= p.tu) {
+      } else if (E.moveCost(state, p, "university").tu + Math.round(2 * E.TU_SCALE) <= p.tu) {
         return { type: "move", to: "university" };
       }
     }
@@ -224,7 +224,7 @@
     var wantJob = !p.job || (betterJob && betterJob.basePayT100 >= p.job.basePayT100 * 1.3);
     if (wantJob && betterJob) {
       if (p.location !== "soulExchange") {
-        if (E.moveCost(state, p, "soulExchange").tu + 1 <= p.tu) return { type: "move", to: "soulExchange" };
+        if (E.moveCost(state, p, "soulExchange").tu + Math.round(E.TU_SCALE) <= p.tu) return { type: "move", to: "soulExchange" };
       } else {
         var getJob = findHere(function (x) { return x.id === "A076"; });
         if (getJob) return { type: "perform", id: getJob.id, choice: { job: betterJob.name, building: betterJob.building } };
@@ -237,7 +237,7 @@
       if (p.location === p.job.building) {
         var work = findHere(function (x) { return x.name === "Work"; });
         if (work && work.ok) return { type: "perform", id: work.id };
-      } else if (E.moveCost(state, p, p.job.building).tu + 2 <= p.tu) {
+      } else if (E.moveCost(state, p, p.job.building).tu + Math.round(2 * E.TU_SCALE) <= p.tu) {
         return { type: "move", to: p.job.building };
       }
     }
@@ -245,14 +245,14 @@
     if (goal && goal.affordable) {
       if (goal.adopt) {
         if (p.location !== "petShop") {
-          if (E.moveCost(state, p, "petShop").tu + 1 <= p.tu) return { type: "move", to: "petShop" };
+          if (E.moveCost(state, p, "petShop").tu + Math.round(E.TU_SCALE) <= p.tu) return { type: "move", to: "petShop" };
         } else {
           var adopt = findHere(function (x) { return x.id === "A102"; });
           if (adopt) return { type: "perform", id: adopt.id, choice: { pet: pickPet(p) } };
         }
       } else {
         if (p.location !== "mall") {
-          if (E.moveCost(state, p, "mall").tu + 1 <= p.tu) return { type: "move", to: "mall" };
+          if (E.moveCost(state, p, "mall").tu + Math.round(E.TU_SCALE) <= p.tu) return { type: "move", to: "mall" };
         } else {
           var it = E.ITEMS[goal.item];
           var shopAction = { "Transportation": "A112", "Electronics/Appliances": "A113",
