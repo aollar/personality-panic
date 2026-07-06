@@ -18,15 +18,15 @@
   function load() {
     try {
       var s = JSON.parse(window.PPStore.get("pp_audio") || "{}");
-      ["master", "music", "sfx", "muted", "musicMuted", "musicMode"].forEach(function (k) {
+      // musicMuted intentionally NOT loaded: a persisted mute once killed music silently
+      ["master", "music", "sfx", "muted", "musicMode"].forEach(function (k) {
         if (s[k] !== undefined) st[k] = s[k];
       });
     } catch (e) {}
   }
   function save() {
     window.PPStore.set("pp_audio", JSON.stringify({
-      master: st.master, music: st.music, sfx: st.sfx, muted: st.muted,
-      musicMuted: st.musicMuted, musicMode: st.musicMode
+      master: st.master, music: st.music, sfx: st.sfx, muted: st.muted, musicMode: st.musicMode
     }));
   }
   load();

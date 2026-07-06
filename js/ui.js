@@ -78,12 +78,29 @@
   function saveGame() {
     if (UI.mode === "guest" || !UI.state) return;
     try {
-      window.PPStore.set("pp_save", JSON.stringify({ state: UI.state, cfg: UI.cfg, mode: UI.mode }));
+      window.PPStore.set("pp_save", JSON.stringify({ state: UI.state, cfg: UI.cfg, mode: UI.mode,
+        tuPerTurn: DATA.settings.timeUnitsPerTurn }));
     } catch (e) {}
   }
   function clearSave() { window.PPStore.remove("pp_save"); }
   function loadSave() {
-    try { return JSON.parse(window.PPStore.get("pp_save") || "null"); } catch (e) { return null; }
+    try {
+      var s = JSON.parse(window.PPStore.get("pp_save") || "null");
+      // saves from before the 40-TU day: convert leftover TU to the new scale
+      if (s && s.state) {
+        var cur = DATA.settings.timeUnitsPerTurn;
+        var was = s.tuPerTurn || 6;
+        if (was !== cur) {
+          var f = cur / was;
+          s.state.players.forEach(function (p) {
+            p.tu = Math.round(p.tu * f);
+            p.tuPenaltyNext = Math.round((p.tuPenaltyNext || 0) * f);
+          });
+          s.tuPerTurn = cur;
+        }
+      }
+      return s;
+    } catch (e) { return null; }
   }
 
   // ---------------- START SCREEN ----------------
@@ -1049,6 +1066,10 @@
     $("#set-sfx").oninput = function () { A.set("sfx", this.value / 100); };
     $("#set-mode").onchange = function () { A.set("musicMode", this.value); if (UI.state) A.setScene(UI.inScene || "overmap", E.isRentTurn(UI.state)); };
     $("#set-mute").onchange = function () { A.set("muted", this.checked); };
+    $("#set-musicmute").onchange = function () {
+      A.set("musicMuted", this.checked);
+      if (window.PPMuteIcon) window.PPMuteIcon();
+    };
     $("#set-timerwarn").onchange = function () { window.PPStore.set("pp_timerwarn", this.checked ? "on" : "off"); };
     $("#set-fullscreen").onclick = function () {
       click();
@@ -1123,8 +1144,19 @@
     $("#btn-more").onclick = function () { click(); openMore(); };
     $("#skip-cpu").onclick = function () { click(); UI.botFast = true; };
     var muteB = $("#music-mute");
-    function muteIcon() { muteB.textContent = A.state.musicMuted ? "\ud83d\udd07" : "\ud83c\udfb5"; }
-    muteB.onclick = function () { click(); A.set("musicMuted", !A.state.musicMuted); muteIcon(); };
+    function muteIcon() {
+      muteB.textContent = A.state.musicMuted ? "\ud83d\udd07" : "\ud83d\udd0a";
+      muteB.classList.toggle("muted", !!A.state.musicMuted);
+      var sm = $("#set-musicmute");
+      if (sm) sm.checked = !!A.state.musicMuted;
+    }
+    window.PPMuteIcon = muteIcon;
+    muteB.onclick = function () {
+      click();
+      A.set("musicMuted", !A.state.musicMuted);
+      muteIcon();
+      toast(A.state.musicMuted ? "\ud83d\udd07 Music muted (this session only)" : "\ud83d\udd0a Music on", "good");
+    };
     muteIcon();
     $("#btn-rematch").onclick = function () {
       click();
