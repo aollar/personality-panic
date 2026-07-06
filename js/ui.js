@@ -125,6 +125,7 @@
     setup = {
       mode: mode, humans: mode === "single" ? 1 : 2, bots: 1,
       length: "short", timer: 0, hints: true, skipCpu: true, maxRounds: 15,
+      tuPerTurn: DATA.settings.timeUnitsPerTurn,
       picks: [], activeSlot: 0
     };
     rebuildSlots();
@@ -155,6 +156,7 @@
       ["CPU Bots", setup.bots, "bots", [0, 3]],
       ["Game Length", setup.length.toUpperCase() + " (T=" + lengthT() + ")", "length"],
       ["Turn Timer", timerLabel, "timer"],
+      ["Time Units / turn", setup.tuPerTurn + " TU", "tuPerTurn"],
       ["Map", "Personality Panic City", "map"],
       ["Hints", setup.hints ? "On" : "Off", "hints"],
       ["Skip CPU Turns", setup.skipCpu ? "On" : "Off", "skipCpu"],
@@ -239,6 +241,11 @@
     if (k === "timer") {
       var T = [0, 30, 60, 90, 120], j = (T.indexOf(setup.timer) + d + T.length) % T.length;
       setup.timer = T[j];
+    }
+    if (k === "tuPerTurn") {
+      var TU = [12, 16, 20, 24, 30, 40, 50];
+      var ti = TU.indexOf(setup.tuPerTurn); if (ti < 0) ti = TU.indexOf(24);
+      setup.tuPerTurn = TU[(ti + d + TU.length) % TU.length];
     }
     if (k === "hints") setup.hints = !setup.hints;
     if (k === "skipCpu") setup.skipCpu = !setup.skipCpu;
@@ -1168,6 +1175,10 @@
     safe(function () { if (window.PPClock) UI.clock = window.PPClock.mount($("#turn-clock")); }, "mountClock");
     $("#btn-start-game").onclick = function () {
       click();
+      if (setup && setup.tuPerTurn) {          // apply the chosen Time Units / turn (costs stay 1-3)
+        DATA.settings.timeUnitsPerTurn = setup.tuPerTurn;
+        DATA.settings.baseTimeUnits = setup.tuPerTurn;
+      }
       if (setup.mode === "host") window.PPNet.startHostedGame(setup);
       else startLocalGame();
     };
