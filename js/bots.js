@@ -102,6 +102,7 @@
     if (p.pet && !p.pet.dead && !p.flags.petToy && !owns("Pet Toys")) wants.push("Pet Toys");
     if (!owns("Smart Clothes") && p.stats.career > 0.10 * T) wants.push("Smart Clothes");
     if (!owns("Dressy Clothes") && p.stats.connection < 0.8 * T) wants.push("Dressy Clothes");
+    if (owns("Dressy Clothes") && !owns("Dress Shoes") && p.stats.connection < 0.8 * T) wants.push("Dress Shoes");
     if (!owns("Business Clothes") && p.stats.career > 0.25 * T) wants.push("Business Clothes");
     if (!owns("Bicycle")) wants.push("Bicycle");
     if (!owns("Computer") && p.stats.career > 0.4 * T) wants.push("Computer");
@@ -149,8 +150,7 @@
       if (cheque) return { type: "perform", id: cheque.id };
       var rehouse = findHere(function (x) { return x.id === "X005"; });
       if (rehouse) return { type: "perform", id: rehouse.id };
-      if (p.stats.money >= 0.2 * T && p.location !== "lowCost" && E.moveCost(state, p, "lowCost").tu <= p.tu)
-        return { type: "move", to: "lowCost" };
+      // X005 re-house works anywhere now — no trip needed
       if (E.isRentTurn(state) && p.location !== "park" && E.moveCost(state, p, "park").tu <= p.tu)
         return { type: "move", to: "park" };
     }

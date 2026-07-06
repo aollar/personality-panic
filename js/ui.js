@@ -440,7 +440,12 @@
         Math.round((p.housing === "lux" ? 0.5 : 0.2) * T) + "</button>");
     if (!p.ate) flags.push('<span class="flag-chip bad">\ud83c\udf54 eat!</span>');
     if (p.turnsSinceRelax >= 2) flags.push('<span class="flag-chip bad">\ud83d\ude35 stressed</span>');
-    if (p.homeless) flags.push('<span class="flag-chip bad">\ud83c\udfda homeless</span>');
+    if (p.homeless && isMyTurn()) {
+      flags.push('<button class="flag-chip bad" id="hud-rehouse">\ud83c\udfda RE-HOUSE $' + Math.round(0.30 * T) + "</button>");
+      flags.push('<button class="flag-chip" id="hud-rehouse-lux">\ud83c\udfd9 GO LUXURY $' + Math.round(0.75 * T) + "</button>");
+    } else if (p.homeless) {
+      flags.push('<span class="flag-chip bad">\ud83c\udfda homeless</span>');
+    }
     if (p.pet && !p.pet.dead) {
       var band = E.petState(st, p);
       flags.push('<span class="flag-chip' + (band === "Healthy" ? "" : " bad") + '">\ud83d\udc3e ' + p.pet.health + "/" + p.pet.happiness + "</span>");
@@ -453,6 +458,10 @@
       fl.innerHTML = flags.join("");
       var rentBtn = $("#hud-rent");
       if (rentBtn) rentBtn.onclick = function () { click(); doAction(p.housing === "lux" ? "X007" : "X006"); };
+      var rh = $("#hud-rehouse");
+      if (rh) rh.onclick = function () { click(); doAction("X005"); };
+      var rhl = $("#hud-rehouse-lux");
+      if (rhl) rhl.onclick = function () { click(); doAction("X009"); };
     }
     $("#hud-end").style.display = isMyTurn() ? "" : "none";
     $("#skip-cpu").style.display = (p.isBot && UI.mode !== "guest") ? "" : "none";
@@ -742,14 +751,20 @@
           '<div class="wc-tu" id="wc-tu"></div>' +
           mains.map(function (stat, i) {
             var col = i % 2, row = (i / 2) | 0;
-            return '<span class="wc-bar" style="left:' + (39 + col * 28.5) + "%;top:" + (30 + row * 14.5) + '%">' +
+            return '<span class="wc-bar" style="left:' + (37.2 + col * 29.5) + "%;top:" + (30.6 + row * 13.4) + '%">' +
               '<i id="wc-bar-' + stat + '" style="background:' + STAT_META[stat].color + '"></i></span>';
+          }).join("") +
+          ["coolness", "critical", "enlightenment"].map(function (stat, i) {
+            return '<span class="wc-coin" id="wc-coin-' + stat + '" style="left:' + (43.4 + i * 13.3) + '%"></span>';
           }).join("");
       }
-      $("#wc-money").textContent = "$" + p.stats.money;
-      $("#wc-tu").textContent = p.tu + " TU · " + dayClock(p);
+      $("#wc-money").textContent = "\ud83d\udcb5 $" + p.stats.money;
+      $("#wc-tu").textContent = "\u23f3 " + p.tu + " TU \u00b7 " + dayClock(p);
       mains.forEach(function (stat) {
         $("#wc-bar-" + stat).style.width = Math.min(100, p.stats[stat] / st.T * 100) + "%";
+      });
+      ["coolness", "critical", "enlightenment"].forEach(function (stat) {
+        $("#wc-coin-" + stat).textContent = p.stats[stat];
       });
       return;
     }
@@ -864,8 +879,8 @@
       var owned = p.items.indexOf(it.name) !== -1;
       var why = owned ? "Owned" : null;
       if (!why && p.stats.money < cost) why = "Not enough money";
-      var fx = it.bonus ? "+" + Math.round(it.bonus.pct * 100) + "% " + E.statName(it.bonus.stat) + " gains" : "";
-      if (it.penalty) fx += " · -" + Math.round(it.penalty.pct * 100) + "% " + E.statName(it.penalty.stat);
+      var fx = it.bonus ? "+" + Math.round(it.bonus.pct * st.T) + " " + E.statName(it.bonus.stat) : "";
+      if (it.penalty) fx += " \u00b7 -" + Math.round(it.penalty.pct * st.T) + " " + E.statName(it.penalty.stat);
       return '<button class="shop-item ' + (owned ? "owned" : "") + '" data-i="' + i + '" ' + (why ? "disabled" : "") + ">" +
         '<div class="s-name">' + it.name + '</div>' +
         '<div class="s-fx">' + (fx || it.effect || "") + '</div>' +
@@ -903,13 +918,21 @@
     });
   }
 
+  var PET_EMOJI = { ENFP: "\ud83d\udc15", ESTP: "\ud83e\udd8a", ENTP: "\ud83e\udd9c", ESFP: "\ud83e\udda9",
+    ENFJ: "\ud83d\udc2c", ESFJ: "\ud83d\udc08", ENTJ: "\ud83e\udd85", ESTJ: "\ud83d\udc3a",
+    INTJ: "\ud83e\udd89", ISTJ: "\ud83d\udc22", ISFJ: "\ud83d\udc30", INFJ: "\ud83e\udd8c",
+    INFP: "\ud83e\udd84", ISFP: "\ud83d\udc39", ISTP: "\ud83e\udd8e", INTP: "\ud83d\udc19" };
   function openPetChoice(actionId) {
     var p = activeP();
     $("#pet-grid").innerHTML = Object.keys(DATA.pets).map(function (code) {
       var pet = DATA.pets[code], pp = per(code);
-      return '<button class="shop-item" data-code="' + code + '">' +
+      // real pet art drops in via assets/pets/<code>.png later; emoji until then
+      return '<button class="shop-item pet-card" data-code="' + code + '">' +
+        '<div class="pet-pic">' + (PET_EMOJI[code] || "\ud83d\udc3e") + "</div>" +
         '<div class="s-name">' + pp.name.replace("The ", "") + " Pet</div>" +
-        '<div class="s-fx">boosts ' + E.statName(pet.main) + " & " + E.statName(pet.upkeep) + "</div></button>";
+        '<div class="pet-hover">Boosts <b>' + E.statName(pet.main) + "</b> & <b>" + E.statName(pet.upkeep) + "</b>" +
+        "<br>+10% on a neutral stat \u00b7 +5% stacking a strength \u00b7 halves a matching weakness" +
+        '<br><i>\u201c' + pp.tag + '\u201d</i></div></button>';
     }).join("");
     openDialog("pets");
     $$("#pet-grid .shop-item").forEach(function (b) {

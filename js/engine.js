@@ -165,21 +165,9 @@
     return m;
   }
   function itemMult(p, stat) {
-    // per slot only the best item counts; for a stat take the strongest bonus/penalty
-    var bySlot = {};
-    p.items.forEach(function (n) {
-      var it = ITEMS[n]; if (!it) return;
-      var cur = bySlot[it.slot];
-      var pw = it.bonus ? it.bonus.pct : 0;
-      if (!cur || pw > (cur.bonus ? cur.bonus.pct : 0)) bySlot[it.slot] = it;
-    });
-    var bonus = 0, penalty = 0;
-    Object.keys(bySlot).forEach(function (s) {
-      var it = bySlot[s];
-      if (it.bonus && it.bonus.stat === stat) bonus = Math.max(bonus, it.bonus.pct);
-      if (it.penalty && it.penalty.stat === stat) penalty = Math.max(penalty, it.penalty.pct);
-    });
-    return (1 + bonus) * (1 - penalty);
+    // items now grant flat stat points at purchase (see openShop fx below) —
+    // visible and readable — instead of an invisible passive gain multiplier.
+    return 1;
   }
   function totalMult(state, p, stat) {
     var m = personalityMult(p, stat) * itemMult(p, stat);
@@ -468,6 +456,17 @@
           addStat(state, p, "money", -icost);
           p.items.push(it.name);
           summary.push("bought " + it.name + " (-$" + icost + ")");
+          // numeric stat grant: the sheet's bonus % of T lands ONCE as points
+          if (it.bonus) {
+            var bpts = Math.round(it.bonus.pct * state.T);
+            var bd = addStat(state, p, it.bonus.stat, bpts);
+            if (bd) summary.push("+" + bd + " " + statName(it.bonus.stat));
+          }
+          if (it.penalty) {
+            var ppts = Math.round(it.penalty.pct * state.T);
+            var pd = addStat(state, p, it.penalty.stat, -ppts);
+            if (pd) summary.push(pd + " " + statName(it.penalty.stat));
+          }
           result.sfx.push("money");
           log(state, p, "Bought " + it.name + " for $" + icost, "");
           break;
@@ -494,9 +493,11 @@
 
   // ---------- Movement ----------
   function clubGate(state, p) {
-    var need = Math.round((ASSUME.clubEntryCoolnessPct || 0) * state.T);
-    if (p.stats.coolness >= need) return null;
-    return "The bouncer looks you over… need Coolness " + need + "+ to get in";
+    var missing = (ASSUME.clubEntryItems || []).filter(function (n) {
+      return p.items.indexOf(n) === -1;
+    });
+    if (!missing.length) return null;
+    return "Dress code! The bouncer wants: " + missing.join(" + ");
   }
   function moveTo(state, toId) {
     var p = active(state);
