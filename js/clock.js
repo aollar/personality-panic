@@ -80,7 +80,10 @@
       used.setAttribute("stroke-dasharray", uLen + " " + (C - uLen));
       var pLen = (p / total) * C;
       preview.setAttribute("stroke-dasharray", pLen + " " + (C - pLen));
-      preview.setAttribute("transform", "rotate(" + (-90 + (u / total) * 360) + " " + CX + " " + CY + ")");
+      // Slide the segment with dashoffset instead of rotating the element:
+      // rotating also rotated the stripe pattern, so the preview's stripes
+      // changed direction depending on how much TU was used (Austin, 2026-07-06).
+      preview.setAttribute("stroke-dashoffset", -uLen);
     }
     function fitLabel(text) {
       var s = String(text);
