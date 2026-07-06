@@ -293,6 +293,14 @@
       h.dataset.id = id;
       mv.appendChild(h);
       h.onclick = function () { onHotspot(id); };
+      h.onmouseenter = function () {
+        if (!UI.state || UI.state.over || UI.inScene || !isMyTurn()) return;
+        var p = activeP();
+        if (p.location === id) { clockClear(); return; }
+        var mc = E.moveCost(UI.state, p, id);
+        clockPreview(mc ? mc.tu : 0);              // preview the travel Time-Unit cost
+      };
+      h.onmouseleave = clockClear;
     });
   }
   function onHotspot(id) {
@@ -383,11 +391,29 @@
     renderScoreboard();
     updateHotspotStates();
     renderTimer();
+    updateClock();
     if (UI.inScene) renderSceneUI();
     // guests / non-walking updates: keep avatar on the active player's building
     if (!UI.walker.raf) UI.walker.jumpTo(activeP().location);
     UI.walker.setName(activeP().name, PLAYER_COLORS[UI.state.activeIdx % 4]);
   }
+
+  // ---- live turn clock: ring = Time Units used; hover previews an action's cost ----
+  function updateClock() {
+    if (!UI.clock || !UI.state) return;
+    var total = (DATA.settings && DATA.settings.timeUnitsPerTurn) || 6;
+    var p = activeP();
+    UI.clock.set({ total: total, used: Math.max(0, total - p.tu) });
+    UI.clock.label(clockLabelText());
+  }
+  // center number = the real-time turn countdown; ∞ only for the Unlimited setting.
+  function clockLabelText() {
+    if (!UI.state || !UI.state.timerSeconds) return "∞";
+    return Math.max(0, UI.timerLeft);
+  }
+  function clockPreview(tu) { if (UI.clock) UI.clock.preview(tu || 0); }
+  function clockClear() { if (UI.clock) UI.clock.preview(0); }
+  function previewActionClock(actionId) { var a = annFor(actionId); clockPreview(a ? a.tu : 0); }
 
   function statRow(stat, val, T) {
     var m = STAT_META[stat];
@@ -499,24 +525,28 @@
   function startTimer() {
     stopTimer();
     var secs = UI.state.timerSeconds;
-    $("#turn-timer").style.display = secs ? "" : "none";
-    if (!secs || activeP().isBot) return;
-    UI.timerLeft = secs;
+    var bot = activeP().isBot;
+    $("#turn-timer").style.display = (secs && !bot) ? "" : "none";
+    if (!secs) { renderTimer(); return; }          // Unlimited: no countdown (clock shows ∞)
+    UI.timerLeft = secs;                            // every turn (incl. CPU) gets the countdown
     renderTimer();
     UI.timerId = setInterval(function () {
       UI.timerLeft--;
       renderTimer();
-      if (UI.timerLeft <= 5 && UI.timerLeft > 0 && window.PPStore.get("pp_timerwarn") !== "off") A.sfx("click");
+      if (UI.timerLeft <= 5 && UI.timerLeft > 0 && !bot && window.PPStore.get("pp_timerwarn") !== "off") A.sfx("click");
       if (UI.timerLeft <= 0) {
         stopTimer();
-        toast("⏰ Time's up!", "bad");
-        if (isMyTurn() || UI.mode !== "guest") endTurnClicked(true);
+        if (!bot) {                                // humans time out -> auto end; bots end their own turn
+          toast("⏰ Time's up!", "bad");
+          if (isMyTurn() || UI.mode !== "guest") endTurnClicked(true);
+        }
       }
     }, 1000);
   }
   function stopTimer() { if (UI.timerId) { clearInterval(UI.timerId); UI.timerId = null; } }
   function renderTimer() {
     var el = $("#turn-timer"), p = activeP();
+    if (UI.clock) UI.clock.label(clockLabelText());   // the SVG clock's number reflects the timer each tick
     if (UI.state.timerSeconds && !p.isBot) {          // real-time countdown wins the clock face
       el.style.display = "";
       el.querySelector(".t").textContent = UI.timerLeft;
@@ -698,8 +728,8 @@
       btn.style.width = h.box[2] + "%";
       btn.style.height = h.box[3] + "%";
       btn.innerHTML = '<span class="tu-chip"></span><span class="lock-chip" style="display:none">🔒</span>';
-      btn.onmouseenter = function () { showTip(btn, h); };
-      btn.onmouseleave = hideTip;
+      btn.onmouseenter = function () { showTip(btn, h); previewActionClock(h.a); };
+      btn.onmouseleave = function () { hideTip(); clockClear(); };
       btn.onclick = function () {
         if (!isMyTurn()) { toast("Not your turn"); return; }
         click();
@@ -1135,6 +1165,7 @@
     safe(fitStage, "fitStage");
     safe(initStart, "initStart");
     safe(initSettings, "initSettings");
+    safe(function () { if (window.PPClock) UI.clock = window.PPClock.mount($("#turn-clock")); }, "mountClock");
     $("#btn-start-game").onclick = function () {
       click();
       if (setup.mode === "host") window.PPNet.startHostedGame(setup);

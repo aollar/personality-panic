@@ -11,7 +11,7 @@ var path = require("path");
 
 var CHROME = process.env.CHROME || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 var SHOTS = process.env.SHOT_DIR || path.join(__dirname, "shots");
-var URL = "http://localhost:8123/index.html";
+var URL = process.env.PP_URL || "http://localhost:8123/index.html";
 var os = require("os");
 
 (async function () {

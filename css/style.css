@@ -263,6 +263,14 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
 @keyframes timerPulse { from { filter: none; } to { filter: brightness(1.25) drop-shadow(0 0 .6em #ff4d4d); } }
 .turn-timer .lbl { font-size: .72em; text-transform: uppercase; letter-spacing: .06em; }
 
+/* the SVG turn clock replaces the plain gold timer face above */
+#turn-timer { display: none !important; }
+/* live turn clock — SAME size in every location (map + every scene), bottom-middle;
+   z-index 50 = above scenes (z30), below dialogs (z60). Display-only. */
+#turn-clock { position: absolute; left: 50%; bottom: 3%; transform: translateX(-50%);
+  width: 16%; z-index: 50; pointer-events: none; filter: drop-shadow(0 5px 10px rgba(0,0,0,.4)); }
+#turn-clock .pc-svg { width: 100%; height: auto; display: block; overflow: visible; }
+
 /* ---------- Building scene view ---------- */
 .scene-view { position: absolute; inset: 0; background: #000; z-index: 30; display: none; }
 .scene-view.show { display: block; }

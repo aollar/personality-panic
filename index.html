@@ -89,6 +89,9 @@
       <div class="turn-timer" id="turn-timer" style="display:none">
         <div><div class="t">60</div><div class="lbl">your turn</div></div>
       </div>
+      <!-- live SVG turn clock (Time Units used = dark ring, hovered action = light red;
+           center = timer countdown / ∞). Replaces the plain gold timer face above. -->
+      <div id="turn-clock"></div>
 
       <!-- building scene: painted menus in the art are clipped into live buttons -->
       <div class="scene-view" id="scene-view">
@@ -181,6 +184,7 @@
 <script src="js/bots.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/walker.js"></script>
+<script src="js/clock.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/net.js"></script>
 </body>
