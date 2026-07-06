@@ -71,6 +71,15 @@
     if (UI.state.over) { renderAll(); openPodium(); return; }
     if (after) after(r);
     renderAll();
+    // out of Time Units (red ring full) -> automatically end the turn
+    if (kind !== "end" && UI.mode !== "guest" && !UI.state.over && isMyTurn() && activeP().tu <= 0) {
+      setTimeout(function () {
+        if (!UI.state.over && isMyTurn() && activeP().tu <= 0) {
+          toast("⏳ Out of Time Units — turn over", "");
+          endTurnClicked(true);
+        }
+      }, 800);
+    }
     maybeRunBot();
   }
 
