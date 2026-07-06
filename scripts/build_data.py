@@ -179,7 +179,7 @@ def main():
     settings = {
         "gameLengths": {"short": 100, "medium": 500, "long": 1000},
         "timeUnitsPerTurn": 40,
-        "baseTimeUnits": 6,  # design base: all sheet TU costs are in sixths of a day
+        "baseTimeUnits": 40,  # costs used AS AUTHORED (1-3 TU): 40 TU/turn = many actions per day (Austin 2026-07-06)
         "rentIntervalTurns": 4,
         "turnTimerOptions": [30, 60, 90, 120, 0],  # 0 = Unlimited
         "maxPlayers": 4, "minParticipants": 2,

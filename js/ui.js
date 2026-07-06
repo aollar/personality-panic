@@ -124,7 +124,7 @@
   function openSetup(mode) {
     setup = {
       mode: mode, humans: mode === "single" ? 1 : 2, bots: 1,
-      length: "short", timer: 0, hints: true, skipCpu: true, maxRounds: 30,
+      length: "short", timer: 0, hints: true, skipCpu: true, maxRounds: 15,
       picks: [], activeSlot: 0
     };
     rebuildSlots();
@@ -234,7 +234,7 @@
     if (k === "length") {
       var L = ["short", "medium", "long"], i = (L.indexOf(setup.length) + d + 3) % 3;
       setup.length = L[i];
-      setup.maxRounds = { short: 30, medium: 40, long: 50 }[setup.length];
+      setup.maxRounds = { short: 15, medium: 20, long: 25 }[setup.length];
     }
     if (k === "timer") {
       var T = [0, 30, 60, 90, 120], j = (T.indexOf(setup.timer) + d + T.length) % T.length;
@@ -578,9 +578,9 @@
     UI.botRunning = true;
     UI.botFast = UI.cfg && UI.cfg.skipCpu;
     UI._botSteps = 0;
-    var stepDelay = function () { return UI.botFast ? 0 : 650; };
+    var stepDelay = function () { return UI.botFast ? 0 : 420; };
     function step() {
-      if (++UI._botSteps > 60) { E.endTurn(UI.state); UI._botSteps = 0; } // hard cap: a bot turn can never hang the game
+      if (++UI._botSteps > 120) { E.endTurn(UI.state); UI._botSteps = 0; } // hard cap: a bot turn can never hang the game
       if (UI.state.over) { UI.botRunning = false; renderAll(); openPodium(); return; }
       var cur = activeP();
       if (!cur.isBot) { UI.botRunning = false; saveGame(); renderAll(); turnIntro(); return; }

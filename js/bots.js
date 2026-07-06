@@ -288,7 +288,7 @@
 
   // Run a whole bot turn (used by sim + "skip" button). Returns step log.
   function botTurn(state, maxSteps) {
-    var steps = [], guard = maxSteps || 30;
+    var steps = [], guard = maxSteps || 90;
     while (guard-- > 0 && !state.over) {
       var s = botStep(state);
       steps.push(s);

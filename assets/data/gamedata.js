@@ -8,7 +8,7 @@ var PP_DATA = {
    "long": 1000
   },
   "timeUnitsPerTurn": 40,
-  "baseTimeUnits": 6,
+  "baseTimeUnits": 40,
   "rentIntervalTurns": 4,
   "turnTimerOptions": [
    30,

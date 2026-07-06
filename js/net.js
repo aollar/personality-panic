@@ -12,7 +12,7 @@
     conn: null,                  // guest: connection to host
     code: null, isHost: false,
     roster: [],                  // lobby: [{name, code(personality), slot, connId}]
-    mySlot: 0, opts: { length: "short", timer: 0, bots: 0, maxRounds: 30, skipCpu: true, hints: true }
+    mySlot: 0, opts: { length: "short", timer: 0, bots: 0, maxRounds: 15, skipCpu: true, hints: true }
   };
   window.PPNet = NET;
   var $ = function (s) { return document.querySelector(s); };
