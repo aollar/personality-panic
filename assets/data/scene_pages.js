@@ -38,8 +38,8 @@ function ppActGrid(ids, g) {
 // ---- Mall menu geometry (right panel, "RETAIL THERAPY REVIEW") ----
 var MG3 = { cols: 3, x0: 70.6, dx: 9.65, w: 9.0, y0: 16.8, dy: 18.4, h: 16.6 };   // 3-col x 2-row pages
 var MG2 = { cols: 2, x0: 70.6, dx: 14.15, w: 13.4, y0: 16.0, dy: 16.3, h: 14.6 }; // 2-col x 3-row pages
-var ARR_M3 = { prev: [79.0, 56.2, 5.2, 6.0], next: [90.2, 56.2, 5.2, 6.0] };
-var ARR_M2 = { prev: [79.0, 63.4, 5.2, 6.0], next: [90.2, 63.4, 5.2, 6.0] };
+var ARR_M3 = { prev: [77.7, 55.4, 4.8, 6.6], next: [85.6, 55.4, 4.8, 6.6] }; // on the ◀ ▶ glyphs (3-col page)
+var ARR_M2 = { prev: [77.7, 63.2, 4.8, 6.8], next: [85.6, 63.2, 4.8, 6.8] }; // on the ◀ ▶ glyphs (2-col page)
 var MALL_TABS = [
   { tab: "style", box: [70.4, 9.4, 10.2, 5.6] },
   { tab: "gear",  box: [81.0, 9.4, 8.8, 5.6] },
@@ -56,37 +56,37 @@ var PP_SCENE_PAGES = {
       { tab: "care",   box: [86.1, 5.4, 6.6, 4.4] },
       { tab: "bribes", box: [93.0, 5.4, 6.0, 4.4] }
     ],
-    arrows: { prev: [80.2, 59.4, 5.6, 4.9], next: [92.0, 59.4, 5.6, 4.9] },
+    arrows: { prev: [81.4, 58.8, 5.0, 5.6], next: [88.6, 58.8, 5.0, 5.6] }, // on the ◀ ▶ glyphs
     work: { a: "A110", box: [86.5, 89.0, 12.5, 10.0] },
     tabs: [
       { id: "adopt", label: "ADOPT", pages: [
         { img: "pet_adopt_1.jpg", hotspots: [
-          { a: "A102", choice: { pet: "ESFJ" }, box: [79.9, 13.4, 8.9, 21.4] }, // Captain Snuggleton
-          { a: "A102", choice: { pet: "ENFJ" }, box: [89.0, 13.4, 8.9, 21.4] }, // King Heartmane
-          { a: "A102", choice: { pet: "ENFP" }, box: [79.9, 35.0, 8.9, 21.4] }, // Otter the Explorer
-          { a: "A102", choice: { pet: "ESFP" }, box: [89.0, 35.0, 8.9, 21.4] }, // Party Piggy
-          { a: "A102", choice: { pet: "ESFJ" }, box: [79.9, 63.5, 18.0, 21.5] } // featured
+          { a: "A102", choice: { pet: "ESFJ" }, label: "Captain Snuggleton", box: [79.9, 13.4, 8.9, 21.4] },
+          { a: "A102", choice: { pet: "ENFJ" }, label: "King Heartmane",     box: [89.0, 13.4, 8.9, 21.4] },
+          { a: "A102", choice: { pet: "ENFP" }, label: "Otter the Explorer", box: [79.9, 35.0, 8.9, 21.4] },
+          { a: "A102", choice: { pet: "ESFP" }, label: "Party Piggy",        box: [89.0, 35.0, 8.9, 21.4] },
+          { a: "A102", choice: { pet: "ESFJ" }, label: "Captain Snuggleton", box: [79.9, 63.5, 18.0, 21.5] } // featured
         ]},
         { img: "pet_adopt_2.jpg", hotspots: [
-          { a: "A102", choice: { pet: "ESTJ" }, box: [79.9, 13.4, 8.9, 21.4] }, // Chief Pawton
-          { a: "A102", choice: { pet: "ENTJ" }, box: [89.0, 13.4, 8.9, 21.4] }, // CEO Gorillionaire
-          { a: "A102", choice: { pet: "ENTP" }, box: [79.9, 35.0, 8.9, 21.4] }, // Sir Honksworth
-          { a: "A102", choice: { pet: "ESTP" }, box: [89.0, 35.0, 8.9, 21.4] }, // Hustle Harry
-          { a: "A102", choice: { pet: "ESTJ" }, box: [79.9, 63.5, 18.0, 21.5] }
+          { a: "A102", choice: { pet: "ESTJ" }, label: "Chief Pawton",       box: [79.9, 13.4, 8.9, 21.4] },
+          { a: "A102", choice: { pet: "ENTJ" }, label: "CEO Gorillionaire",  box: [89.0, 13.4, 8.9, 21.4] },
+          { a: "A102", choice: { pet: "ENTP" }, label: "Sir Honksworth",     box: [79.9, 35.0, 8.9, 21.4] },
+          { a: "A102", choice: { pet: "ESTP" }, label: "Hustle Harry",       box: [89.0, 35.0, 8.9, 21.4] },
+          { a: "A102", choice: { pet: "ESTJ" }, label: "Chief Pawton",       box: [79.9, 63.5, 18.0, 21.5] }
         ]},
         { img: "pet_adopt_3.jpg", hotspots: [
-          { a: "A102", choice: { pet: "ISFJ" }, box: [79.9, 13.4, 8.9, 21.4] }, // Nurse Nibbles
-          { a: "A102", choice: { pet: "INFJ" }, box: [89.0, 13.4, 8.9, 21.4] }, // Vinnie
-          { a: "A102", choice: { pet: "INFP" }, box: [79.9, 35.0, 8.9, 21.4] }, // Fawnie Dreamer
-          { a: "A102", choice: { pet: "ISFP" }, box: [89.0, 35.0, 8.9, 21.4] }, // Duchess Meowtilda
-          { a: "A102", choice: { pet: "ISFJ" }, box: [79.9, 63.5, 18.0, 21.5] }
+          { a: "A102", choice: { pet: "ISFJ" }, label: "Nurse Nibbles",           box: [79.9, 13.4, 8.9, 21.4] },
+          { a: "A102", choice: { pet: "INFJ" }, label: "Vinnie the Vibe Scanner", box: [89.0, 13.4, 8.9, 21.4] },
+          { a: "A102", choice: { pet: "INFP" }, label: "Fawnie Dreamer",          box: [79.9, 35.0, 8.9, 21.4] },
+          { a: "A102", choice: { pet: "ISFP" }, label: "Duchess Meowtilda",       box: [89.0, 35.0, 8.9, 21.4] },
+          { a: "A102", choice: { pet: "ISFJ" }, label: "Nurse Nibbles",           box: [79.9, 63.5, 18.0, 21.5] }
         ]},
         { img: "pet_adopt_4.jpg", hotspots: [
-          { a: "A102", choice: { pet: "ISTJ" }, box: [79.9, 13.4, 8.9, 21.4] }, // Detective Biscuit
-          { a: "A102", choice: { pet: "ISTP" }, box: [89.0, 13.4, 8.9, 21.4] }, // Clutch
-          { a: "A102", choice: { pet: "INTJ" }, box: [79.9, 35.0, 8.9, 21.4] }, // Professor Beakman
-          { a: "A102", choice: { pet: "INTP" }, box: [89.0, 35.0, 8.9, 21.4] }, // Orylle Overplan
-          { a: "A102", choice: { pet: "ISTJ" }, box: [79.9, 63.5, 18.0, 21.5] }
+          { a: "A102", choice: { pet: "ISTJ" }, label: "Detective Biscuit",  box: [79.9, 13.4, 8.9, 21.4] },
+          { a: "A102", choice: { pet: "ISTP" }, label: "Clutch",             box: [89.0, 13.4, 8.9, 21.4] },
+          { a: "A102", choice: { pet: "INTJ" }, label: "Professor Beakman",  box: [79.9, 35.0, 8.9, 21.4] },
+          { a: "A102", choice: { pet: "INTP" }, label: "Orylle Overplan",    box: [89.0, 35.0, 8.9, 21.4] },
+          { a: "A102", choice: { pet: "ISTJ" }, label: "Detective Biscuit",  box: [79.9, 63.5, 18.0, 21.5] }
         ]}
       ]},
       { id: "care", label: "PET CARE", pages: [

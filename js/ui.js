@@ -712,6 +712,7 @@
     $("#scene-title").textContent = b.name;
     $("#fallback-panel").style.display = (painted || b.video) ? "none" : "";
     if (paged) {
+      preloadScenePages(id);
       UI.sceneTab = 0; UI.scenePage = 0;
       renderScenePage();
     } else {
@@ -723,6 +724,19 @@
   }
 
   // ---- paged / tabbed scenes (ADOPT/CARE/BRIBES, STYLE/GEAR/HOME, ...) ----
+  var _pagePreload = {};  // src -> Image, kept alive so the browser caches+decodes
+  // Warm the cache for every page image in a scene so switching tabs/pages swaps
+  // instantly instead of flashing black while the new image decodes.
+  function preloadScenePages(id) {
+    var cfg = PAGES[id]; if (!cfg) return;
+    cfg.tabs.forEach(function (t) {
+      t.pages.forEach(function (pg) {
+        var src = "assets/scenes/" + pg.img;
+        if (_pagePreload[src]) return;
+        var im = new Image(); im.src = src; _pagePreload[src] = im;
+      });
+    });
+  }
   function pagedCfg() { return PAGES[UI.inScene] || null; }
   function switchTab(tabIndex) {
     var cfg = pagedCfg(); if (!cfg || !cfg.tabs[tabIndex]) return;
@@ -735,13 +749,23 @@
     UI.scenePage = (UI.scenePage + delta + pages.length) % pages.length;
     click(); renderScenePage(); renderSceneUI();
   }
-  // swap backdrop to the active tab/page image and rebuild its hotspot layer
+  // swap backdrop to the active tab/page image and rebuild its hotspot layer.
+  // Rebuild hotspots immediately, but only swap the (visible) backdrop image once
+  // the new one is decoded — so the previous page stays up instead of flashing
+  // black while the new image loads. A sequence token drops stale late loads.
   function renderScenePage() {
     var cfg = pagedCfg(); if (!cfg) return;
     var tab = cfg.tabs[UI.sceneTab] || cfg.tabs[0];
     var page = tab.pages[UI.scenePage] || tab.pages[0];
-    $("#scene-backdrop").style.backgroundImage = "url('assets/scenes/" + page.img + "')";
     buildPagedLayer(cfg, tab, page);
+    var src = "assets/scenes/" + page.img;
+    var swap = function () { $("#scene-backdrop").style.backgroundImage = "url('" + src + "')"; };
+    var im = _pagePreload[src];
+    if (im && im.complete && im.naturalWidth) { swap(); return; } // cached -> instant
+    var seq = (UI._pageSeq = (UI._pageSeq || 0) + 1);
+    var w = new Image(); _pagePreload[src] = w;
+    w.onload = w.onerror = function () { if (UI._pageSeq === seq && UI.inScene) swap(); };
+    w.src = src;
   }
   function buildPagedLayer(cfg, tab, page) {
     var layer = $("#paint-layer");
@@ -841,12 +865,20 @@
     var a = ann.action, costBits = [];
     if (ann.tu) costBits.push("⏳ " + ann.tu + " TU");
     if (ann.cost) costBits.push("💵 $" + ann.cost);
+    // Adopt cards: show THIS pet's stat bonuses (each animal boosts a different pair)
+    var petCode = h.choice && h.choice.pet;
+    var pet = petCode && DATA.pets[petCode];
+    var nameLine = pet ? ((h.label || per(petCode).name.replace("The ", "")) + " · " + petCode + " pet") : a.name;
+    var bodyHtml = pet
+      ? '<div class="t-fx">🐾 Boosts <b>' + E.statName(pet.main) + "</b> & <b>" + E.statName(pet.upkeep) + "</b></div>" +
+        '<div class="t-note">+10% to a neutral stat · +5% if it stacks a strength · halves a matching weakness · one pet at a time</div>'
+      : (fxSummary(a) ? '<div class="t-fx">' + fxSummary(a) + "</div>" : "");
     tip.innerHTML =
-      '<div class="t-name">' + a.name + '</div>' +
+      '<div class="t-name">' + nameLine + '</div>' +
       '<div class="t-cost">' + (costBits.join(" · ") || "Free") + "</div>" +
-      (fxSummary(a) ? '<div class="t-fx">' + fxSummary(a) + "</div>" : "") +
+      bodyHtml +
       (!ann.ok ? '<div class="t-why">🔒 ' + ann.why + "</div>" : "") +
-      ((UI.cfg && UI.cfg.hints && a.note) ? '<div class="t-note">💡 ' + a.note + "</div>" : "");
+      ((UI.cfg && UI.cfg.hints && a.note && !pet) ? '<div class="t-note">💡 ' + a.note + "</div>" : "");
     tip.style.display = "";
     // place the tip just left of the painted panel, level with the button
     tip.style.right = (100 - h.box[0] + 1) + "%";
