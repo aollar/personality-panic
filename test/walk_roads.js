@@ -29,7 +29,8 @@ var PORT = process.env.PORT || "8126";
   });
 
   var fails = [];
-  var trips = [["mall", "debtstreet"], ["university", "petShop"], ["airport", "temple"]];
+  var trips = [["mall", "debtstreet"], ["university", "petShop"], ["airport", "temple"],
+               ["airport", "luxury"], ["club", "park"], ["soulExchange", "park"]];
   for (var i = 0; i < trips.length; i++) {
     var from = trips[i][0], to = trips[i][1];
     await p.evaluate(function (from) {

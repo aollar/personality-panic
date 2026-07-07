@@ -5779,11 +5779,11 @@ var PP_DATA = {
     19.0
    ],
    "entrance": [
-    87.4,
-    36.6
+    86.5,
+    35.0
    ],
    "doors": [
-    "luxAlley1"
+    "luxPlaza"
    ]
   },
   "park": {
@@ -5794,11 +5794,13 @@ var PP_DATA = {
     44.0
    ],
    "entrance": [
-    50.5,
-    44.8
+    56.0,
+    48.0
    ],
    "doors": [
-    "parkPath"
+    "parkPath",
+    "ringSW1",
+    "nwJoin"
    ]
   },
   "airOne": {
@@ -6094,28 +6096,28 @@ var PP_DATA = {
    40.0
   ],
   "aoBend": [
-   32.2,
-   44.2
+   31.8,
+   42.5
   ],
   "wJoin": [
-   30.3,
-   45.2
+   31.3,
+   45.5
   ],
   "templeRoad1": [
-   32.0,
-   49.0
+   33.0,
+   49.5
   ],
   "templeRoad2": [
-   33.7,
-   56.5
+   34.6,
+   54.5
   ],
   "templeBend": [
-   33.8,
-   60.5
+   34.6,
+   60.0
   ],
   "templeFront": [
-   32.0,
-   66.0
+   32.8,
+   65.5
   ],
   "gymBend1": [
    34.5,
@@ -6177,25 +6179,21 @@ var PP_DATA = {
    88.2,
    85.7
   ],
-  "luxAlley1": [
-   86.6,
-   40.5
+  "luxRoad1": [
+   72.8,
+   28.8
   ],
-  "luxAlley2": [
-   86.7,
-   45.5
+  "luxRoad2": [
+   75.5,
+   26.0
   ],
-  "luxAlley3": [
-   86.9,
-   50.5
+  "luxRoad3": [
+   79.5,
+   26.8
   ],
-  "luxAlley4": [
-   87.1,
-   55.5
-  ],
-  "luxAlley5": [
-   86.9,
-   59.5
+  "luxPlaza": [
+   83.5,
+   30.0
   ],
   "eRoad1": [
    76.0,
@@ -6448,24 +6446,20 @@ var PP_DATA = {
    "bvdEast"
   ],
   [
-   "luxAlley1",
-   "luxAlley2"
+   "neJunction",
+   "luxRoad1"
   ],
   [
-   "luxAlley2",
-   "luxAlley3"
+   "luxRoad1",
+   "luxRoad2"
   ],
   [
-   "luxAlley3",
-   "luxAlley4"
+   "luxRoad2",
+   "luxRoad3"
   ],
   [
-   "luxAlley4",
-   "luxAlley5"
-  ],
-  [
-   "luxAlley5",
-   "eRoad4"
+   "luxRoad3",
+   "luxPlaza"
   ],
   [
    "seTaxi",

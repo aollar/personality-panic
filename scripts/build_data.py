@@ -312,9 +312,11 @@ def main():
         "lowCost": {"name": "Low Cost Housing", "scene": "low_cost_housing.jpg", "pos": [47.3, 74.0],
                     "entrance": [48.8, 82.5], "doors": ["bvdLow"]},
         "luxury": {"name": "Luxury Apartments", "scene": "luxury_apartments.jpg", "pos": [87.3, 19.0],
-                   "entrance": [87.4, 36.6], "doors": ["luxAlley1"]},
+                   "entrance": [86.5, 35.0], "doors": ["luxPlaza"]},
+        # the park is open on all sides — walk up from any nearby stretch of the
+        # ring and cross the lawn; she ends up on the fountain path
         "park": {"name": "Almost Fine Park", "scene": "park.jpg", "pos": [57.7, 44.0],
-                 "entrance": [50.5, 44.8], "doors": ["parkPath"]},
+                 "entrance": [56.0, 48.0], "doors": ["parkPath", "ringSW1", "nwJoin"]},
         "airOne": {"name": "Air One Supermarket", "scene": "air_one_supermarket.jpg", "pos": [24.5, 37.0],
                    "entrance": [31.2, 40.0], "doors": ["aoFront"]},
         "regretBurger": {"name": "Regret Burger", "scene": "regret_burger.jpg", "pos": [72.7, 74.5],
@@ -358,9 +360,9 @@ def main():
         "nwFork": [43.8, 22.5], "nwRoad1": [45.3, 25.3], "nwRoad2": [47.6, 28.6],
         "uniRoad1": [41.8, 25.5], "uniRoad2": [39.5, 30.5], "uniFront": [36.4, 34.8],
         # west road: university -> Air One -> temple -> around the gym to the boulevard
-        "aoFront": [33.0, 40.0], "aoBend": [32.2, 44.2], "wJoin": [30.3, 45.2],
-        "templeRoad1": [32.0, 49.0], "templeRoad2": [33.7, 56.5], "templeBend": [33.8, 60.5],
-        "templeFront": [32.0, 66.0],
+        "aoFront": [33.0, 40.0], "aoBend": [31.8, 42.5], "wJoin": [31.3, 45.5],
+        "templeRoad1": [33.0, 49.5], "templeRoad2": [34.6, 54.5], "templeBend": [34.6, 60.0],
+        "templeFront": [32.8, 65.5],
         "gymBend1": [34.5, 70.8], "gymBend2": [37.0, 74.5], "gymFront": [42.0, 81.0],
         "gymCorner": [41.3, 88.1],
         # west connector road + the park's tan gate path (west side)
@@ -369,9 +371,10 @@ def main():
         "bvdLow": [47.5, 87.8], "bvdClock": [52.5, 88.0], "bvdJoin": [56.0, 88.6],
         "mallFront": [58.3, 89.3], "bvdMid1": [64.5, 90.8], "burgerFront": [74.8, 90.8],
         "bvdMid2": [78.5, 91.3], "petFront": [84.8, 90.3], "bvdEast": [88.2, 85.7],
-        # Luxury's doorstep alley between Debtstreet and Soul Exchange
-        "luxAlley1": [86.6, 40.5], "luxAlley2": [86.7, 45.5], "luxAlley3": [86.9, 50.5],
-        "luxAlley4": [87.1, 55.5], "luxAlley5": [86.9, 59.5],
+        # Luxury's approach: the road that climbs from the NE crosswalk and slips
+        # BEHIND Debtstreet's rooftop sign into the Heelton Heights forecourt
+        "luxRoad1": [72.8, 28.8], "luxRoad2": [75.5, 26.0], "luxRoad3": [79.5, 26.8],
+        "luxPlaza": [83.5, 30.0],
         # east road: ring (taxi corner) -> Soul Exchange -> down past the Pet Shop
         "eRoad1": [76.0, 57.9], "eRoad2": [77.5, 60.5], "eRoad3": [80.2, 60.9],
         "eRoad4": [84.9, 63.2], "soulFront": [88.8, 67.0],
@@ -396,9 +399,9 @@ def main():
         ["bvdLow", "bvdClock"], ["bvdClock", "bvdJoin"], ["bvdJoin", "mallFront"],
         ["mallFront", "bvdMid1"], ["bvdMid1", "burgerFront"], ["burgerFront", "bvdMid2"],
         ["bvdMid2", "petFront"], ["petFront", "bvdEast"],
-        # Luxury alley, east road, pet-shop right road
-        ["luxAlley1", "luxAlley2"], ["luxAlley2", "luxAlley3"], ["luxAlley3", "luxAlley4"],
-        ["luxAlley4", "luxAlley5"], ["luxAlley5", "eRoad4"],
+        # Luxury road (behind Debtstreet's roof), east road, pet-shop right road
+        ["neJunction", "luxRoad1"], ["luxRoad1", "luxRoad2"], ["luxRoad2", "luxRoad3"],
+        ["luxRoad3", "luxPlaza"],
         ["seTaxi", "eRoad1"], ["eRoad1", "eRoad2"], ["eRoad2", "eRoad3"], ["eRoad3", "eRoad4"],
         ["eRoad4", "soulFront"], ["soulFront", "petRight1"], ["petRight1", "petRight2"],
         ["petRight2", "petRight3"], ["petRight3", "petRight4"], ["petRight4", "bvdEast"],
