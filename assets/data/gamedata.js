@@ -6092,28 +6092,40 @@ var PP_DATA = {
    34.8
   ],
   "aoFront": [
-   33.0,
-   40.0
+   34.3,
+   40.3
   ],
-  "aoBend": [
-   31.8,
-   42.5
+  "vRoad1": [
+   38.0,
+   39.5
   ],
-  "wJoin": [
-   31.3,
-   45.5
+  "vRoad2": [
+   38.2,
+   43.0
   ],
-  "templeRoad1": [
-   33.0,
-   49.5
+  "vRoad3": [
+   38.1,
+   46.3
   ],
-  "templeRoad2": [
-   34.6,
-   54.5
+  "vMerge": [
+   39.4,
+   51.5
   ],
-  "templeBend": [
-   34.6,
-   60.0
+  "swRoad1": [
+   40.3,
+   58.5
+  ],
+  "swRoad2": [
+   40.3,
+   63.0
+  ],
+  "swRoad3": [
+   39.8,
+   68.0
+  ],
+  "swRoad4": [
+   39.3,
+   73.5
   ],
   "templeFront": [
    32.8,
@@ -6134,10 +6146,6 @@ var PP_DATA = {
   "gymCorner": [
    41.3,
    88.1
-  ],
-  "wMid": [
-   37.0,
-   45.6
   ],
   "parkPath": [
    44.8,
@@ -6355,31 +6363,51 @@ var PP_DATA = {
   ],
   [
    "uniFront",
+   "vRoad1"
+  ],
+  [
+   "vRoad1",
    "aoFront"
   ],
   [
    "aoFront",
-   "aoBend"
+   "vRoad2"
   ],
   [
-   "aoBend",
-   "wJoin"
+   "vRoad1",
+   "vRoad2"
   ],
   [
-   "wJoin",
-   "templeRoad1"
+   "vRoad2",
+   "vRoad3"
   ],
   [
-   "templeRoad1",
-   "templeRoad2"
+   "vRoad3",
+   "vMerge"
   ],
   [
-   "templeRoad2",
-   "templeBend"
+   "vMerge",
+   "ringW1"
   ],
   [
-   "templeBend",
-   "templeFront"
+   "ringW1",
+   "swRoad1"
+  ],
+  [
+   "swRoad1",
+   "swRoad2"
+  ],
+  [
+   "swRoad2",
+   "swRoad3"
+  ],
+  [
+   "swRoad3",
+   "swRoad4"
+  ],
+  [
+   "swRoad4",
+   "gymFront"
   ],
   [
    "templeFront",
@@ -6402,11 +6430,7 @@ var PP_DATA = {
    "bvdLow"
   ],
   [
-   "wJoin",
-   "wMid"
-  ],
-  [
-   "wMid",
+   "vRoad3",
    "ringW3"
   ],
   [

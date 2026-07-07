@@ -360,13 +360,21 @@ def main():
         "nwFork": [43.8, 22.5], "nwRoad1": [45.3, 25.3], "nwRoad2": [47.6, 28.6],
         "uniRoad1": [41.8, 25.5], "uniRoad2": [39.5, 30.5], "uniFront": [36.4, 34.8],
         # west road: university -> Air One -> temple -> around the gym to the boulevard
-        "aoFront": [33.0, 40.0], "aoBend": [31.8, 42.5], "wJoin": [31.3, 45.5],
-        "templeRoad1": [33.0, 49.5], "templeRoad2": [34.6, 54.5], "templeBend": [34.6, 60.0],
+        # the west vertical road rides the lane NEAREST THE PARK: it merges with
+        # the ring at ~(42,54) and continues straight down between the gym and
+        # Low Cost Housing. The temple is reached by looping back up its little
+        # doorstep lane from the gym side (the through-lane dashes that grazed
+        # the temple dome were stray art, patched out of overmap.jpg).
+        "aoFront": [34.3, 40.3],
+        "vRoad1": [38.0, 39.5], "vRoad2": [38.2, 43.0], "vRoad3": [38.1, 46.3],
+        "vMerge": [39.4, 51.5],
+        "swRoad1": [40.3, 58.5], "swRoad2": [40.3, 63.0], "swRoad3": [39.8, 68.0],
+        "swRoad4": [39.3, 73.5],
         "templeFront": [32.8, 65.5],
         "gymBend1": [34.5, 70.8], "gymBend2": [37.0, 74.5], "gymFront": [42.0, 81.0],
         "gymCorner": [41.3, 88.1],
         # west connector road + the park's tan gate path (west side)
-        "wMid": [37.0, 45.6], "parkPath": [44.8, 45.5],
+        "parkPath": [44.8, 45.5],
         # bottom boulevard (partly behind the baked-in alarm-clock art + HUD buttons)
         "bvdLow": [47.5, 87.8], "bvdClock": [52.5, 88.0], "bvdJoin": [56.0, 88.6],
         "mallFront": [58.3, 89.3], "bvdMid1": [64.5, 90.8], "burgerFront": [74.8, 90.8],
@@ -389,12 +397,14 @@ def main():
         # NW spur + university/west road
         ["nwFork", "nwRoad1"], ["nwRoad1", "nwRoad2"], ["nwRoad2", "nwJoin"],
         ["nwFork", "uniRoad1"], ["uniRoad1", "uniRoad2"], ["uniRoad2", "uniFront"],
-        ["uniFront", "aoFront"], ["aoFront", "aoBend"], ["aoBend", "wJoin"],
-        ["wJoin", "templeRoad1"], ["templeRoad1", "templeRoad2"], ["templeRoad2", "templeBend"],
-        ["templeBend", "templeFront"],
+        ["uniFront", "vRoad1"], ["vRoad1", "aoFront"], ["aoFront", "vRoad2"],
+        ["vRoad1", "vRoad2"], ["vRoad2", "vRoad3"], ["vRoad3", "vMerge"],
+        ["vMerge", "ringW1"],
+        ["ringW1", "swRoad1"], ["swRoad1", "swRoad2"], ["swRoad2", "swRoad3"],
+        ["swRoad3", "swRoad4"], ["swRoad4", "gymFront"],
         ["templeFront", "gymBend1"], ["gymBend1", "gymBend2"], ["gymBend2", "gymFront"],
         ["gymFront", "gymCorner"], ["gymCorner", "bvdLow"],
-        ["wJoin", "wMid"], ["wMid", "ringW3"], ["ringW3", "parkPath"],
+        ["vRoad3", "ringW3"], ["ringW3", "parkPath"],
         # bottom boulevard
         ["bvdLow", "bvdClock"], ["bvdClock", "bvdJoin"], ["bvdJoin", "mallFront"],
         ["mallFront", "bvdMid1"], ["bvdMid1", "burgerFront"], ["burgerFront", "bvdMid2"],
