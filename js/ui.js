@@ -588,6 +588,7 @@
   // ---------------- turn flow ----------------
   function turnIntro() {
     var p = activeP();
+    closeAllDialogs();                        // fresh turn: never inherit a stale menu from the last one
     if (p.isBot) { renderAll(); maybeRunBot(); startTimer(); return; }
     if (isMyTurn()) openTurnCard();          // spectators just watch the map + feed
     renderAll();
@@ -612,6 +613,7 @@
   function endTurnClicked(auto) {
     if (UI.state.over) return;
     stopTimer();
+    closeAllDialogs();              // turn's over -> cut off any open menu (jobs/shop/pets/more)
     if (UI.inScene) closeScene();
     dispatch("end", {}, function () {
       if (!UI.state.over) {
