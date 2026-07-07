@@ -14,6 +14,8 @@
     mode: "local",           // "local" | "host" | "guest"
     mySlots: [],             // player indexes controlled on this machine
     inScene: null,           // building id currently open
+    sceneTab: 0,             // active tab index for paged/tabbed scenes
+    scenePage: 0,            // active page index within the active tab
     walker: null,
     timerId: null, timerLeft: 0,
     botRunning: false, botFast: false,
@@ -669,10 +671,20 @@
 
   // ---------------- scenes: the painted art menus ARE the UI ----------------
   var PAINT = window.PP_HOTSPOTS || {};
+  var PAGES = window.PP_SCENE_PAGES || {};
   var BDC_MAP = window.PP_BDC_MAP || {};
 
   function paintedActionIds(id) {
     if (id === "club") return Object.keys(BDC_MAP).map(function (k) { return BDC_MAP[k]; });
+    if (PAGES[id]) {
+      var ids = {};
+      var cfg = PAGES[id];
+      cfg.tabs.forEach(function (t) { t.pages.forEach(function (pg) {
+        pg.hotspots.forEach(function (h) { ids[h.a] = 1; });
+      }); });
+      if (cfg.work) ids[cfg.work.a] = 1;
+      return Object.keys(ids);
+    }
     return (PAINT[id] || []).map(function (h) { return h.a; });
   }
 
@@ -682,7 +694,8 @@
     var b = DATA.buildings[id];
     var sv = $("#scene-view");
     var bd = $("#scene-backdrop"), vid = $("#scene-video"), frame = $("#bdc-frame");
-    var painted = !!PAINT[id];
+    var paged = !!PAGES[id];
+    var painted = paged || !!PAINT[id];
     if (b.video) {
       bd.style.display = "none";
       vid.style.display = "";
@@ -694,14 +707,92 @@
       vid.pause(); vid.style.display = "none";
       frame.style.display = "none";
       bd.style.display = "";
-      bd.style.backgroundImage = "url('assets/scenes/" + b.scene + "')";
+      if (!paged) bd.style.backgroundImage = "url('assets/scenes/" + b.scene + "')";
     }
     $("#scene-title").textContent = b.name;
     $("#fallback-panel").style.display = (painted || b.video) ? "none" : "";
-    buildPaintLayer(painted ? id : null);
+    if (paged) {
+      UI.sceneTab = 0; UI.scenePage = 0;
+      renderScenePage();
+    } else {
+      buildPaintLayer(painted ? id : null);
+    }
     sv.classList.add("show");
     A.setScene(id, E.isRentTurn(UI.state));
     renderSceneUI();
+  }
+
+  // ---- paged / tabbed scenes (ADOPT/CARE/BRIBES, STYLE/GEAR/HOME, ...) ----
+  function pagedCfg() { return PAGES[UI.inScene] || null; }
+  function switchTab(tabIndex) {
+    var cfg = pagedCfg(); if (!cfg || !cfg.tabs[tabIndex]) return;
+    UI.sceneTab = tabIndex; UI.scenePage = 0;
+    click(); renderScenePage(); renderSceneUI();
+  }
+  function switchPage(delta) {
+    var cfg = pagedCfg(); if (!cfg) return;
+    var pages = cfg.tabs[UI.sceneTab].pages;
+    UI.scenePage = (UI.scenePage + delta + pages.length) % pages.length;
+    click(); renderScenePage(); renderSceneUI();
+  }
+  // swap backdrop to the active tab/page image and rebuild its hotspot layer
+  function renderScenePage() {
+    var cfg = pagedCfg(); if (!cfg) return;
+    var tab = cfg.tabs[UI.sceneTab] || cfg.tabs[0];
+    var page = tab.pages[UI.scenePage] || tab.pages[0];
+    $("#scene-backdrop").style.backgroundImage = "url('assets/scenes/" + page.img + "')";
+    buildPagedLayer(cfg, tab, page);
+  }
+  function buildPagedLayer(cfg, tab, page) {
+    var layer = $("#paint-layer");
+    layer.innerHTML = "";
+    layer.classList.add("paged");
+    // action hotspots for this page (each may carry a pre-made choice)
+    page.hotspots.forEach(function (h) { layer.appendChild(makePaintBtn(h)); });
+    if (cfg.work) layer.appendChild(makePaintBtn(cfg.work));
+    // tab buttons baked across the top — switch tabs (view-only, always allowed)
+    (cfg.tabBar || []).forEach(function (t, i) {
+      var idx = cfg.tabs.map(function (x) { return x.id; }).indexOf(t.tab);
+      var b = navButton(t.box, "tab", function () { switchTab(idx); });
+      if (idx === UI.sceneTab) b.classList.add("active");
+      layer.appendChild(b);
+    });
+    // ◀ N/M ▶ arrows only when the active tab has multiple pages.
+    // Arrow row height can differ per page (2-col vs 3-col art), so a page may
+    // override the building-level arrow boxes.
+    var arr = page.arrows || cfg.arrows;
+    if (arr && tab.pages.length > 1) {
+      layer.appendChild(navButton(arr.prev, "arrow prev", function () { switchPage(-1); }));
+      layer.appendChild(navButton(arr.next, "arrow next", function () { switchPage(1); }));
+    }
+  }
+  function navButton(box, cls, onClick) {
+    var b = document.createElement("button");
+    b.className = "nav-btn " + cls;
+    b.style.left = box[0] + "%"; b.style.top = box[1] + "%";
+    b.style.width = box[2] + "%"; b.style.height = box[3] + "%";
+    b.onclick = function (e) { e.stopPropagation(); onClick(); };
+    return b;
+  }
+  function makePaintBtn(h) {
+    var btn = document.createElement("button");
+    btn.className = "paint-btn";
+    btn.dataset.a = h.a;
+    if (h.choice) btn._choice = h.choice;
+    btn.style.left = h.box[0] + "%";
+    btn.style.top = h.box[1] + "%";
+    btn.style.width = h.box[2] + "%";
+    btn.style.height = h.box[3] + "%";
+    btn.innerHTML = '<span class="tu-chip"></span><span class="lock-chip" style="display:none">🔒</span>';
+    btn.onmouseenter = function () { showTip(btn, h); previewActionClock(h.a); };
+    btn.onmouseleave = function () { hideTip(); clockClear(); };
+    btn.onclick = function () {
+      if (!isMyTurn()) { toast("Not your turn"); return; }
+      click();
+      hideTip();
+      doAction(h.a, btn._choice);
+    };
+    return btn;
   }
   function closeScene(spectate) {
     if (!spectate && isMyTurn()) window.PPNet && window.PPNet.sendView(null);
@@ -724,6 +815,7 @@
   function buildPaintLayer(id) {
     var layer = $("#paint-layer");
     layer.innerHTML = "";
+    layer.classList.remove("paged");
     if (!id) return;
     if (id === "mall") {           // the art has no Transportation tab - add a matching one
       var rides = document.createElement("button");
@@ -735,25 +827,7 @@
       };
       layer.appendChild(rides);
     }
-    PAINT[id].forEach(function (h) {
-      var btn = document.createElement("button");
-      btn.className = "paint-btn";
-      btn.dataset.a = h.a;
-      btn.style.left = h.box[0] + "%";
-      btn.style.top = h.box[1] + "%";
-      btn.style.width = h.box[2] + "%";
-      btn.style.height = h.box[3] + "%";
-      btn.innerHTML = '<span class="tu-chip"></span><span class="lock-chip" style="display:none">🔒</span>';
-      btn.onmouseenter = function () { showTip(btn, h); previewActionClock(h.a); };
-      btn.onmouseleave = function () { hideTip(); clockClear(); };
-      btn.onclick = function () {
-        if (!isMyTurn()) { toast("Not your turn"); return; }
-        click();
-        hideTip();
-        doAction(h.a);
-      };
-      layer.appendChild(btn);
-    });
+    PAINT[id].forEach(function (h) { layer.appendChild(makePaintBtn(h)); });
   }
   function annFor(actionId) {
     var st = UI.state, p = activeP();
