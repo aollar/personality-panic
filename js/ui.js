@@ -295,6 +295,8 @@
     A.setScene("overmap", E.isRentTurn(UI.state));
     if (!resumed) turnIntro();
     else { toast("Game resumed — turn " + UI.state.turn, "good"); startTimer(); maybeRunBot(); }
+    // warm all scene backdrops in the background so entering a building is instant
+    setTimeout(preloadAllScenes, 1200);
   }
 
   function buildHotspots() {
@@ -709,14 +711,14 @@
       vid.pause(); vid.style.display = "none";
       frame.style.display = "none";
       bd.style.display = "";
-      if (!paged) bd.style.backgroundImage = "url('assets/scenes/" + b.scene + "')";
+      if (!paged && b.scene) setBackdrop(b.scene, true);   // blank-then-decode: no old-location flash
     }
     $("#scene-title").textContent = b.name;
     $("#fallback-panel").style.display = (painted || b.video) ? "none" : "";
     if (paged) {
       preloadScenePages(id);
       UI.sceneTab = 0; UI.scenePage = 0;
-      renderScenePage();
+      renderScenePage(true);
     } else {
       buildPaintLayer(painted ? id : null);
     }
@@ -725,19 +727,35 @@
     renderSceneUI();
   }
 
-  // ---- paged / tabbed scenes (ADOPT/CARE/BRIBES, STYLE/GEAR/HOME, ...) ----
-  var _pagePreload = {};  // src -> Image, kept alive so the browser caches+decodes
-  // Warm the cache for every page image in a scene so switching tabs/pages swaps
-  // instantly instead of flashing black while the new image decodes.
+  // ---- scene backdrop image cache + decode-gated swap ----
+  var _sceneImgs = {};                         // filename -> Image (kept alive = cached+decoded)
+  function sceneImg(file) {
+    var im = _sceneImgs[file];
+    if (!im) { im = new Image(); im.src = "assets/scenes/" + file; _sceneImgs[file] = im; }
+    return im;
+  }
+  // Set the scene backdrop, but only once the target image is DECODED, so we never
+  // show a half-loaded frame mid-transition. `opening` = entering a NEW scene:
+  // blank first so the PREVIOUS location can't flash on screen. Within-scene page/
+  // tab switches (opening falsy) keep the current page up until the new one is ready.
+  function setBackdrop(file, opening) {
+    var bd = $("#scene-backdrop");
+    var url = "url('assets/scenes/" + file + "')";
+    var im = sceneImg(file);
+    var seq = (UI._bgSeq = (UI._bgSeq || 0) + 1);
+    if (im.complete && im.naturalWidth) { bd.style.backgroundImage = url; return; }
+    if (opening) bd.style.backgroundImage = "none";   // don't flash the old location
+    im.onload = im.onerror = function () { if (UI._bgSeq === seq && UI.inScene) bd.style.backgroundImage = url; };
+  }
   function preloadScenePages(id) {
     var cfg = PAGES[id]; if (!cfg) return;
-    cfg.tabs.forEach(function (t) {
-      t.pages.forEach(function (pg) {
-        var src = "assets/scenes/" + pg.img;
-        if (_pagePreload[src]) return;
-        var im = new Image(); im.src = src; _pagePreload[src] = im;
-      });
-    });
+    cfg.tabs.forEach(function (t) { t.pages.forEach(function (pg) { sceneImg(pg.img); }); });
+  }
+  // Warm every scene backdrop once (legacy + paged) so building-to-building
+  // transitions are instant. Kicked off after the game is interactive.
+  function preloadAllScenes() {
+    Object.keys(DATA.buildings).forEach(function (id) { var b = DATA.buildings[id]; if (b.scene) sceneImg(b.scene); });
+    Object.keys(PAGES).forEach(function (id) { preloadScenePages(id); });
   }
   function pagedCfg() { return PAGES[UI.inScene] || null; }
   function switchTab(tabIndex) {
@@ -751,23 +769,14 @@
     UI.scenePage = (UI.scenePage + delta + pages.length) % pages.length;
     click(); renderScenePage(); renderSceneUI();
   }
-  // swap backdrop to the active tab/page image and rebuild its hotspot layer.
-  // Rebuild hotspots immediately, but only swap the (visible) backdrop image once
-  // the new one is decoded — so the previous page stays up instead of flashing
-  // black while the new image loads. A sequence token drops stale late loads.
-  function renderScenePage() {
+  // Rebuild hotspots immediately; swap the visible backdrop only once decoded.
+  // `opening` is passed through when entering the scene fresh (blank vs old page).
+  function renderScenePage(opening) {
     var cfg = pagedCfg(); if (!cfg) return;
     var tab = cfg.tabs[UI.sceneTab] || cfg.tabs[0];
     var page = tab.pages[UI.scenePage] || tab.pages[0];
     buildPagedLayer(cfg, tab, page);
-    var src = "assets/scenes/" + page.img;
-    var swap = function () { $("#scene-backdrop").style.backgroundImage = "url('" + src + "')"; };
-    var im = _pagePreload[src];
-    if (im && im.complete && im.naturalWidth) { swap(); return; } // cached -> instant
-    var seq = (UI._pageSeq = (UI._pageSeq || 0) + 1);
-    var w = new Image(); _pagePreload[src] = w;
-    w.onload = w.onerror = function () { if (UI._pageSeq === seq && UI.inScene) swap(); };
-    w.src = src;
+    setBackdrop(page.img, opening);
   }
   function buildPagedLayer(cfg, tab, page) {
     var layer = $("#paint-layer");

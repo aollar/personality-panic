@@ -61,12 +61,25 @@
   }
   function setScene(location, rentDue) { playMusic(musicFor(location, rentDue)); }
 
+  // One-shot SFX play through a small REUSED pool. Creating a fresh `new Audio()`
+  // per call meant rapid clicking spawned unbounded elements, which exhausts the
+  // browser's audio decoders and stalls the looping music track (the reported
+  // "sound cut out for the scene and the map" bug). The pool caps concurrent
+  // elements; a short per-sound guard drops machine-gun retriggers.
+  var SFX_POOL_MAX = 8;
+  var sfxPool = [], sfxIdx = 0, sfxLast = {};
   function sfx(name) {
     var f = window.PP_DATA.sfx[name];
     if (!f || !st.unlocked) return;
-    var el = new Audio(SFX_DIR + f);
+    var now = (window.performance && performance.now) ? performance.now() : Date.now();
+    if (sfxLast[name] && now - sfxLast[name] < 45) return; // de-dupe rapid retrigger
+    sfxLast[name] = now;
+    var el;
+    if (sfxPool.length < SFX_POOL_MAX) { el = new Audio(); el.onerror = function () {}; sfxPool.push(el); }
+    else { el = sfxPool[sfxIdx]; sfxIdx = (sfxIdx + 1) % SFX_POOL_MAX; }
+    if (el._f !== f) { el.src = SFX_DIR + f; el._f = f; }
+    try { el.pause(); el.currentTime = 0; } catch (e) {}
     el.volume = sfxVol();
-    el.onerror = function () {};
     el.play().catch(function () {});
   }
   // movement: walking loops; bike/car are one-shots and mute the walk loop
@@ -87,9 +100,10 @@
   }
 
   function unlock() {
-    if (st.unlocked) return;
     st.unlocked = true;
-    if (st.musicEl) st.musicEl.play().catch(function () {});
+    // Self-heal: if music should be playing but stalled/paused (e.g. after the
+    // browser throttled audio), the next click kicks it back on.
+    if (st.musicEl && st.musicEl.paused && musicVol() > 0) st.musicEl.play().catch(function () {});
   }
   document.addEventListener("pointerdown", unlock, { once: false });
 
