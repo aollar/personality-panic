@@ -109,7 +109,7 @@
     ALL_STATS.forEach(function (s) { stats[s] = 0; });
     return {
       id: id, name: name, code: code, isBot: !!isBot,
-      stats: stats, // money lives in stats.money (cash === Money stat, capped at T)
+      stats: stats, // money lives in stats.money (cash === Money stat; NOT capped at T — see addStat)
       location: "lowCost", housing: "low", homeless: false,
       tu: DATA.settings.timeUnitsPerTurn, tuPenaltyNext: 0,
       ate: false, turnsSinceRelax: 0, sleptThisTurn: false,
@@ -193,7 +193,10 @@
       return p.pet[key] - old;
     }
     var o = p.stats[stat];
-    p.stats[stat] = Math.max(0, Math.min(state.T, o + pts));
+    // Money is cash, not a 0..T percentage stat — let it accumulate past T so
+    // players can save up (e.g. $200 rent, luxury items). Still floors at 0.
+    if (stat === "money") p.stats[stat] = Math.max(0, o + pts);
+    else p.stats[stat] = Math.max(0, Math.min(state.T, o + pts));
     return p.stats[stat] - o;
   }
   function money(p) { return p.stats.money; }
