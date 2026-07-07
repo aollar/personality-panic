@@ -7,8 +7,8 @@ var PP_DATA = {
    "medium": 500,
    "long": 1000
   },
-  "timeUnitsPerTurn": 24,
-  "baseTimeUnits": 24,
+  "timeUnitsPerTurn": 40,
+  "baseTimeUnits": 40,
   "rentIntervalTurns": 4,
   "turnTimerOptions": [
    30,
@@ -5762,6 +5762,13 @@ var PP_DATA = {
    "pos": [
     47.3,
     74.0
+   ],
+   "entrance": [
+    48.8,
+    82.5
+   ],
+   "doors": [
+    "bvdLow"
    ]
   },
   "luxury": {
@@ -5770,6 +5777,13 @@ var PP_DATA = {
    "pos": [
     87.3,
     19.0
+   ],
+   "entrance": [
+    87.4,
+    36.6
+   ],
+   "doors": [
+    "luxAlley1"
    ]
   },
   "park": {
@@ -5778,6 +5792,13 @@ var PP_DATA = {
    "pos": [
     57.7,
     44.0
+   ],
+   "entrance": [
+    50.5,
+    44.8
+   ],
+   "doors": [
+    "parkPath"
    ]
   },
   "airOne": {
@@ -5786,6 +5807,13 @@ var PP_DATA = {
    "pos": [
     24.5,
     37.0
+   ],
+   "entrance": [
+    31.2,
+    40.0
+   ],
+   "doors": [
+    "aoFront"
    ]
   },
   "regretBurger": {
@@ -5794,6 +5822,13 @@ var PP_DATA = {
    "pos": [
     72.7,
     74.5
+   ],
+   "entrance": [
+    74.5,
+    88.0
+   ],
+   "doors": [
+    "burgerFront"
    ]
   },
   "gym": {
@@ -5802,6 +5837,13 @@ var PP_DATA = {
    "pos": [
     32.0,
     78.0
+   ],
+   "entrance": [
+    39.2,
+    82.3
+   ],
+   "doors": [
+    "gymFront"
    ]
   },
   "club": {
@@ -5811,6 +5853,13 @@ var PP_DATA = {
    "pos": [
     51.7,
     16.0
+   ],
+   "entrance": [
+    62.8,
+    28.3
+   ],
+   "doors": [
+    "clubFront"
    ]
   },
   "temple": {
@@ -5819,6 +5868,13 @@ var PP_DATA = {
    "pos": [
     30.0,
     57.0
+   ],
+   "entrance": [
+    29.8,
+    67.5
+   ],
+   "doors": [
+    "templeFront"
    ]
   },
   "university": {
@@ -5827,6 +5883,13 @@ var PP_DATA = {
    "pos": [
     33.3,
     19.0
+   ],
+   "entrance": [
+    35.2,
+    33.9
+   ],
+   "doors": [
+    "uniFront"
    ]
   },
   "soulExchange": {
@@ -5835,6 +5898,13 @@ var PP_DATA = {
    "pos": [
     92.5,
     51.0
+   ],
+   "entrance": [
+    90.3,
+    68.3
+   ],
+   "doors": [
+    "soulFront"
    ]
   },
   "debtstreet": {
@@ -5843,6 +5913,13 @@ var PP_DATA = {
    "pos": [
     79.7,
     41.0
+   ],
+   "entrance": [
+    76.8,
+    55.3
+   ],
+   "doors": [
+    "seTaxi"
    ]
   },
   "airport": {
@@ -5851,6 +5928,13 @@ var PP_DATA = {
    "pos": [
     67.3,
     14.0
+   ],
+   "entrance": [
+    67.4,
+    26.5
+   ],
+   "doors": [
+    "airportFront"
    ]
   },
   "petShop": {
@@ -5859,6 +5943,13 @@ var PP_DATA = {
    "pos": [
     85.7,
     75.5
+   ],
+   "entrance": [
+    84.7,
+    87.0
+   ],
+   "doors": [
+    "petFront"
    ]
   },
   "mall": {
@@ -5867,259 +5958,554 @@ var PP_DATA = {
    "pos": [
     58.7,
     71.5
+   ],
+   "entrance": [
+    58.4,
+    86.8
+   ],
+   "doors": [
+    "mallFront"
    ]
   }
  },
  "roadNodes": {
-  "topUni": [
-   33.3,
-   26.0
+  "ringTop": [
+   58.0,
+   29.0
   ],
-  "topClub": [
-   52.0,
-   23.0
+  "clubFront": [
+   62.9,
+   29.4
   ],
-  "topAirport": [
-   67.3,
-   21.0
+  "airportFront": [
+   67.0,
+   30.4
   ],
-  "topLux": [
-   85.0,
-   27.0
+  "neJunction": [
+   70.4,
+   30.9
   ],
-  "ringN": [
-   57.0,
-   26.0
+  "ringNE2": [
+   71.7,
+   34.5
   ],
-  "ringNE": [
-   67.5,
-   30.0
+  "ringE1": [
+   73.6,
+   38.6
   ],
-  "ringE": [
-   71.5,
-   41.0
+  "ringE2": [
+   74.2,
+   43.5
   ],
-  "ringSE": [
-   67.5,
-   53.0
+  "ringE3": [
+   73.5,
+   48.4
+  ],
+  "ringSE1": [
+   72.0,
+   52.7
+  ],
+  "seTaxi": [
+   70.0,
+   56.5
+  ],
+  "ringSE2": [
+   67.0,
+   58.3
+  ],
+  "ringSE3": [
+   63.0,
+   59.8
   ],
   "ringS": [
-   57.0,
-   58.5
+   58.8,
+   60.2
   ],
-  "ringSW": [
-   46.5,
-   53.0
+  "ringSW1": [
+   54.0,
+   60.3
   ],
-  "ringW": [
-   42.5,
-   41.0
+  "ringSW2": [
+   48.2,
+   59.7
   ],
-  "ringNW": [
-   46.5,
-   30.0
+  "ringSW3": [
+   44.6,
+   57.6
   ],
-  "leftAir": [
-   27.5,
-   43.0
+  "ringW1": [
+   42.1,
+   54.0
   ],
-  "leftMid": [
-   28.5,
-   50.0
+  "ringW2": [
+   41.0,
+   49.8
+  ],
+  "ringW3": [
+   40.2,
+   44.3
+  ],
+  "ringNW1": [
+   41.2,
+   39.0
+  ],
+  "ringNW2": [
+   43.5,
+   34.6
+  ],
+  "ringNW3": [
+   46.2,
+   30.9
+  ],
+  "nwJoin": [
+   50.0,
+   31.2
+  ],
+  "ringN0": [
+   53.8,
+   29.8
+  ],
+  "nwFork": [
+   43.8,
+   22.5
+  ],
+  "nwRoad1": [
+   45.3,
+   25.3
+  ],
+  "nwRoad2": [
+   47.6,
+   28.6
+  ],
+  "uniRoad1": [
+   41.8,
+   25.5
+  ],
+  "uniRoad2": [
+   39.5,
+   30.5
+  ],
+  "uniFront": [
+   36.4,
+   34.8
+  ],
+  "aoFront": [
+   33.0,
+   40.0
+  ],
+  "aoBend": [
+   32.2,
+   44.2
+  ],
+  "wJoin": [
+   30.3,
+   45.2
+  ],
+  "templeRoad1": [
+   32.0,
+   49.0
+  ],
+  "templeRoad2": [
+   33.7,
+   56.5
+  ],
+  "templeBend": [
+   33.8,
+   60.5
   ],
   "templeFront": [
-   31.5,
-   62.0
+   32.0,
+   66.0
   ],
-  "botGym": [
-   33.5,
-   83.0
+  "gymBend1": [
+   34.5,
+   70.8
   ],
-  "botLow": [
-   47.3,
+  "gymBend2": [
+   37.0,
+   74.5
+  ],
+  "gymFront": [
+   42.0,
    81.0
   ],
-  "botMall": [
-   58.7,
-   79.5
+  "gymCorner": [
+   41.3,
+   88.1
   ],
-  "botBurger": [
-   72.7,
-   81.0
+  "wMid": [
+   37.0,
+   45.6
   ],
-  "botPet": [
-   85.7,
-   81.5
+  "parkPath": [
+   44.8,
+   45.5
   ],
-  "rightTop": [
-   82.0,
-   33.0
+  "bvdLow": [
+   47.5,
+   87.8
   ],
-  "debtFront": [
-   79.0,
-   46.0
+  "bvdClock": [
+   52.5,
+   88.0
   ],
-  "rightMid": [
-   83.0,
-   56.0
+  "bvdJoin": [
+   56.0,
+   88.6
+  ],
+  "mallFront": [
+   58.3,
+   89.3
+  ],
+  "bvdMid1": [
+   64.5,
+   90.8
+  ],
+  "burgerFront": [
+   74.8,
+   90.8
+  ],
+  "bvdMid2": [
+   78.5,
+   91.3
+  ],
+  "petFront": [
+   84.8,
+   90.3
+  ],
+  "bvdEast": [
+   88.2,
+   85.7
+  ],
+  "luxAlley1": [
+   86.6,
+   40.5
+  ],
+  "luxAlley2": [
+   86.7,
+   45.5
+  ],
+  "luxAlley3": [
+   86.9,
+   50.5
+  ],
+  "luxAlley4": [
+   87.1,
+   55.5
+  ],
+  "luxAlley5": [
+   86.9,
+   59.5
+  ],
+  "eRoad1": [
+   76.0,
+   57.9
+  ],
+  "eRoad2": [
+   77.5,
+   60.5
+  ],
+  "eRoad3": [
+   80.2,
+   60.9
+  ],
+  "eRoad4": [
+   84.9,
+   63.2
   ],
   "soulFront": [
-   89.5,
-   58.0
+   88.8,
+   67.0
   ],
-  "rightLow": [
-   85.5,
-   69.0
+  "petRight1": [
+   93.0,
+   72.0
   ],
-  "swConnector": [
-   43.0,
-   64.0
+  "petRight2": [
+   93.3,
+   75.5
   ],
-  "sConnector": [
-   57.5,
-   66.0
+  "petRight3": [
+   92.3,
+   79.5
+  ],
+  "petRight4": [
+   89.7,
+   83.3
   ]
  },
  "roadEdges": [
   [
-   "topUni",
-   "topClub"
+   "ringTop",
+   "clubFront"
   ],
   [
-   "topClub",
-   "topAirport"
+   "clubFront",
+   "airportFront"
   ],
   [
-   "topAirport",
-   "topLux"
+   "airportFront",
+   "neJunction"
   ],
   [
-   "topClub",
-   "ringN"
+   "neJunction",
+   "ringNE2"
   ],
   [
-   "topUni",
-   "ringNW"
+   "ringNE2",
+   "ringE1"
   ],
   [
-   "topAirport",
-   "ringNE"
+   "ringE1",
+   "ringE2"
   ],
   [
-   "ringN",
-   "ringNE"
+   "ringE2",
+   "ringE3"
   ],
   [
-   "ringNE",
-   "ringE"
+   "ringE3",
+   "ringSE1"
   ],
   [
-   "ringE",
-   "ringSE"
+   "ringSE1",
+   "seTaxi"
   ],
   [
-   "ringSE",
+   "seTaxi",
+   "ringSE2"
+  ],
+  [
+   "ringSE2",
+   "ringSE3"
+  ],
+  [
+   "ringSE3",
    "ringS"
   ],
   [
    "ringS",
-   "ringSW"
+   "ringSW1"
   ],
   [
-   "ringSW",
-   "ringW"
+   "ringSW1",
+   "ringSW2"
   ],
   [
-   "ringW",
-   "ringNW"
+   "ringSW2",
+   "ringSW3"
   ],
   [
-   "ringNW",
-   "ringN"
+   "ringSW3",
+   "ringW1"
   ],
   [
-   "ringW",
-   "leftAir"
+   "ringW1",
+   "ringW2"
   ],
   [
-   "leftAir",
-   "leftMid"
+   "ringW2",
+   "ringW3"
   ],
   [
-   "leftMid",
+   "ringW3",
+   "ringNW1"
+  ],
+  [
+   "ringNW1",
+   "ringNW2"
+  ],
+  [
+   "ringNW2",
+   "ringNW3"
+  ],
+  [
+   "ringNW3",
+   "nwJoin"
+  ],
+  [
+   "nwJoin",
+   "ringN0"
+  ],
+  [
+   "ringN0",
+   "ringTop"
+  ],
+  [
+   "nwFork",
+   "nwRoad1"
+  ],
+  [
+   "nwRoad1",
+   "nwRoad2"
+  ],
+  [
+   "nwRoad2",
+   "nwJoin"
+  ],
+  [
+   "nwFork",
+   "uniRoad1"
+  ],
+  [
+   "uniRoad1",
+   "uniRoad2"
+  ],
+  [
+   "uniRoad2",
+   "uniFront"
+  ],
+  [
+   "uniFront",
+   "aoFront"
+  ],
+  [
+   "aoFront",
+   "aoBend"
+  ],
+  [
+   "aoBend",
+   "wJoin"
+  ],
+  [
+   "wJoin",
+   "templeRoad1"
+  ],
+  [
+   "templeRoad1",
+   "templeRoad2"
+  ],
+  [
+   "templeRoad2",
+   "templeBend"
+  ],
+  [
+   "templeBend",
    "templeFront"
   ],
   [
-   "leftAir",
-   "topUni"
-  ],
-  [
    "templeFront",
-   "swConnector"
+   "gymBend1"
   ],
   [
-   "swConnector",
-   "botGym"
+   "gymBend1",
+   "gymBend2"
   ],
   [
-   "swConnector",
-   "ringSW"
+   "gymBend2",
+   "gymFront"
   ],
   [
-   "botGym",
-   "botLow"
+   "gymFront",
+   "gymCorner"
   ],
   [
-   "botLow",
-   "botMall"
+   "gymCorner",
+   "bvdLow"
   ],
   [
-   "botMall",
-   "botBurger"
+   "wJoin",
+   "wMid"
   ],
   [
-   "botBurger",
-   "botPet"
+   "wMid",
+   "ringW3"
   ],
   [
-   "ringS",
-   "sConnector"
+   "ringW3",
+   "parkPath"
   ],
   [
-   "sConnector",
-   "botMall"
+   "bvdLow",
+   "bvdClock"
   ],
   [
-   "ringSW",
-   "swConnector"
+   "bvdClock",
+   "bvdJoin"
   ],
   [
-   "topLux",
-   "rightTop"
+   "bvdJoin",
+   "mallFront"
   ],
   [
-   "rightTop",
-   "debtFront"
+   "mallFront",
+   "bvdMid1"
   ],
   [
-   "ringE",
-   "debtFront"
+   "bvdMid1",
+   "burgerFront"
   ],
   [
-   "debtFront",
-   "rightMid"
+   "burgerFront",
+   "bvdMid2"
   ],
   [
-   "rightMid",
+   "bvdMid2",
+   "petFront"
+  ],
+  [
+   "petFront",
+   "bvdEast"
+  ],
+  [
+   "luxAlley1",
+   "luxAlley2"
+  ],
+  [
+   "luxAlley2",
+   "luxAlley3"
+  ],
+  [
+   "luxAlley3",
+   "luxAlley4"
+  ],
+  [
+   "luxAlley4",
+   "luxAlley5"
+  ],
+  [
+   "luxAlley5",
+   "eRoad4"
+  ],
+  [
+   "seTaxi",
+   "eRoad1"
+  ],
+  [
+   "eRoad1",
+   "eRoad2"
+  ],
+  [
+   "eRoad2",
+   "eRoad3"
+  ],
+  [
+   "eRoad3",
+   "eRoad4"
+  ],
+  [
+   "eRoad4",
    "soulFront"
   ],
   [
-   "rightMid",
-   "rightLow"
+   "soulFront",
+   "petRight1"
   ],
   [
-   "rightLow",
-   "botPet"
+   "petRight1",
+   "petRight2"
+  ],
+  [
+   "petRight2",
+   "petRight3"
+  ],
+  [
+   "petRight3",
+   "petRight4"
+  ],
+  [
+   "petRight4",
+   "bvdEast"
   ]
  ]
 };

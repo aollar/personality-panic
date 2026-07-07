@@ -43,7 +43,11 @@
   // ---------- Road graph: pairwise building walk distances ----------
   var NODE_POS = {};
   Object.keys(DATA.roadNodes).forEach(function (k) { NODE_POS[k] = DATA.roadNodes[k]; });
-  Object.keys(DATA.buildings).forEach(function (id) { NODE_POS[id] = DATA.buildings[id].pos; });
+  // a building's walk node is its ENTRANCE (door on the pavement), not its center
+  Object.keys(DATA.buildings).forEach(function (id) {
+    var b = DATA.buildings[id];
+    NODE_POS[id] = b.entrance || b.pos;
+  });
   var AR_X = 1672 / 100, AR_Y = 941 / 100;
   function segLen(a, b) {
     return Math.hypot((a[0] - b[0]) * AR_X, (a[1] - b[1]) * AR_Y);
@@ -54,8 +58,17 @@
     var w = segLen(NODE_POS[e[0]], NODE_POS[e[1]]);
     ADJ[e[0]].push([e[1], w]); ADJ[e[1]].push([e[0], w]);
   });
-  // connect each building to its 2 nearest road nodes
+  // connect each building's entrance to its authored door node(s) so routes
+  // approach along the painted road; fall back to the 2 nearest road nodes
   Object.keys(DATA.buildings).forEach(function (id) {
+    var doors = DATA.buildings[id].doors;
+    if (doors && doors.length) {
+      doors.forEach(function (n) {
+        var w = segLen(NODE_POS[id], NODE_POS[n]);
+        ADJ[id].push([n, w]); ADJ[n].push([id, w]);
+      });
+      return;
+    }
     var dists = Object.keys(DATA.roadNodes).map(function (n) {
       return [n, segLen(NODE_POS[id], NODE_POS[n])];
     }).sort(function (a, b) { return a[1] - b[1]; });

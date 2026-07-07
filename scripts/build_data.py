@@ -304,48 +304,104 @@ def main():
     }
 
     # ---- Buildings + map coords (positions eyeballed off the new overmap art) ----
+    # pos      = building center (map hotspot fallback / labels)
+    # entrance = where the DOOR meets the pavement — the walker stands/arrives here
+    # doors    = road node(s) the entrance connects to (short doorstep connector);
+    #            keeps the avatar on painted roads instead of cutting cross-country
     buildings = {
-        "lowCost": {"name": "Low Cost Housing", "scene": "low_cost_housing.jpg", "pos": [47.3, 74.0]},
-        "luxury": {"name": "Luxury Apartments", "scene": "luxury_apartments.jpg", "pos": [87.3, 19.0]},
-        "park": {"name": "Almost Fine Park", "scene": "park.jpg", "pos": [57.7, 44.0]},
-        "airOne": {"name": "Air One Supermarket", "scene": "air_one_supermarket.jpg", "pos": [24.5, 37.0]},
-        "regretBurger": {"name": "Regret Burger", "scene": "regret_burger.jpg", "pos": [72.7, 74.5]},
-        "gym": {"name": "Bro Science Gym", "scene": "bro_science_gym.jpg", "pos": [32.0, 78.0]},
-        "club": {"name": "Bad Decisions Club", "scene": None, "video": "bdc_scene.mp4", "pos": [51.7, 16.0]},
-        "temple": {"name": "Re-Education Temple", "scene": "re_education_temple.jpg", "pos": [30.0, 57.0]},
-        "university": {"name": "High IQ University", "scene": "high_iq_university.jpg", "pos": [33.3, 19.0]},
-        "soulExchange": {"name": "Corporate Soul Exchange", "scene": "corporate_soul_exchange.jpg", "pos": [92.5, 51.0]},
-        "debtstreet": {"name": "Debtstreet Capital", "scene": "debtstreet_capital.jpg", "pos": [79.7, 41.0]},
-        "airport": {"name": "Emotional Baggage Airport", "scene": "emotional_baggage_airport.jpg", "pos": [67.3, 14.0]},
-        "petShop": {"name": "Ethical Pet Shop", "scene": "ethical_pet_shop.jpg", "pos": [85.7, 75.5]},
-        "mall": {"name": "Mall", "scene": "mall.jpg", "pos": [58.7, 71.5]},
+        "lowCost": {"name": "Low Cost Housing", "scene": "low_cost_housing.jpg", "pos": [47.3, 74.0],
+                    "entrance": [48.8, 82.5], "doors": ["bvdLow"]},
+        "luxury": {"name": "Luxury Apartments", "scene": "luxury_apartments.jpg", "pos": [87.3, 19.0],
+                   "entrance": [87.4, 36.6], "doors": ["luxAlley1"]},
+        "park": {"name": "Almost Fine Park", "scene": "park.jpg", "pos": [57.7, 44.0],
+                 "entrance": [50.5, 44.8], "doors": ["parkPath"]},
+        "airOne": {"name": "Air One Supermarket", "scene": "air_one_supermarket.jpg", "pos": [24.5, 37.0],
+                   "entrance": [31.2, 40.0], "doors": ["aoFront"]},
+        "regretBurger": {"name": "Regret Burger", "scene": "regret_burger.jpg", "pos": [72.7, 74.5],
+                         "entrance": [74.5, 88.0], "doors": ["burgerFront"]},
+        "gym": {"name": "Bro Science Gym", "scene": "bro_science_gym.jpg", "pos": [32.0, 78.0],
+                "entrance": [39.2, 82.3], "doors": ["gymFront"]},
+        "club": {"name": "Bad Decisions Club", "scene": None, "video": "bdc_scene.mp4", "pos": [51.7, 16.0],
+                 "entrance": [62.8, 28.3], "doors": ["clubFront"]},
+        "temple": {"name": "Re-Education Temple", "scene": "re_education_temple.jpg", "pos": [30.0, 57.0],
+                   "entrance": [29.8, 67.5], "doors": ["templeFront"]},
+        "university": {"name": "High IQ University", "scene": "high_iq_university.jpg", "pos": [33.3, 19.0],
+                       "entrance": [35.2, 33.9], "doors": ["uniFront"]},
+        "soulExchange": {"name": "Corporate Soul Exchange", "scene": "corporate_soul_exchange.jpg", "pos": [92.5, 51.0],
+                         "entrance": [90.3, 68.3], "doors": ["soulFront"]},
+        "debtstreet": {"name": "Debtstreet Capital", "scene": "debtstreet_capital.jpg", "pos": [79.7, 41.0],
+                       "entrance": [76.8, 55.3], "doors": ["seTaxi"]},
+        "airport": {"name": "Emotional Baggage Airport", "scene": "emotional_baggage_airport.jpg", "pos": [67.3, 14.0],
+                    "entrance": [67.4, 26.5], "doors": ["airportFront"]},
+        "petShop": {"name": "Ethical Pet Shop", "scene": "ethical_pet_shop.jpg", "pos": [85.7, 75.5],
+                    "entrance": [84.7, 87.0], "doors": ["petFront"]},
+        "mall": {"name": "Mall", "scene": "mall.jpg", "pos": [58.7, 71.5],
+                 "entrance": [58.4, 86.8], "doors": ["mallFront"]},
     }
 
-    # Road graph for the walking avatar (percent coords on the 1672x941 map)
+    # Road graph for the walking avatar (percent coords on the 1672x941 map).
+    # The ring around the park is the OUTER gray road (color-probed radially from
+    # the fountain, 2026-07-07); the tan circles inside are park footpaths. Its
+    # bottom arc passes BEHIND the mall roof and the baked-in alarm-clock art.
     roadNodes = {
-        "topUni": [33.3, 26.0], "topClub": [52.0, 23.0], "topAirport": [67.3, 21.0], "topLux": [85.0, 27.0],
-        "ringN": [57.0, 26.0], "ringNE": [67.5, 30.0], "ringE": [71.5, 41.0], "ringSE": [67.5, 53.0],
-        "ringS": [57.0, 58.5], "ringSW": [46.5, 53.0], "ringW": [42.5, 41.0], "ringNW": [46.5, 30.0],
-        "leftAir": [27.5, 43.0], "leftMid": [28.5, 50.0], "templeFront": [31.5, 62.0],
-        "botGym": [33.5, 83.0], "botLow": [47.3, 81.0], "botMall": [58.7, 79.5],
-        "botBurger": [72.7, 81.0], "botPet": [85.7, 81.5],
-        "rightTop": [82.0, 33.0], "debtFront": [79.0, 46.0], "rightMid": [83.0, 56.0],
-        "soulFront": [89.5, 58.0], "rightLow": [85.5, 69.0],
-        "swConnector": [43.0, 64.0], "sConnector": [57.5, 66.0],
+        # ring road (24-gon, clockwise from the top). The bottom arc rides the
+        # road's visible upper edge where the mall/burger roofs overlap it.
+        "ringTop": [58.0, 29.0], "clubFront": [62.9, 29.4], "airportFront": [67.0, 30.4],
+        "neJunction": [70.4, 30.9], "ringNE2": [71.7, 34.5], "ringE1": [73.6, 38.6],
+        "ringE2": [74.2, 43.5], "ringE3": [73.5, 48.4], "ringSE1": [72.0, 52.7],
+        "seTaxi": [70.0, 56.5], "ringSE2": [67.0, 58.3], "ringSE3": [63.0, 59.8],
+        "ringS": [58.8, 60.2], "ringSW1": [54.0, 60.3], "ringSW2": [48.2, 59.7],
+        "ringSW3": [44.6, 57.6], "ringW1": [42.1, 54.0], "ringW2": [41.0, 49.8],
+        "ringW3": [40.2, 44.3], "ringNW1": [41.2, 39.0], "ringNW2": [43.5, 34.6],
+        "ringNW3": [46.2, 30.9], "nwJoin": [50.0, 31.2], "ringN0": [53.8, 29.8],
+        # north-west spur from the top edge + the road past the university steps
+        "nwFork": [43.8, 22.5], "nwRoad1": [45.3, 25.3], "nwRoad2": [47.6, 28.6],
+        "uniRoad1": [41.8, 25.5], "uniRoad2": [39.5, 30.5], "uniFront": [36.4, 34.8],
+        # west road: university -> Air One -> temple -> around the gym to the boulevard
+        "aoFront": [33.0, 40.0], "aoBend": [32.2, 44.2], "wJoin": [30.3, 45.2],
+        "templeRoad1": [32.0, 49.0], "templeRoad2": [33.7, 56.5], "templeBend": [33.8, 60.5],
+        "templeFront": [32.0, 66.0],
+        "gymBend1": [34.5, 70.8], "gymBend2": [37.0, 74.5], "gymFront": [42.0, 81.0],
+        "gymCorner": [41.3, 88.1],
+        # west connector road + the park's tan gate path (west side)
+        "wMid": [37.0, 45.6], "parkPath": [44.8, 45.5],
+        # bottom boulevard (partly behind the baked-in alarm-clock art + HUD buttons)
+        "bvdLow": [47.5, 87.8], "bvdClock": [52.5, 88.0], "bvdJoin": [56.0, 88.6],
+        "mallFront": [58.3, 89.3], "bvdMid1": [64.5, 90.8], "burgerFront": [74.8, 90.8],
+        "bvdMid2": [78.5, 91.3], "petFront": [84.8, 90.3], "bvdEast": [88.2, 85.7],
+        # Luxury's doorstep alley between Debtstreet and Soul Exchange
+        "luxAlley1": [86.6, 40.5], "luxAlley2": [86.7, 45.5], "luxAlley3": [86.9, 50.5],
+        "luxAlley4": [87.1, 55.5], "luxAlley5": [86.9, 59.5],
+        # east road: ring (taxi corner) -> Soul Exchange -> down past the Pet Shop
+        "eRoad1": [76.0, 57.9], "eRoad2": [77.5, 60.5], "eRoad3": [80.2, 60.9],
+        "eRoad4": [84.9, 63.2], "soulFront": [88.8, 67.0],
+        "petRight1": [93.0, 72.0], "petRight2": [93.3, 75.5], "petRight3": [92.3, 79.5],
+        "petRight4": [89.7, 83.3],
     }
-    roadEdges = [
-        ["topUni", "topClub"], ["topClub", "topAirport"], ["topAirport", "topLux"],
-        ["topClub", "ringN"], ["topUni", "ringNW"], ["topAirport", "ringNE"],
-        ["ringN", "ringNE"], ["ringNE", "ringE"], ["ringE", "ringSE"], ["ringSE", "ringS"],
-        ["ringS", "ringSW"], ["ringSW", "ringW"], ["ringW", "ringNW"], ["ringNW", "ringN"],
-        ["ringW", "leftAir"], ["leftAir", "leftMid"], ["leftMid", "templeFront"],
-        ["leftAir", "topUni"], ["templeFront", "swConnector"], ["swConnector", "botGym"],
-        ["swConnector", "ringSW"], ["botGym", "botLow"], ["botLow", "botMall"],
-        ["botMall", "botBurger"], ["botBurger", "botPet"], ["ringS", "sConnector"],
-        ["sConnector", "botMall"], ["ringSW", "swConnector"],
-        ["topLux", "rightTop"], ["rightTop", "debtFront"], ["ringE", "debtFront"],
-        ["debtFront", "rightMid"], ["rightMid", "soulFront"], ["rightMid", "rightLow"],
-        ["rightLow", "botPet"],
+    _ring = ["ringTop", "clubFront", "airportFront", "neJunction", "ringNE2", "ringE1",
+             "ringE2", "ringE3", "ringSE1", "seTaxi", "ringSE2", "ringSE3", "ringS",
+             "ringSW1", "ringSW2", "ringSW3", "ringW1", "ringW2", "ringW3", "ringNW1",
+             "ringNW2", "ringNW3", "nwJoin", "ringN0", "ringTop"]
+    roadEdges = [[_ring[i], _ring[i + 1]] for i in range(len(_ring) - 1)] + [
+        # NW spur + university/west road
+        ["nwFork", "nwRoad1"], ["nwRoad1", "nwRoad2"], ["nwRoad2", "nwJoin"],
+        ["nwFork", "uniRoad1"], ["uniRoad1", "uniRoad2"], ["uniRoad2", "uniFront"],
+        ["uniFront", "aoFront"], ["aoFront", "aoBend"], ["aoBend", "wJoin"],
+        ["wJoin", "templeRoad1"], ["templeRoad1", "templeRoad2"], ["templeRoad2", "templeBend"],
+        ["templeBend", "templeFront"],
+        ["templeFront", "gymBend1"], ["gymBend1", "gymBend2"], ["gymBend2", "gymFront"],
+        ["gymFront", "gymCorner"], ["gymCorner", "bvdLow"],
+        ["wJoin", "wMid"], ["wMid", "ringW3"], ["ringW3", "parkPath"],
+        # bottom boulevard
+        ["bvdLow", "bvdClock"], ["bvdClock", "bvdJoin"], ["bvdJoin", "mallFront"],
+        ["mallFront", "bvdMid1"], ["bvdMid1", "burgerFront"], ["burgerFront", "bvdMid2"],
+        ["bvdMid2", "petFront"], ["petFront", "bvdEast"],
+        # Luxury alley, east road, pet-shop right road
+        ["luxAlley1", "luxAlley2"], ["luxAlley2", "luxAlley3"], ["luxAlley3", "luxAlley4"],
+        ["luxAlley4", "luxAlley5"], ["luxAlley5", "eRoad4"],
+        ["seTaxi", "eRoad1"], ["eRoad1", "eRoad2"], ["eRoad2", "eRoad3"], ["eRoad3", "eRoad4"],
+        ["eRoad4", "soulFront"], ["soulFront", "petRight1"], ["petRight1", "petRight2"],
+        ["petRight2", "petRight3"], ["petRight3", "petRight4"], ["petRight4", "bvdEast"],
     ]
 
     data = {

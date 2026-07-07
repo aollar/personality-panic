@@ -20,7 +20,7 @@
     this.img = el.querySelector("img");
     this.ring = el.querySelector(".ring");
     this.img.src = IDLE_SRC;
-    this.pos = [47.3, 74.0];
+    this.pos = (E.NODE_POS.lowCost || [47.3, 74.0]).slice(); // lowCost doorstep
     this.raf = null;
     this.setPos(this.pos[0], this.pos[1]);
   }
