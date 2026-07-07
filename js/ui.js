@@ -869,27 +869,58 @@
     var list = E.actionsAt(st, p);
     return list.filter(function (x) { return x.id === actionId; })[0] || null;
   }
+  // Why a specific shop item can't be bought right now (null = buyable)
+  function itemBlockReason(p, item) {
+    if (p.items.indexOf(item.name) !== -1) return "✓ Already owned";
+    var req = item.req || [];
+    for (var i = 0; i < req.length; i++) {
+      var r = req[i];
+      if (r.kind === "ownsItem" && p.items.indexOf(r.item) === -1) return "Requires " + r.item + " first";
+      if (r.kind === "housedLux" && (p.homeless || p.housing !== "lux")) return "Luxury Apartment tenants only";
+      if (r.kind === "housedLow" && (p.homeless || p.housing !== "low")) return "Low Cost Housing tenants only";
+      if (r.kind === "notHomeless" && p.homeless) return "Not while homeless";
+    }
+    if (p.stats.money < Math.round(item.costPct * UI.state.T)) return "Need $" + Math.round(item.costPct * UI.state.T);
+    return null;
+  }
   function showTip(btn, h) {
     var ann = annFor(h.a);
     var tip = $("#paint-tip");
     if (!ann) { hideTip(); return; }
-    var a = ann.action, costBits = [];
+    var a = ann.action, st = UI.state, p = activeP(), costBits = [], nameLine, bodyHtml, whyHtml = "";
+    var petCode = h.choice && h.choice.pet, pet = petCode && DATA.pets[petCode];
+    var itemName = h.choice && h.choice.item, item = itemName && E.ITEMS && E.ITEMS[itemName];
     if (ann.tu) costBits.push("⏳ " + ann.tu + " TU");
-    if (ann.cost) costBits.push("💵 $" + ann.cost);
-    // Adopt cards: show THIS pet's stat bonuses (each animal boosts a different pair)
-    var petCode = h.choice && h.choice.pet;
-    var pet = petCode && DATA.pets[petCode];
-    var nameLine = pet ? ((h.label || per(petCode).name.replace("The ", "")) + " · " + petCode + " pet") : a.name;
-    var bodyHtml = pet
-      ? '<div class="t-fx">🐾 Boosts <b>' + E.statName(pet.main) + "</b> & <b>" + E.statName(pet.upkeep) + "</b></div>" +
-        '<div class="t-note">+10% to a neutral stat · +5% if it stacks a strength · halves a matching weakness · one pet at a time</div>'
-      : (fxSummary(a) ? '<div class="t-fx">' + fxSummary(a) + "</div>" : "");
+    if (item) {
+      // mall shop item: show THIS item's price, stat effect, and manual blurb
+      var icost = Math.round(item.costPct * st.T);
+      costBits.push("💵 $" + icost);
+      nameLine = item.name;
+      var fxb = [];
+      if (item.bonus) fxb.push("+" + Math.round(item.bonus.pct * st.T) + " " + E.statName(item.bonus.stat));
+      if (item.penalty) fxb.push("-" + Math.round(item.penalty.pct * st.T) + " " + E.statName(item.penalty.stat));
+      bodyHtml = (fxb.length ? '<div class="t-fx">' + fxb.join(" · ") + "</div>" : "") +
+        (item.effect ? '<div class="t-note">💡 ' + item.effect + "</div>" : "");
+      var block = itemBlockReason(p, item);
+      if (block) whyHtml = '<div class="t-why">' + (block.charAt(0) === "✓" ? "" : "🔒 ") + block + "</div>";
+    } else if (pet) {
+      // adopt card: THIS pet's stat bonuses (each animal boosts a different pair)
+      if (ann.cost) costBits.push("💵 $" + ann.cost);
+      nameLine = (h.label || per(petCode).name.replace("The ", "")) + " · " + petCode + " pet";
+      bodyHtml = '<div class="t-fx">🐾 Boosts <b>' + E.statName(pet.main) + "</b> & <b>" + E.statName(pet.upkeep) + "</b></div>" +
+        '<div class="t-note">+10% to a neutral stat · +5% if it stacks a strength · halves a matching weakness · one pet at a time</div>';
+      if (!ann.ok) whyHtml = '<div class="t-why">🔒 ' + ann.why + "</div>";
+    } else {
+      if (ann.cost) costBits.push("💵 $" + ann.cost);
+      nameLine = a.name;
+      bodyHtml = (fxSummary(a) ? '<div class="t-fx">' + fxSummary(a) + "</div>" : "") +
+        ((UI.cfg && UI.cfg.hints && a.note) ? '<div class="t-note">💡 ' + a.note + "</div>" : "");
+      if (!ann.ok) whyHtml = '<div class="t-why">🔒 ' + ann.why + "</div>";
+    }
     tip.innerHTML =
       '<div class="t-name">' + nameLine + '</div>' +
       '<div class="t-cost">' + (costBits.join(" · ") || "Free") + "</div>" +
-      bodyHtml +
-      (!ann.ok ? '<div class="t-why">🔒 ' + ann.why + "</div>" : "") +
-      ((UI.cfg && UI.cfg.hints && a.note && !pet) ? '<div class="t-note">💡 ' + a.note + "</div>" : "");
+      bodyHtml + whyHtml;
     tip.style.display = "";
     // place the tip just left of the painted panel, level with the button
     tip.style.right = (100 - h.box[0] + 1) + "%";
