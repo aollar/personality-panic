@@ -110,7 +110,7 @@ var PP_SCENE_PAGES = {
 
   mall: {
     tabBar: MALL_TABS,
-    work: { a: "A118", box: [88.0, 85.0, 11.0, 12.0] },
+    work: { a: "A118", box: [81.0, 85.3, 17.7, 11.2] }, // full painted WORK button
     tabs: [
       { id: "style", label: "STYLE", pages: [
         { img: "mall.jpg", arrows: ARR_M3, hotspots: ppItemGrid([
@@ -155,7 +155,7 @@ var PP_SCENE_PAGES = {
       ]},
       { id: "rent", label: "PAY RENT", pages: [
         { img: "house_rent.jpg", hotspots: [
-          { a: "X006", box: [72.3, 15.0, 12.3, 17.5] }, // Pay Low-Cost Rent card
+          { a: "X006", box: [74.4, 14.3, 11.5, 23.2] }, // Pay Low-Cost Rent card
           { a: "X006", box: [72.3, 86.5, 26.0, 9.0] }   // big PAY RENT bar (A008 was
                                                         // folded into X006 in assumptions)
         ]}
