@@ -19,7 +19,7 @@ var PP_HOTSPOTS = {
     { a: "A001", box: [70.5, 89.5, 28.0, 9.5] }   // featured: Bunk Bed
   ],
   luxury: [
-    { a: "X007", box: [86.5, 11.5, 11.5, 4.5] },   // PAY RENT tab
+    { a: "X007", box: [87.0, 10.0, 11.3, 4.8] },   // PAY RENT tab
     { a: "A009", box: [76.5, 16.0, 10.0, 17.0] }, // Sleep in Fancy Bed
     { a: "A010", box: [87.0, 16.0, 11.0, 17.0] }, // Luxury Bath
     { a: "A011", box: [76.5, 34.0, 10.0, 16.0] }, // Relax in Your Suite
@@ -31,70 +31,70 @@ var PP_HOTSPOTS = {
     { a: "A009", box: [76.5, 79.0, 21.5, 17.0] }  // featured: Fancy Bed
   ],
   park: [
-    { a: "A018", box: [69.5, 12.0, 14.5, 21.0] }, // Take a Walk
-    { a: "A019", box: [84.0, 12.0, 14.5, 21.0] }, // Touch Grass
-    { a: "A020", box: [69.5, 34.0, 14.5, 20.0] }, // Feed Judgmental Ducks
-    { a: "A021", box: [84.0, 34.0, 14.5, 20.0] }, // Use Restroom of Uncertainty
-    { a: "A022", box: [69.5, 55.0, 14.5, 20.0] }, // Nap on Park Bench
-    { a: "A023", box: [84.0, 55.0, 14.5, 20.0] }, // Pick Up Loose Change
-    { a: "A019", box: [69.5, 77.0, 29.0, 15.0] }, // featured: Touch Grass
-    { a: "A024", box: [69.5, 92.5, 29.0, 6.5] }   // unhoused support strip -> cheque
+    { a: "A018", box: [72.2, 12.2, 11.5, 19.7] }, // Take a Walk
+    { a: "A019", box: [85.4, 12.2, 13.0, 19.7] }, // Touch Grass
+    { a: "A020", box: [72.2, 34.2, 11.5, 19.1] }, // Feed Judgmental Ducks
+    { a: "A021", box: [85.4, 34.2, 13.0, 19.1] }, // Use Restroom of Uncertainty
+    { a: "A022", box: [72.2, 55.0, 11.5, 19.4] }, // Nap on Park Bench
+    { a: "A023", box: [85.4, 55.0, 13.0, 19.4] }, // Pick Up Loose Change
+    { a: "A019", box: [72.2, 76.3, 26.2, 15.3] }, // featured: Touch Grass
+    { a: "A024", box: [72.2, 92.5, 26.2, 6.9] }   // unhoused support strip -> cheque
   ],
   airOne: [
-    { a: "A026", box: [70.3, 12.0, 9.7, 25.5] }, // 1 Week Groceries
-    { a: "A027", box: [80.3, 12.0, 18.0, 25.5] }, // 1 Week Organic
-    { a: "A028", box: [70.3, 38.5, 9.7, 24.5] }, // 4 Weeks Groceries
-    { a: "A029", box: [80.3, 38.5, 18.0, 24.5] }, // $22 Smoothie
-    { a: "A030", box: [70.3, 64.5, 28.0, 10.0] }, // Judge Window Shoppers
-    { a: "A033", box: [76.0, 84.0, 22.5, 10.5], work: true } // WORK
+    { a: "A026", box: [70.6, 11.5, 12.9, 24.8] }, // 1 Week Groceries
+    { a: "A027", box: [83.9, 11.5, 14.9, 24.8] }, // 1 Week Organic
+    { a: "A028", box: [70.6, 38.6, 12.9, 24.1] }, // 4 Weeks Groceries
+    { a: "A029", box: [83.9, 38.6, 14.9, 24.1] }, // $22 Smoothie
+    { a: "A030", box: [70.6, 64.0, 28.2, 10.6] }, // Judge Window Shoppers
+    { a: "A033", box: [77.2, 84.0, 21.6, 11.8], work: true } // WORK
   ],
   regretBurger: [
-    { a: "A034", box: [68.0, 12.0, 11.0, 26.0] }, // Classic
-    { a: "A035", box: [79.0, 12.0, 10.5, 26.0] }, // Double Deluxe
-    { a: "A036", box: [89.5, 12.0, 9.0, 26.0] },  // Shame Shake
-    { a: "A037", box: [68.0, 40.0, 12.5, 23.0] }, // Doomscroll Fries
-    { a: "A038", box: [80.5, 40.0, 17.5, 23.0] }, // Emotional Support Nuggets
-    { a: "A035", box: [68.0, 65.0, 30.5, 17.0] }, // featured: Double Deluxe
+    { a: "A034", box: [67.5, 12.2, 10.2, 25.5] }, // Classic
+    { a: "A035", box: [78.2, 12.2, 10.2, 25.5] }, // Double Deluxe
+    { a: "A036", box: [89.1, 12.2, 9.7, 25.5] },  // Shame Shake
+    { a: "A037", box: [67.9, 39.5, 14.8, 23.0] }, // Doomscroll Fries
+    { a: "A038", box: [83.3, 39.5, 15.4, 23.0] }, // Emotional Support Nuggets
+    { a: "A035", box: [67.9, 64.6, 30.8, 16.7] }, // featured: Double Deluxe
     { a: "A041", box: [71.0, 85.0, 25.0, 12.0], work: true } // WORK
   ],
   gym: [
-    { a: "A042", box: [68.0, 11.0, 11.8, 20.0] }, // Cardio Session
-    { a: "A043", box: [80.0, 11.0, 17.5, 20.0] }, // Chest Day
-    { a: "A044", box: [68.0, 32.0, 11.8, 20.0] }, // Treninator Bootcamp
-    { a: "A045", box: [80.0, 32.0, 17.5, 20.0] }, // Suspicious Test Booster
-    { a: "A046", box: [68.0, 53.0, 11.8, 15.0] }, // Flex in Mirror
-    { a: "A047", box: [80.0, 53.0, 17.5, 15.0] }, // Skip Leg Day
-    { a: "A042", box: [68.0, 69.0, 30.0, 11.0] }, // featured: Cardio
-    { a: "A049", box: [71.0, 88.0, 27.0, 11.0], work: true } // WORK
+    { a: "A042", box: [74.3, 11.5, 11.0, 19.5] }, // Cardio Session
+    { a: "A043", box: [86.0, 11.5, 11.7, 19.5] }, // Chest Day
+    { a: "A044", box: [74.3, 32.2, 11.0, 19.6] }, // Treninator Bootcamp
+    { a: "A045", box: [86.0, 32.2, 11.7, 19.6] }, // Suspicious Test Booster
+    { a: "A046", box: [74.3, 52.9, 11.0, 14.9] }, // Flex in Mirror
+    { a: "A047", box: [86.0, 52.9, 11.7, 14.9] }, // Skip Leg Day
+    { a: "A042", box: [74.3, 69.1, 23.4, 10.1] }, // featured: Cardio
+    { a: "A049", box: [79.7, 88.0, 18.3, 10.0], work: true } // WORK
   ],
   temple: [
-    { a: "A058", box: [71.0, 11.0, 10.5, 26.0] }, // Buy My Camp
-    { a: "A059", box: [82.0, 11.0, 8.5, 26.0] },  // Surrender Thought
-    { a: "A060", box: [90.5, 11.0, 8.0, 26.0] },  // Join Group Chant
-    { a: "A061", box: [71.0, 39.0, 13.5, 21.0] }, // Report Doubt
-    { a: "A062", box: [84.5, 39.0, 14.0, 21.0] }, // Achieve Inner Peace
-    { a: "A063", box: [71.0, 62.0, 27.5, 20.0] }, // Guided Surrender Package
-    { a: "A066", box: [80.0, 84.0, 19.0, 13.0], work: true } // WORK
+    { a: "A058", box: [72.0, 11.0, 9.4, 26.0] },  // Buy My Camp
+    { a: "A059", box: [81.9, 11.0, 8.5, 26.0] },  // Surrender Thought
+    { a: "A060", box: [90.8, 11.0, 7.7, 26.0] },  // Join Group Chant
+    { a: "A061", box: [72.1, 39.0, 12.5, 21.0] }, // Report Doubt
+    { a: "A062", box: [85.4, 39.0, 13.0, 21.0] }, // Achieve Inner Peace
+    { a: "A063", box: [72.1, 61.1, 26.3, 20.2] }, // Guided Surrender Package
+    { a: "A066", box: [80.3, 83.5, 18.5, 12.0], work: true } // WORK
   ],
   university: [
-    { a: "A067", box: [70.5, 12.0, 12.0, 24.0] }, // Take Class
-    { a: "A068", box: [83.0, 12.0, 15.0, 24.0] }, // Study Group
-    { a: "A069", box: [70.5, 37.0, 12.0, 24.0] }, // Flirt With Classmate
-    { a: "A070", box: [83.0, 37.0, 15.0, 24.0] }, // Finish Undergrad
-    { a: "A071", box: [70.5, 62.0, 12.0, 23.0] }, // Finish Master's
-    { a: "A072", box: [83.0, 62.0, 15.0, 23.0] }, // Finish PhD
-    { a: "A075", box: [77.0, 87.5, 21.5, 11.0], work: true } // WORK
+    { a: "A067", box: [74.3, 11.9, 12.4, 23.2] }, // Take Class
+    { a: "A068", box: [87.3, 11.9, 10.9, 23.2] }, // Study Group
+    { a: "A069", box: [74.3, 37.0, 12.4, 23.4] }, // Flirt With Classmate
+    { a: "A070", box: [87.3, 37.0, 10.9, 23.4] }, // Finish Undergrad
+    { a: "A071", box: [74.3, 62.2, 12.4, 21.2] }, // Finish Master's
+    { a: "A072", box: [87.3, 62.2, 10.9, 21.2] }, // Finish PhD
+    { a: "A075", box: [82.8, 87.8, 15.9, 9.0], work: true } // WORK
   ],
   soulExchange: [
-    { a: "A076", box: [71.0, 9.0, 13.5, 18.0] },  // Get / Change Job
-    { a: "A078", box: [84.5, 9.0, 14.0, 18.0] },  // Update Resume Secretly
-    { a: "A079", box: [71.0, 28.0, 13.5, 16.0] }, // Attend Team Building
-    { a: "A080", box: [84.5, 28.0, 14.0, 16.0] }, // Join Union Meeting
-    { a: "A081", box: [71.0, 45.0, 13.5, 16.0] }, // Use Bathroom Timer
-    { a: "A082", box: [84.5, 45.0, 14.0, 16.0] }, // Max Out Benefits
-    { a: "A083", box: [71.0, 62.0, 27.5, 10.0] }, // Quit Before Benefits Start
-    { a: "A076", box: [71.0, 73.0, 27.5, 15.0] }, // featured: Get/Change Job
-    { a: "A077", box: [82.0, 89.0, 17.0, 10.0], work: true } // WORK
+    { a: "A076", box: [73.4, 9.4, 11.0, 17.2] },  // Get / Change Job
+    { a: "A078", box: [85.2, 9.4, 13.2, 17.2] },  // Update Resume Secretly
+    { a: "A079", box: [73.4, 27.8, 11.0, 17.4] }, // Attend Team Building
+    { a: "A080", box: [85.2, 27.8, 13.2, 17.4] }, // Join Union Meeting
+    { a: "A081", box: [73.4, 45.9, 11.0, 12.9] }, // Use Bathroom Timer
+    { a: "A082", box: [85.2, 45.9, 13.2, 12.9] }, // Max Out Benefits
+    { a: "A083", box: [73.4, 60.0, 25.0, 14.0] }, // Quit Before Benefits Start
+    { a: "A076", box: [73.4, 73.0, 25.0, 17.5] }, // featured: Get/Change Job
+    { a: "A077", box: [83.0, 90.3, 15.7, 9.2], work: true } // WORK
   ],
   debtstreet: [
     { a: "A085", box: [68.5, 16.0, 13.0, 14.0] }, // Open Savings Account
@@ -104,16 +104,16 @@ var PP_HOTSPOTS = {
     { a: "A089", box: [68.5, 47.0, 13.0, 15.0] }, // Read Tiny Print
     { a: "A090", box: [82.0, 47.0, 16.0, 15.0] }, // Take Lifestyle Loan
     { a: "A091", box: [68.5, 63.0, 29.5, 11.0] }, // Buy Penny Stocks
-    { a: "A092", box: [76.0, 80.0, 22.0, 16.0], work: true } // WORK
+    { a: "A092", box: [83.0, 83.0, 15.0, 13.5], work: true } // WORK
   ],
   airport: [
-    { a: "A093", box: [67.0, 11.0, 13.0, 25.0] }, // Fly to Hawaii
-    { a: "A094", box: [80.0, 11.0, 18.5, 25.0] }, // Fly to Japan
-    { a: "A095", box: [67.0, 37.0, 13.0, 22.0] }, // Fly to France
-    { a: "A096", box: [80.0, 37.0, 18.5, 22.0] }, // Fly to Australia
-    { a: "A097", box: [67.0, 60.0, 13.0, 22.0] }, // Long-Term Backpacking Trip
-    { a: "A098", box: [80.0, 60.0, 18.5, 22.0] }, // Complain About Missing Baggage
-    { a: "A101", box: [82.0, 85.0, 17.0, 13.0], work: true } // WORK
+    { a: "A093", box: [73.9, 10.6, 11.5, 24.5] }, // Fly to Hawaii
+    { a: "A094", box: [85.8, 10.6, 12.9, 24.5] }, // Fly to Japan
+    { a: "A095", box: [73.9, 37.0, 11.5, 22.5] }, // Fly to France
+    { a: "A096", box: [85.8, 37.0, 12.9, 22.5] }, // Fly to Australia
+    { a: "A097", box: [73.9, 60.1, 11.5, 21.7] }, // Long-Term Backpacking Trip
+    { a: "A098", box: [85.8, 60.1, 12.9, 21.7] }, // Complain About Missing Baggage
+    { a: "A101", box: [82.4, 85.0, 16.3, 12.8], work: true } // WORK
   ],
   petShop: [
     { a: "A102", box: [79.5, 5.5, 6.5, 4.0] },    // ADOPT tab
@@ -135,10 +135,28 @@ var PP_HOTSPOTS = {
   ]
   // club: handled separately (video + animated side menu iframe)
 };
+// Overmap building hotspots: [x, y, w, h] percent boxes traced around each
+// painted building (replaces the old one-size-fits-all box centered on pos).
+var PP_MAP_BOXES = {
+  lowCost:      [41.9, 60.5, 11.0, 23.0],
+  luxury:       [79.8,  4.0, 18.3, 29.0],
+  park:         [50.8, 28.5, 14.4, 26.0],
+  airOne:       [19.7, 22.5, 12.6, 19.5],
+  regretBurger: [68.2, 61.5, 11.3, 24.0],
+  gym:          [24.8, 63.5, 14.4, 27.5],
+  club:         [43.5,  2.0, 14.0, 22.5],
+  temple:       [22.4, 42.0, 15.0, 24.0],
+  university:   [22.1,  3.7, 16.8, 27.5],
+  soulExchange: [84.9, 35.0, 14.4, 30.0],
+  debtstreet:   [76.0, 26.0, 11.0, 30.0],
+  airport:      [59.8,  2.5, 17.4, 18.5],
+  petShop:      [80.4, 62.0, 14.1, 28.0],
+  mall:         [51.7, 57.5, 14.4, 26.0]
+};
 // BDC side-menu card ids -> engine actions
 var PP_BDC_MAP = {
   dance: "A050", flirt: "A051", digits: "A052",
   shots: "A053", vip: "A054", stranger: "A055", work: "A057"
 };
-if (typeof window !== "undefined") { window.PP_HOTSPOTS = PP_HOTSPOTS; window.PP_BDC_MAP = PP_BDC_MAP; }
-if (typeof module !== "undefined") module.exports = { PP_HOTSPOTS: PP_HOTSPOTS, PP_BDC_MAP: PP_BDC_MAP };
+if (typeof window !== "undefined") { window.PP_HOTSPOTS = PP_HOTSPOTS; window.PP_BDC_MAP = PP_BDC_MAP; window.PP_MAP_BOXES = PP_MAP_BOXES; }
+if (typeof module !== "undefined") module.exports = { PP_HOTSPOTS: PP_HOTSPOTS, PP_BDC_MAP: PP_BDC_MAP, PP_MAP_BOXES: PP_MAP_BOXES };

@@ -304,10 +304,12 @@
       var b = DATA.buildings[id];
       var h = document.createElement("button");
       h.className = "hotspot";
-      h.style.left = b.pos[0] + "%";
-      h.style.top = (b.pos[1] - 4) + "%";
-      h.style.setProperty("--w", "14.5%");
-      h.style.setProperty("--h", "21%");
+      var mb = window.PP_MAP_BOXES && window.PP_MAP_BOXES[id];
+      // .hotspot is centered on left/top via translate(-50%,-50%)
+      h.style.left = (mb ? mb[0] + mb[2] / 2 : b.pos[0]) + "%";
+      h.style.top = (mb ? mb[1] + mb[3] / 2 : b.pos[1] - 4) + "%";
+      h.style.setProperty("--w", (mb ? mb[2] : 14.5) + "%");
+      h.style.setProperty("--h", (mb ? mb[3] : 21) + "%");
       h.dataset.id = id;
       mv.appendChild(h);
       h.onclick = function () { onHotspot(id); };
