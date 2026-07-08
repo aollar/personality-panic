@@ -107,6 +107,13 @@
       NET.conns.forEach(function (o) { if (o !== c) send(o, { t: "view", scene: msg.scene }); });
       return;
     }
+    if (msg.t === "begin" && UI.state) {
+      // active player pressed "Start Turn": sync every spectator's countdown
+      if (c.slotIdx !== UI.state.activeIdx) return;
+      UI.syncTimerStart();
+      NET.conns.forEach(function (o) { if (o !== c) send(o, { t: "begin" }); });
+      return;
+    }
     if (msg.t === "intent" && UI.state) {
       if (c.slotIdx !== UI.state.activeIdx) return; // not their turn
       if (msg.kind === "move") E.moveTo(UI.state, msg.payload.to);
@@ -114,7 +121,13 @@
         var r2 = E.perform(UI.state, msg.payload.id, msg.payload.choice);
         if (r2 && r2.needsChoice) { send(c, { t: "choice", need: r2.needsChoice, group: r2.group, actionId: msg.payload.id }); return; }
       }
-      else if (msg.kind === "end") E.endTurn(UI.state);
+      else if (msg.kind === "end") {
+        E.endTurn(UI.state);
+        NET.broadcastState();
+        if (UI.state.over) { UI.openPodium(); return; }
+        UI.turnIntro();     // restarts the host's clock for whoever is next (incl. bots)
+        return;
+      }
       NET.broadcastState();
       UI.renderAll();
       if (UI.state.over) UI.openPodium();
@@ -172,7 +185,10 @@
     }
     if (msg.t === "view") { UI.spectateScene(msg.scene); return; }
     if (msg.t === "walk" && UI.state) {
-      if (!UI.walker.raf) UI.walker.walkTo(msg.to, msg.from, function () {});
+      if (!UI.walker.raf) {
+        window.PPAudio.startMove(msg.transport || "walk");
+        UI.walker.walkTo(msg.to, msg.from, function () { window.PPAudio.stopMove(); });
+      }
       return;
     }
     if (msg.t === "lobby") { NET.roster = msg.roster; NET.code = msg.code; NET.opts = msg.opts; renderLobby(); }
@@ -185,9 +201,10 @@
       document.querySelector("#dlg-lobby").classList.remove("show");
       UI.startGameUI(false);
     }
+    if (msg.t === "begin") { UI.syncTimerStart(); return; }   // active player started their turn
     if (msg.t === "state") {
       var wasMyTurn = UI.state && UI.mySlots.indexOf(UI.state.activeIdx) !== -1;
-      var prevTurn = UI.state && UI.state.turn;
+      var prevActive = UI.state ? UI.state.activeIdx : -1;
       UI.state = E.deserialize(msg.state);
       if (UI.state.over) { UI.openPodium(); return; }
       UI.renderAll();
@@ -195,23 +212,30 @@
       window.PPAudio.setScene(UI.inScene || "overmap", E.isRentTurn(UI.state));
       var nowMyTurn = UI.mySlots.indexOf(UI.state.activeIdx) !== -1;
       if (nowMyTurn && !wasMyTurn) UI.turnIntro();
+      else if (UI.state.activeIdx !== prevActive) UI.spectateTurnChange();  // fresh clock for their turn
     }
     if (msg.t === "choice") {
       // host bounced a choice-action back: open the right picker
       if (msg.need === "shop") UI.doActionShopRemote(msg.group, msg.actionId);
+      if (msg.need === "course") UI.doActionCourseRemote(msg.actionId);
     }
   }
   NET.sendIntent = function (kind, payload) {
     if (NET.conn) NET.conn.send({ t: "intent", kind: kind, payload: payload });
+  };
+  // "Start Turn" pressed: let every other client restart its spectator clock
+  NET.sendBegin = function () {
+    if (NET.isHost) broadcast({ t: "begin" });
+    else if (NET.conn) NET.conn.send({ t: "begin" });
   };
   // scene view sync: my open/close building -> everyone's screen
   NET.sendView = function (scene) {
     if (NET.isHost) broadcast({ t: "view", scene: scene });
     else if (NET.conn) NET.conn.send({ t: "view", scene: scene });
   };
-  // walk animation relay (host-authoritative)
-  NET.relayWalk = function (from, to) {
-    if (NET.isHost) broadcast({ t: "walk", from: from, to: to });
+  // walk animation relay (host-authoritative); transport lets spectators HEAR it
+  NET.relayWalk = function (from, to, transport) {
+    if (NET.isHost) broadcast({ t: "walk", from: from, to: to, transport: transport || "walk" });
   };
   NET.leave = function () {
     try { if (NET.conn) NET.conn.send({ t: "bye" }); } catch (e) {}
@@ -345,6 +369,22 @@
       b.onclick = function () {
         document.querySelector("#dlg-shop").classList.remove("show");
         NET.sendIntent("action", { id: actionId, choice: { item: items[+b.dataset.i].name } });
+      };
+    });
+  };
+  // guest remote course picker (host bounced needsChoice back)
+  UI.doActionCourseRemote = function (actionId) {
+    var courses = (window.PP_ASSUMPTIONS && window.PP_ASSUMPTIONS.courses) || [];
+    $("#shop-title").textContent = "📚 Course Catalog";
+    $("#shop-grid").innerHTML = courses.map(function (c, i) {
+      return '<button class="shop-item" data-i="' + i + '">' +
+        '<div class="s-name">' + c.name + "</div><div class='s-cost'>" + c.blurb + "</div></button>";
+    }).join("");
+    document.querySelector("#dlg-shop").classList.add("show");
+    $$("#shop-grid .shop-item").forEach(function (b) {
+      b.onclick = function () {
+        document.querySelector("#dlg-shop").classList.remove("show");
+        NET.sendIntent("action", { id: actionId, choice: { course: courses[+b.dataset.i].name } });
       };
     });
   };

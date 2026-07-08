@@ -153,7 +153,22 @@ var PP_ASSUMPTIONS = {
       note: "Heelton Heights does not do grace periods." }
   ],
   // Sheet rent rows replaced by synthetic ones above (A008 dual-purposed poorly):
-  removedActions: ["A008", "A017"]
+  removedActions: ["A008", "A017"],
+
+  // University course catalog for "Take Class" (Austin 2026-07-09: show + choose
+  // courses). Names riff on the scene art (book spines / whiteboard). Every
+  // course = the sheet's A067 (same TU/cost, +1 degree progress) plus this
+  // INVENTED mini-bonus so the pick matters:
+  courses: [
+    { name: "Philosophy 101", stat: "enlightenment", pct: 0.02, blurb: "Think about thinking. Regret both." },
+    { name: "Quantum Confusion", stat: "critical", pct: 0.02, blurb: "The answer is yes, no, and maybe — simultaneously." },
+    { name: "Memory of Maybe", stat: "critical", pct: 0.02, blurb: "Remember things that almost happened." },
+    { name: "Intro to Panic", stat: "happiness", pct: 0.02, blurb: "Prerequisites: none. You're already enrolled." },
+    { name: "The Overthinking Equation", stat: "enlightenment", pct: 0.02, blurb: "1 + 1 = 11. Show your work." },
+    { name: "Group Project Survival", stat: "connection", pct: 0.02, blurb: "Carry the team. Emotionally." }
+  ],
+  // Buy My Camp is once-per-game; the single purchase hits hard (Austin 2026-07-09):
+  myCampBoost: { enlightenment: 0.10, happiness: 0.05 }
 };
 if (typeof window !== "undefined") window.PP_ASSUMPTIONS = PP_ASSUMPTIONS;
 if (typeof module !== "undefined") module.exports = PP_ASSUMPTIONS;

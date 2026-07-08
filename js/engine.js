@@ -251,6 +251,7 @@
         case "degreeProgress":
           if (p.degreeProgress < r.n) return "Study more first (" + p.degreeProgress + "/" + r.n + " progress)"; break;
         case "myCamp": if (!p.flags.myCamp) return "Buy My Camp first"; break;
+        case "notFlag": if (p.flags[r.flag]) return r.msg || "Already done"; break;
         case "promotionEligible":
           if (!p.job) return "Need a job";
           if (!bestPromotion(state, p)) return "No promotion available yet"; break;
@@ -350,6 +351,12 @@
     }
     if (needsJob && !choice) return { ok: true, needsChoice: "job" };
     if (needsPet && !choice) return { ok: true, needsChoice: "pet" };
+    // Take Class: pick a course from the catalog (bots grab whatever's next)
+    var needsCourse = a.id === "A067" && ASSUME.courses && ASSUME.courses.length;
+    if (needsCourse && !choice) {
+      if (!p.isBot) return { ok: true, needsChoice: "course" };
+      choice = { course: ASSUME.courses[Math.floor(rand(state) * ASSUME.courses.length)].name };
+    }
 
     // pay the bill
     p.tu -= ann.tu;
@@ -403,7 +410,19 @@
                     happiness: Math.round(ASSUME.petStartPct * state.T), fedThisTurn: true, dead: false };
           log(state, p, "Adopted the " + DATA.personalities[choice.pet].name + " pet!", "good");
           break;
-        case "degreeProgress": p.degreeProgress += 1; break;
+        case "degreeProgress": {
+          p.degreeProgress += 1;
+          // the chosen course adds its little themed bonus (assumptions)
+          var crs = (choice && choice.course && ASSUME.courses)
+            ? ASSUME.courses.filter(function (c) { return c.name === choice.course; })[0] : null;
+          if (crs) {
+            summary.push("📚 " + crs.name);
+            var cd = gainStat(state, p, crs.stat, crs.pct);
+            if (cd) summary.push("+" + cd + " " + statName(crs.stat));
+          }
+          summary.push("class " + p.degreeProgress + " done");
+          break;
+        }
         case "grantDegree":
           if (p.degrees.indexOf(f.degree) === -1) {
             p.degrees.push(f.degree);
@@ -425,7 +444,17 @@
         case "quitJob":
           if (p.job) { log(state, p, "Quit being a " + p.job.name + ". Freedom (temporarily).", ""); p.job = null; }
           break;
-        case "unlock": p.flags[f.flag] = true; break;
+        case "unlock":
+          p.flags[f.flag] = true;
+          // My Camp is once-per-game (req notFlag) — make the single purchase
+          // land hard: bonus stats on top of the sheet's gain (assumptions)
+          if (f.flag === "myCamp" && ASSUME.myCampBoost) {
+            Object.keys(ASSUME.myCampBoost).forEach(function (s) {
+              var d = gainStat(state, p, s, ASSUME.myCampBoost[s]);
+              if (d) summary.push("+" + d + " " + statName(s));
+            });
+          }
+          break;
         case "payRent": p.rentPaid = true; result.sfx.push("money"); break;
         case "rehouse":
           p.homeless = false; p.housing = "low"; p.rentPaid = true;
@@ -532,9 +561,14 @@
   }
 
   // ---------- Turn / round flow ----------
+  function homeOf(p) {
+    if (p.homeless) return "park";
+    return p.housing === "lux" ? "luxury" : "lowCost";
+  }
   function startTurn(state) {
     var p = active(state);
     p.tu = DATA.settings.timeUnitsPerTurn;
+    p.location = homeOf(p);   // every turn starts at home (Austin 2026-07-09)
     p.warnings = [];
     // debts collected at the start of the turn they're due
     p.debts = p.debts.filter(function (d) {

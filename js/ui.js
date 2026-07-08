@@ -348,7 +348,7 @@
     var from = p.location;
     var r = dispatchNoRender("move", { to: id });
     if (!r.ok) { toast(r.why, "bad"); return; }
-    if (UI.mode === "host") window.PPNet.relayWalk(r.from, id);
+    if (UI.mode === "host") window.PPNet.relayWalk(r.from, id, r.transport);
     A.startMove(r.transport);
     renderHud();
     UI.walker.walkTo(id, from, function () {
@@ -431,6 +431,9 @@
   // center number = the real-time turn countdown; ∞ only for the Unlimited setting.
   function clockLabelText() {
     if (!UI.state || !UI.state.timerSeconds) return "∞";
+    // before any timer has run on this client (e.g. spectating turn 1) show the
+    // full allowance instead of NaN
+    if (UI.timerLeft == null) return UI.state.timerSeconds;
     return Math.max(0, UI.timerLeft);
   }
   function clockPreview(tu) { if (UI.clock) UI.clock.preview(tu || 0); }
@@ -558,9 +561,11 @@
       if (UI.timerLeft <= 5 && UI.timerLeft > 0 && !bot && window.PPStore.get("pp_timerwarn") !== "off") A.sfx("click");
       if (UI.timerLeft <= 0) {
         stopTimer();
-        if (!bot) {                                // humans time out -> auto end; bots end their own turn
+        // only the ACTIVE player's own client enforces the timeout — spectator
+        // clocks are display-only approximations (bots end their own turns)
+        if (!bot && isMyTurn()) {
           toast("⏰ Time's up!", "bad");
-          if (isMyTurn() || UI.mode !== "guest") endTurnClicked(true);
+          endTurnClicked(true);
         }
       }
     }, 1000);
@@ -591,8 +596,16 @@
     closeAllDialogs();                        // fresh turn: never inherit a stale menu from the last one
     if (p.isBot) { renderAll(); maybeRunBot(); startTimer(); return; }
     if (isMyTurn()) openTurnCard();          // spectators just watch the map + feed
+    else startTimer();                        // ...with a live clock for the other player's turn
     renderAll();
   }
+  // a remote player's turn began/advanced: restart the display clock on this client
+  UI.spectateTurnChange = function () {
+    closeAllDialogs();
+    startTimer();
+    renderAll();
+  };
+  UI.syncTimerStart = startTimer;             // net: active player pressed "Start Turn"
   function openTurnCard() {
     var p = activeP();
     var d = $("#dlg-turncard");
@@ -608,6 +621,7 @@
     openDialog("turncard");
     $("#btn-begin-turn").onclick = function () {
       click(); closeDialog("turncard"); startTimer();
+      if (UI.mode !== "local" && window.PPNet) window.PPNet.sendBegin();  // sync spectator clocks
     };
   }
   function endTurnClicked(auto) {
@@ -938,6 +952,11 @@
     $$("#paint-layer .paint-btn").forEach(function (btn) {
       var ann = here ? annFor(btn.dataset.a) : null;
       var locked = !ann || !ann.ok;
+      // item buttons (mall/pet pages) also lock on the ITEM's own requirements
+      // (luxury-only appliances, already owned, price) — not just the action's
+      var itemName = btn._choice && btn._choice.item;
+      var item = itemName && E.ITEMS && E.ITEMS[itemName];
+      if (!locked && item && itemBlockReason(p, item)) locked = true;
       btn.classList.toggle("locked", locked);
       btn.querySelector(".lock-chip").style.display = locked ? "" : "none";
       var tc = btn.querySelector(".tu-chip");
@@ -1057,6 +1076,7 @@
         if (shopFx) { openShop(shopFx.group, id); return; }
         if (a.fx.some(function (f) { return f.kind === "openJobDialog"; })) { openJobs(id); return; }
         if (a.fx.some(function (f) { return f.kind === "adoptPet"; })) { openPetChoice(id); return; }
+        if (id === "A067") { openCourses(id); return; }
       }
       dispatch("action", { id: id, choice: choice }); return;
     }
@@ -1065,6 +1085,7 @@
     if (r.needsChoice === "shop") { openShop(r.group, id); return; }
     if (r.needsChoice === "job") { openJobs(id); return; }
     if (r.needsChoice === "pet") { openPetChoice(id); return; }
+    if (r.needsChoice === "course") { openCourses(id); return; }
     if (id === "A018") A.footsteps(1800);          // Take a Walk: audible footsteps
     afterDispatch("action", { id: id }, r);
     var last = UI.state.log[UI.state.log.length - 1];
@@ -1105,6 +1126,37 @@
         click();
         closeDialog("shop");
         doAction(actionId, { item: items[+b.dataset.i].name });
+      };
+    });
+  }
+
+  // University course catalog: pick a class for A067 (reuses the shop dialog)
+  function openCourses(actionId) {
+    var st = UI.state, p = activeP();
+    var courses = (window.PP_ASSUMPTIONS && window.PP_ASSUMPTIONS.courses) || [];
+    var ann = annFor(actionId);
+    // where the degree track stands: next milestone at 3 / 6 / 10 classes
+    var next = p.degrees.indexOf("Undergrad") === -1 ? ["Undergrad", 3]
+             : p.degrees.indexOf("Masters") === -1 ? ["Master's", 6]
+             : p.degrees.indexOf("PhD") === -1 ? ["PhD", 10] : null;
+    $("#shop-title").textContent = "📚 Course Catalog";
+    $("#shop-grid").innerHTML =
+      '<div class="course-progress" style="grid-column:1/-1;font-weight:900;padding:.2em .3em">' +
+      "Classes taken: " + p.degreeProgress +
+      (next ? " · " + next[0] + " unlocks at " + next[1] : " · every degree earned 🎓") +
+      (ann ? " · each class: " + ann.tu + " TU · $" + ann.cost : "") + "</div>" +
+      courses.map(function (c, i) {
+        return '<button class="shop-item" data-i="' + i + '">' +
+          '<div class="s-name">' + c.name + "</div>" +
+          '<div class="s-fx">+1 class · +' + Math.round(c.pct * st.T) + " " + E.statName(c.stat) + "</div>" +
+          '<div class="s-cost">' + c.blurb + "</div></button>";
+      }).join("");
+    openDialog("shop");
+    $$("#shop-grid .shop-item").forEach(function (b) {
+      b.onclick = function () {
+        click();
+        closeDialog("shop");
+        doAction(actionId, { course: courses[+b.dataset.i].name });
       };
     });
   }

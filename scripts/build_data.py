@@ -97,6 +97,10 @@ def norm_req(action_id, building, text):
     if action_id == "A071": add("degree", degree="Undergrad"); add("degreeProgress", n=6)
     if action_id == "A072": add("degree", degree="Masters"); add("degreeProgress", n=10)
     if action_id in ("A062", "A063"): add("myCamp")   # advanced temple actions gated by My Camp
+    if action_id == "A058":  # Buy My Camp: one copy per lifetime of doubt (Austin 2026-07-09)
+        add("notFlag", flag="myCamp", msg="You already own My Camp")
+    if action_id in ("A026", "A027"):  # ALL groceries need a fridge at home, not just 4-week
+        add("fridge")                  # (Austin 2026-07-09; sheet only gated A028)
     if action_id == "A076": pass  # Get/Change Job: dialog filters individual jobs
     return reqs
 

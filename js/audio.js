@@ -70,9 +70,9 @@
   var sfxPool = [], sfxIdx = 0, sfxLast = {};
   function sfx(name) {
     var f = window.PP_DATA.sfx[name];
-    if (!f || !st.unlocked) return;
+    if (!f || !st.unlocked) return null;
     var now = (window.performance && performance.now) ? performance.now() : Date.now();
-    if (sfxLast[name] && now - sfxLast[name] < 45) return; // de-dupe rapid retrigger
+    if (sfxLast[name] && now - sfxLast[name] < 45) return null; // de-dupe rapid retrigger
     sfxLast[name] = now;
     var el;
     if (sfxPool.length < SFX_POOL_MAX) { el = new Audio(); el.onerror = function () {}; sfxPool.push(el); }
@@ -81,12 +81,14 @@
     try { el.pause(); el.currentTime = 0; } catch (e) {}
     el.volume = sfxVol();
     el.play().catch(function () {});
+    return el;
   }
-  // movement: walking loops; bike/car are one-shots and mute the walk loop
+  // movement: walking loops; bike/car one-shots — ALL of them stop on arrival
+  // (the 2.8s car clip used to keep revving inside the building)
   function startMove(transport) {
     stopMove();
-    if (transport === "Bicycle") { sfx("bike"); return; }
-    if (transport === "Car") { sfx("car"); return; }
+    if (transport === "Bicycle") { st.moveEl = sfx("bike"); return; }
+    if (transport === "Car") { st.moveEl = sfx("car"); return; }
     var f = window.PP_DATA.sfx.walk;
     if (!f || !st.unlocked) return;
     var el = new Audio(SFX_DIR + f);
@@ -97,10 +99,25 @@
   }
   function stopMove() {
     if (st.walkLoop) { try { st.walkLoop.pause(); } catch (e) {} st.walkLoop = null; }
+    if (st.moveEl) { try { st.moveEl.pause(); } catch (e) {} st.moveEl = null; }
+  }
+
+  // Fetch + decode every SFX once up front so first plays start instantly
+  // (the car sound's "takes a second to run" was cold-load latency).
+  function primeSfx() {
+    if (st.primed || !window.PP_DATA || !window.PP_DATA.sfx) return;
+    st.primed = true;
+    Object.keys(window.PP_DATA.sfx).forEach(function (k) {
+      var a = new Audio(SFX_DIR + window.PP_DATA.sfx[k]);
+      a.preload = "auto";
+      a.onerror = function () {};
+      try { a.load(); } catch (e) {}
+    });
   }
 
   function unlock() {
     st.unlocked = true;
+    primeSfx();
     // Self-heal: if music should be playing but stalled/paused (e.g. after the
     // browser throttled audio), the next click kicks it back on.
     if (st.musicEl && st.musicEl.paused && musicVol() > 0) st.musicEl.play().catch(function () {});

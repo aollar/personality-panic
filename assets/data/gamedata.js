@@ -935,7 +935,11 @@ var PP_DATA = {
    ],
    "petGains": [],
    "penalties": [],
-   "req": [],
+   "req": [
+    {
+     "kind": "fridge"
+    }
+   ],
    "fx": [
     {
      "kind": "foodSupply",
@@ -959,7 +963,11 @@ var PP_DATA = {
    ],
    "petGains": [],
    "penalties": [],
-   "req": [],
+   "req": [
+    {
+     "kind": "fridge"
+    }
+   ],
    "fx": [
     {
      "kind": "foodSupply",
@@ -1863,6 +1871,11 @@ var PP_DATA = {
      "kind": "statGte",
      "stat": "money",
      "pctT": 0.5
+    },
+    {
+     "kind": "notFlag",
+     "flag": "myCamp",
+     "msg": "You already own My Camp"
     }
    ],
    "fx": [
