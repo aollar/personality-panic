@@ -599,19 +599,44 @@
   }
 
   // ---------------- turn flow ----------------
+  // Splash: "whose week is this" — character art sweeps in, holds a beat, leaves.
+  var splashT1 = null, splashT2 = null;
+  function showTurnSplash(p, cb) {
+    var el = $("#turn-splash");
+    if (!el) { cb && cb(); return; }
+    clearTimeout(splashT1); clearTimeout(splashT2);
+    el.querySelector(".ts-art").src = cardSrc(p.code);
+    el.querySelector(".ts-turn").textContent = "TURN " + UI.state.turn + (p.isBot ? " · CPU" : "");
+    el.querySelector(".ts-name").textContent = p.name;
+    el.querySelector(".ts-sub").textContent = per(p.code).name + " · " + per(p.code).tag;
+    el.classList.remove("show", "out");
+    void el.offsetWidth;                       // restart the enter transition cleanly
+    el.classList.add("show");
+    var hold = p.isBot ? 1000 : 1400;
+    splashT1 = setTimeout(function () {
+      el.classList.add("out");
+      splashT2 = setTimeout(function () { el.classList.remove("show", "out"); cb && cb(); }, 360);
+    }, hold);
+  }
   function turnIntro() {
     var p = activeP();
     closeAllDialogs();                        // fresh turn: never inherit a stale menu from the last one
-    if (p.isBot) { renderAll(); maybeRunBot(); startTimer(); return; }
-    if (isMyTurn()) openTurnCard();          // spectators just watch the map + feed
-    else startTimer();                        // ...with a live clock for the other player's turn
-    renderAll();
+    var instantBot = p.isBot && UI.cfg && UI.cfg.skipCpu;   // fast-forwarded CPU turns skip the ceremony
+    function after() {
+      if (UI.state.over) return;
+      if (p.isBot) { renderAll(); maybeRunBot(); startTimer(); return; }
+      if (isMyTurn()) openWeekendDesk();      // spectators just watch the map + feed
+      else startTimer();                      // ...with a live clock for the other player's turn
+      renderAll();
+    }
+    if (instantBot) { after(); return; }
+    renderAll();                              // HUD flips to the new player behind the splash
+    showTurnSplash(p, after);
   }
   // a remote player's turn began/advanced: restart the display clock on this client
   UI.spectateTurnChange = function () {
     closeAllDialogs();
-    startTimer();
-    renderAll();
+    showTurnSplash(activeP(), function () { startTimer(); renderAll(); });
   };
   UI.syncTimerStart = startTimer;             // net: active player pressed "Start Turn"
 
@@ -643,27 +668,48 @@
       (c.deck ? '<div class="wk-deck">' + DECK_LABEL[c.deck] + "</div>" : "") +
       "</div>";
   }
-  function openTurnCard() {
+  function openWeekendDesk() {
     var p = activeP();
     var d = $("#dlg-turncard");
-    var wknd = (p.weekend && p.weekend.length)
-      ? '<div class="wknd-head">📰 WEEKEND UPDATE — what happened while you were out</div>' +
-        '<div class="wknd-row">' + p.weekend.map(weekendCardHtml).join("") + "</div>"
-      : "";
+    // no weekend before turn 1: deal a single card that introduces your build
+    var cardsHtml = (p.weekend && p.weekend.length)
+      ? p.weekend.map(weekendCardHtml).join("")
+      : '<div class="wknd-card good"><div class="wk-name">FRESH START</div>' +
+        '<div class="wk-icon">🌇</div>' +
+        '<div class="wk-eff">💪 ' + E.statName(per(p.code).mainStrength) + " & " + E.statName(per(p.code).upkeepStrength) +
+        "<br>😬 " + E.statName(per(p.code).mainWeakness) + " & " + E.statName(per(p.code).upkeepWeakness) +
+        '<div class="wk-flavor">' + per(p.code).tag + "</div></div></div>";
     d.querySelector(".turncard-body").innerHTML =
-      wknd +
-      '<div class="turncard-wrap"><img src="' + cardSrc(p.code) + '" alt="">' +
-      '<div class="turncard-info"><h3>' + p.name + " — Turn " + UI.state.turn + "</h3>" +
-      "<div>" + per(p.code).name + " (" + p.code + ") · " + per(p.code).tag + "</div>" +
-      '<div style="margin-top:.4em">💪 ' + E.statName(per(p.code).mainStrength) + " & " + E.statName(per(p.code).upkeepStrength) +
-      " &nbsp; 😬 " + E.statName(per(p.code).mainWeakness) + " & " + E.statName(per(p.code).upkeepWeakness) + "</div>" +
-      '<div class="warnings">' + p.warnings.map(function (w) { return "<div>⚠️ " + w + "</div>"; }).join("") + "</div>" +
-      '<div style="margin-top:.8em"><button class="btn" id="btn-begin-turn">Start Turn ▶</button></div>' +
-      "</div></div>";
+      '<h3>' + p.name + " — Turn " + UI.state.turn + "</h3>" +
+      '<div class="wknd-head">📰 WEEKEND UPDATE — what happened while you were out</div>' +
+      (p.warnings.length
+        ? '<div class="wknd-warns">' + p.warnings.map(function (w) { return "<span>⚠️ " + w + "</span>"; }).join("") + "</div>"
+        : "") +
+      '<div class="wknd-row">' + cardsHtml + "</div>" +
+      '<div id="btn-begin-turn" class="wknd-hint">⏰ tap anywhere — sweep the desk and start your week</div>';
     openDialog("turncard");
-    $("#btn-begin-turn").onclick = function () {
-      click(); closeDialog("turncard"); startTimer();
-      if (UI.mode !== "local" && window.PPNet) window.PPNet.sendBegin();  // sync spectator clocks
+    // no Start Turn button: ONE tap anywhere sweeps the cards off the desk and
+    // the week begins (the sweep IS the start; the timer waits for it)
+    var swept = false;
+    d.onclick = function () {
+      if (swept) return; swept = true;
+      click();
+      var row = d.querySelector(".wknd-row");
+      if (row) row.classList.add("swept");    // let the cards escape the row's scroll clip
+      var cards = d.querySelectorAll(".wknd-card");
+      for (var i = 0; i < cards.length; i++) {
+        cards[i].style.transitionDelay = (i * 55) + "ms";
+        cards[i].classList.add("fly");
+      }
+      var hint = d.querySelector(".wknd-hint");
+      if (hint) hint.classList.add("gone");
+      d.classList.add("sweeping");            // the paper fades out under the flying cards
+      setTimeout(function () {
+        d.onclick = null;
+        d.classList.remove("sweeping");
+        closeDialog("turncard"); startTimer();
+        if (UI.mode !== "local" && window.PPNet) window.PPNet.sendBegin();  // sync spectator clocks
+      }, cards.length ? 480 + cards.length * 55 : 120);
     };
   }
   function endTurnClicked(auto) {
