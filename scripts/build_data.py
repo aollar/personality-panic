@@ -1,6 +1,6 @@
 """
 Personality Panic — data pipeline.
-Reads Personality_Panic_Balance_Lock_v2-2.xlsx (single source of truth for numbers)
+Reads Personality_Panic_Balance_Lock_v3.xlsx (single source of truth for numbers)
 and emits assets/data/gamedata.js (window.PP_DATA) with normalized, structured
 requirements/effects so the engine never parses free text at runtime.
 
@@ -10,7 +10,7 @@ Re-run after any spreadsheet change:  python scripts/build_data.py
 import json, os, re
 import openpyxl
 
-XLSX = r"C:\Users\aloss\OneDrive\Desktop\Personality Panic\Personality_Panic_Balance_Lock_v2-2.xlsx"
+XLSX = r"C:\Users\aloss\OneDrive\Desktop\Personality Panic\Personality_Panic_Balance_Lock_v3.xlsx"
 OUT = os.path.join(os.path.dirname(__file__), "..", "assets", "data", "gamedata.js")
 
 STAT = {
@@ -151,6 +151,114 @@ def num(v):
     if v is None or v == "": return 0.0
     try: return float(v)
     except (TypeError, ValueError): return 0.0
+
+# ---------------------------------------------------------------------------
+# Weekend Update card system (v3 Cards sheet).
+# Status cards are ENGINE-TRIGGERED (their rows here supply display text);
+# investment cards resolve per held asset per turn; exactly 1 event card is
+# drawn per turn using the standing weights below. Redraw on unmet requirement.
+# ---------------------------------------------------------------------------
+CARD_REQ = {
+    "none": [],
+    "owns car": [{"kind": "ownsItem", "item": "Car"}],
+    "owns bicycle": [{"kind": "ownsItem", "item": "Bicycle"}],
+    "owns fridge": [{"kind": "ownsItem", "item": "Fridge"}],
+    "owns any tech item": [{"kind": "ownsAnyTech"}],
+    "owns any tech or appliance": [{"kind": "ownsAnyTechOrAppliance"}],
+    "employed": [{"kind": "hasJob"}],
+    "not homeless": [{"kind": "notHomeless"}],
+    "has living pet": [{"kind": "hasPet"}],
+    "has living pet + any furniture or tech": [{"kind": "hasPet"}, {"kind": "ownsAnyFurnOrTech"}],
+    "ate at regret burger last turn": [{"kind": "prevAteRegret"}],
+    "visited bro science gym last turn": [{"kind": "prevGym"}],
+}
+# Effects the free text under-specifies, keyed by card ID (parsed stats still apply):
+CARD_FX = {
+    "E07": [{"kind": "forceWalk"}],          # transport counts as Walking this turn
+    "E11": [{"kind": "clearFood"}],          # stored groceries spoiled
+    "E25": [{"kind": "rentMod", "mult": 1.25}],
+    "E26": [{"kind": "rentMod", "mult": 0.5}],
+}
+STAT_RE = re.compile(
+    r"(Money|Health|Career|Connection|Happiness|Coolness|Critical Thinking|Enlightenment"
+    r"|Pet Happiness|Pet Health)\s*(\+/-|[+-])\s*\w+\s*\((\d+(?:\.\d+)?)%T\)")
+
+def parse_weekend(wb):
+    ws = wb["Cards"]
+    rows = [[c for c in r] for r in ws.iter_rows(values_only=True)]
+    cards, weights, invest_odds = [], {}, {}
+    STAND_KEY = {"last place": "last", "2nd / 3rd place": "mid", "2nd / 3rd": "mid", "1st place": "first"}
+    in_list = False
+    for r in rows:
+        c0 = str(r[0]).strip() if r[0] is not None else ""
+        # standing weights block: Last/2nd/1st rows follow the header row
+        if c0.lower() in STAND_KEY and not in_list and r[1] is not None and num(r[1]) <= 1:
+            if c0.lower() in ("last place", "2nd / 3rd place", "1st place"):
+                weights[STAND_KEY[c0.lower()]] = {
+                    "majPos": num(r[1]), "minPos": num(r[2]),
+                    "minNeg": num(r[3]), "majNeg": num(r[4])}
+                continue
+        # investment odds block: Asset | Standing | BG SG SL BL
+        if c0 in ("Crypto", "Stocks") and r[1] is not None:
+            key = str(r[1]).strip().lower()
+            invest_odds.setdefault(c0.lower(), {})[STAND_KEY.get(key, key)] = [
+                num(r[2]), num(r[3]), num(r[4]), num(r[5])]
+            continue
+        if c0 in ("Bonds", "Savings"):
+            invest_odds[c0.lower()] = "safe"
+            continue
+        if c0 == "ID":
+            in_list = True
+            continue
+        if in_list and re.match(r"^[SIE]\d\d$", c0):
+            _id, name, typ, pol, mag, req, eff, flav = [
+                ("" if v is None else str(v).strip()) for v in r[:8]]
+            stats = []
+            for m in STAT_RE.finditer(eff):
+                pct = float(m.group(3)) / 100.0
+                sign = m.group(2)
+                if sign == "+/-": sign = "+"   # swing cards: magnitude only, sign from odds
+                stats.append({"stat": STAT[m.group(1)], "pct": pct if sign == "+" else -pct})
+            card = {
+                "id": _id, "name": name, "type": typ.lower(),
+                "polarity": pol.lower(), "magnitude": mag.lower() if mag and mag != "—" else "",
+                "req": CARD_REQ.get(req.lower(), []) if typ == "Event" else [],
+                "stats": stats, "fx": CARD_FX.get(_id, []),
+                "flavor": flav, "effectText": eff,
+            }
+            if typ == "Event":
+                cls = ("maj" if card["magnitude"] == "major" else "min") + \
+                      ("Pos" if card["polarity"] == "positive" else "Neg")
+                card["cls"] = cls
+            cards.append(card)
+    # Which card face shows for each investment outcome (from the sheet's
+    # "Card IDs used" column: crypto I01/I03/I02, stocks I04/I06/I05; stocks
+    # have no big-loss card so I05's -Standard is the worst stocks can do).
+    by_id = {c["id"]: c for c in cards}
+    def mag(cid, sign=1):
+        pcts = [s["pct"] for s in by_id[cid]["stats"] if s["stat"] == "money"]
+        return abs(pcts[0]) * sign
+    invest_fx = {
+        "crypto":  {"bigGain": ["I01", mag("I01")], "smallGain": ["I03", mag("I03")],
+                    "smallLoss": ["I03", -mag("I03")], "bigLoss": ["I02", -mag("I02")]},
+        "stocks":  {"bigGain": ["I04", mag("I04")], "smallGain": ["I06", mag("I06")],
+                    "smallLoss": ["I05", -mag("I05")], "bigLoss": ["I05", -mag("I05")]},
+        "bonds":   {"pay": ["I07", mag("I07")]},
+        "savings": {"pay": ["I08", mag("I08")]},
+    }
+    # Upkeep time penalties (Settings sheet, "UPKEEP TIME PENALTIES" block)
+    hunger, stress = 4, 2
+    for r in wb["Settings"].iter_rows(values_only=True):
+        label = str(r[0]) if r[0] else ""
+        if label.startswith("Hunger"): hunger = int(num(r[1]) * -1 if num(r[1]) < 0 else num(r[1]))
+        if label.startswith("Stress"): stress = int(num(r[1]) * -1 if num(r[1]) < 0 else num(r[1]))
+    assert len([c for c in cards if c["type"] == "event"]) == 30, "expected 30 event cards"
+    assert len(weights) == 3 and "crypto" in invest_odds, "weights/odds blocks not parsed"
+    return {
+        "statusTu": {"hunger": hunger, "stress": stress, "minTu": 1},
+        "weights": weights, "investOdds": invest_odds, "investFx": invest_fx,
+        "cards": cards,
+    }
 
 def main():
     wb = openpyxl.load_workbook(XLSX, data_only=True)
@@ -425,10 +533,11 @@ def main():
         "settings": settings, "personalities": personalities, "actions": actions,
         "items": items, "jobs": jobs, "pets": pets, "music": music, "sfx": sfx,
         "buildings": buildings, "roadNodes": roadNodes, "roadEdges": roadEdges,
+        "weekend": parse_weekend(wb),
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
-        f.write("// GENERATED by scripts/build_data.py from Personality_Panic_Balance_Lock_v2-2.xlsx\n")
+        f.write("// GENERATED by scripts/build_data.py from Personality_Panic_Balance_Lock_v3.xlsx\n")
         f.write("// Do not hand-edit numbers here; edit the spreadsheet and re-run the script.\n")
         f.write("var PP_DATA = ")
         f.write(json.dumps(data, indent=1))

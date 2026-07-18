@@ -410,6 +410,54 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
 .job-row.current { outline: .2em solid var(--blue); }
 .pet-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5em; }
 
+/* Weekend Update card stack (v3) — styled after the reference card mockups */
+.wknd-head {
+  font-weight: 900; letter-spacing: .06em; font-size: .9em; margin: 0 0 .5em;
+  color: var(--ink); opacity: .85; text-transform: uppercase;
+}
+.wknd-row {
+  display: flex; gap: .6em; flex-wrap: wrap; margin-bottom: 1em;
+  max-height: 17em; overflow-y: auto; padding-bottom: .2em;
+}
+.wknd-card {
+  width: 11.5em; border: .2em solid var(--stroke); border-radius: .7em;
+  background: #fffbe8; overflow: hidden; flex-shrink: 0;
+  box-shadow: .2em .3em 0 rgba(0,0,0,.35);
+  animation: wkndDeal .35s ease-out backwards;
+}
+.wknd-card:nth-child(2) { animation-delay: .08s; }
+.wknd-card:nth-child(3) { animation-delay: .16s; }
+.wknd-card:nth-child(4) { animation-delay: .24s; }
+.wknd-card:nth-child(5) { animation-delay: .32s; }
+@keyframes wkndDeal { from { opacity: 0; transform: translateY(.8em) rotate(-2deg); } }
+.wknd-card .wk-name {
+  background: #fff; font-weight: 900; font-size: .78em; text-align: center;
+  padding: .45em .5em; border-bottom: .16em solid var(--stroke); text-transform: uppercase;
+  line-height: 1.15;
+}
+.wknd-card .wk-icon { text-align: center; font-size: 2em; padding: .28em 0; }
+.wknd-card.good .wk-icon { background: #a8e0c8; }
+.wknd-card.bad .wk-icon { background: #f3b3a5; }
+.wknd-card.warn .wk-icon { background: #f6cd76; }
+.wknd-card.grim .wk-icon { background: #cfcac0; }
+.wknd-card .wk-eff {
+  padding: .45em .55em .5em; font-size: .74em; font-weight: 800; line-height: 1.25;
+  border-top: .16em solid var(--stroke);
+}
+.wknd-card .wk-flavor { font-weight: 500; opacity: .75; margin-top: .3em; font-style: italic; }
+.wknd-card .wk-deck {
+  font-size: .58em; font-weight: 900; letter-spacing: .08em; text-align: center;
+  padding: .35em .4em; background: var(--ink); color: var(--gold);
+}
+
+/* pet tombstone chip (housing scenes) */
+.tombstone-chip {
+  position: absolute; left: 2%; bottom: 14%; z-index: 8; pointer-events: none;
+  background: rgba(28,24,20,.85); color: #e8e0d0; font-weight: 800; font-size: .85em;
+  padding: .3em .7em; border-radius: .5em; border: .15em solid #57504a;
+  text-shadow: 0 .1em 0 #000;
+}
+
 /* turn-start player card */
 .turncard-wrap { display: flex; gap: 1.2em; align-items: center; }
 .turncard-wrap img { width: 16em; border-radius: .8em; border: .25em solid var(--stroke); box-shadow: 0 .8em 2em rgba(0,0,0,.6); }

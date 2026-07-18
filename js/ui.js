@@ -171,6 +171,7 @@
       ["Map", "Personality Panic City", "map"],
       ["Hints", setup.hints ? "On" : "Off", "hints"],
       ["Skip CPU Turns", setup.skipCpu ? "On" : "Off", "skipCpu"],
+      ["Weekend Cards", setup.weekend !== false ? "On" : "Off", "weekend"],
       ["Game ends after", setup.maxRounds === 0 ? "— (only stat max)" : setup.maxRounds + " turns", "maxRounds"]
     ];
     el.innerHTML = rows.map(function (r) {
@@ -260,6 +261,7 @@
     }
     if (k === "hints") setup.hints = !setup.hints;
     if (k === "skipCpu") setup.skipCpu = !setup.skipCpu;
+    if (k === "weekend") setup.weekend = !setup.weekend;
     if (k === "maxRounds") {
       var opts = [0, 20, 25, 30, 35, 40, 50, 60, 80];
       var idx = opts.indexOf(setup.maxRounds); if (idx < 0) idx = 3;
@@ -271,7 +273,8 @@
   function startLocalGame() {
     var players = setup.picks.map(function (p) { return { name: p.name, code: p.code, isBot: p.isBot }; });
     UI.cfg = { T: lengthT(), timerSeconds: setup.timer, maxRounds: setup.maxRounds,
-               hints: setup.hints, skipCpu: setup.skipCpu, players: players };
+               hints: setup.hints, skipCpu: setup.skipCpu, players: players,
+               weekendCards: setup.weekend !== false };
     UI.state = E.newGame(UI.cfg);
     UI.mode = (setup.mode === "host") ? "host" : "local";
     UI.mySlots = players.map(function (p, i) { return p.isBot ? -1 : i; }).filter(function (i) { return i >= 0; });
@@ -516,8 +519,13 @@
     }
     if (p.pet && !p.pet.dead) {
       var band = E.petState(st, p);
-      flags.push('<span class="flag-chip' + (band === "Healthy" ? "" : " bad") + '">\ud83d\udc3e ' + p.pet.health + "/" + p.pet.happiness + "</span>");
+      flags.push('<span class="flag-chip' + (band === "Healthy" ? "" : " bad") + '">\ud83d\udc3e ' + p.pet.health + "/" + p.pet.happiness +
+        (band === "Healthy" ? "" : " \u00b7 " + band.toUpperCase()) + "</span>");
+    } else if (p.tombstones && p.tombstones.length) {
+      flags.push('<span class="flag-chip bad">\ud83e\udea6 RIP ' + p.tombstones[p.tombstones.length - 1] + "</span>");
     }
+    if (p.holdings && p.holdings.length)
+      flags.push('<span class="flag-chip">\ud83d\udcc8 ' + p.holdings.join(" \u00b7 ") + "</span>");
     if (p.foodSupply > 0) flags.push('<span class="flag-chip">\ud83e\udd55 \u00d7' + p.foodSupply + "</span>");
     if (p.job) flags.push('<span class="flag-chip">\ud83d\udcbc ' + p.job.name + "</span>");
     var fl = $("#hud-flags");
@@ -606,10 +614,44 @@
     renderAll();
   };
   UI.syncTimerStart = startTimer;             // net: active player pressed "Start Turn"
+
+  // ---------------- Weekend Update cards (v3) ----------------
+  var WKND_ICON = {
+    S01: "🍕", S02: "⚡", S03: "🐾", S04: "⚠️", S05: "💀",
+    I01: "🚀", I02: "📉", I03: "🔀", I04: "📈", I05: "〽️", I06: "💵", I07: "🛡️", I08: "🐖",
+    E01: "🎁", E02: "🧾", E03: "💵", E04: "🏛️", E05: "📻", E06: "🅿️", E07: "🚗", E08: "🚲",
+    E09: "📱", E10: "🛡️", E11: "🧊", E12: "🎥", E13: "🕐", E14: "💬", E15: "💼", E16: "🚪",
+    E17: "📞", E18: "📷", E19: "⭐", E20: "❤️", E21: "🌡️", E22: "🏋️", E23: "👁️", E24: "🌙",
+    E25: "🏠", E26: "％", E27: "🐶", E28: "🛋️", E29: "🔊", E30: "🥗"
+  };
+  var DECK_LABEL = { last: "LUCK DECK · you're in last", mid: "STEADY DECK", first: "KARMA DECK · you're in 1st" };
+  function weekendCardHtml(c) {
+    var tone = c.type === "status" ? (c.id === "S05" ? "grim" : "warn")
+      : c.delta != null ? (c.delta >= 0 ? "good" : "bad")
+      : c.polarity === "positive" ? "good" : c.polarity === "negative" ? "bad" : "warn";
+    var body = c.effectText || "";
+    if (c.petName) body = body.replace(/\bPet\b/, c.petName).replace(/^Pet /, c.petName + " ");
+    if (c.id === "S05") body = c.petName + " is gone. A tombstone appears at home. Happiness set to 0.";
+    if (c.delta != null) body = (c.asset ? c.asset.toUpperCase() + ": " : "") +
+      (c.delta >= 0 ? "+$" : "-$") + Math.abs(c.delta);
+    if (c.detail && c.id[0] === "E") body = c.detail || body;
+    return '<div class="wknd-card ' + tone + '">' +
+      '<div class="wk-name">' + c.name + "</div>" +
+      '<div class="wk-icon">' + (WKND_ICON[c.id] || "🗞️") + "</div>" +
+      '<div class="wk-eff">' + body +
+      (c.flavor ? '<div class="wk-flavor">' + c.flavor + "</div>" : "") + "</div>" +
+      (c.deck ? '<div class="wk-deck">' + DECK_LABEL[c.deck] + "</div>" : "") +
+      "</div>";
+  }
   function openTurnCard() {
     var p = activeP();
     var d = $("#dlg-turncard");
+    var wknd = (p.weekend && p.weekend.length)
+      ? '<div class="wknd-head">📰 WEEKEND UPDATE — what happened while you were out</div>' +
+        '<div class="wknd-row">' + p.weekend.map(weekendCardHtml).join("") + "</div>"
+      : "";
     d.querySelector(".turncard-body").innerHTML =
+      wknd +
       '<div class="turncard-wrap"><img src="' + cardSrc(p.code) + '" alt="">' +
       '<div class="turncard-info"><h3>' + p.name + " — Turn " + UI.state.turn + "</h3>" +
       "<div>" + per(p.code).name + " (" + p.code + ") · " + per(p.code).tag + "</div>" +
@@ -713,6 +755,16 @@
     UI.inScene = id;
     var b = DATA.buildings[id];
     var sv = $("#scene-view");
+    // pet tombstone lives in the owner's housing (v3): visible whenever they're home
+    var oldTomb = $("#tombstone-chip"); if (oldTomb) oldTomb.remove();
+    var tp = activeP();
+    if (tp.tombstones && tp.tombstones.length && !tp.homeless &&
+        ((id === "lowCost" && tp.housing === "low") || (id === "luxury" && tp.housing === "lux"))) {
+      var tomb = document.createElement("div");
+      tomb.id = "tombstone-chip"; tomb.className = "tombstone-chip";
+      tomb.textContent = "🪦 RIP " + tp.tombstones.join(" · ");
+      sv.appendChild(tomb);
+    }
     var bd = $("#scene-backdrop"), vid = $("#scene-video"), frame = $("#bdc-frame");
     var paged = !!PAGES[id];
     var painted = paged || !!PAINT[id];
@@ -1086,6 +1138,7 @@
     if (r.needsChoice === "job") { openJobs(id); return; }
     if (r.needsChoice === "pet") { openPetChoice(id); return; }
     if (r.needsChoice === "course") { openCourses(id); return; }
+    if (r.needsChoice === "sell") { openSellChoice(id, r.assets); return; }
     if (id === "A018") A.footsteps(1800);          // Take a Walk: audible footsteps
     afterDispatch("action", { id: id }, r);
     var last = UI.state.log[UI.state.log.length - 1];
@@ -1131,6 +1184,26 @@
   }
 
   // University course catalog: pick a class for A067 (reuses the shop dialog)
+  function openSellChoice(actionId, assets) {
+    var st = UI.state;
+    var W = (window.PP_ASSUMPTIONS && window.PP_ASSUMPTIONS.weekend) || {};
+    $("#shop-title").textContent = "📉 Panic Sell — pick a position";
+    $("#shop-grid").innerHTML = assets.map(function (a) {
+      var refund = Math.round((W.assetCostPct[a] || 0) * st.T * (W.sellRefundPct || 0.6));
+      return '<button class="shop-item" data-a="' + a + '">' +
+        '<div class="s-name">' + a.toUpperCase() + "</div>" +
+        '<div class="s-fx">stop weekly resolutions</div>' +
+        '<div class="s-cost">get back $' + refund + "</div></button>";
+    }).join("");
+    openDialog("shop");
+    $$("#shop-grid .shop-item").forEach(function (b) {
+      b.onclick = function () {
+        click(); closeDialog("shop");
+        doAction(actionId, { asset: b.dataset.a });
+      };
+    });
+  }
+
   function openCourses(actionId) {
     var st = UI.state, p = activeP();
     var courses = (window.PP_ASSUMPTIONS && window.PP_ASSUMPTIONS.courses) || [];
@@ -1211,7 +1284,8 @@
   function openStats() {
     var st = UI.state;
     $("#stats-body").innerHTML = st.players.map(function (p) {
-      var petTxt = p.pet ? (p.pet.dead ? "💀 dead" : E.petState(st, p) + " (" + p.pet.health + "/" + p.pet.happiness + ")") : "—";
+      var petTxt = p.pet ? (p.pet.dead ? "💀 dead" : E.petState(st, p) + " (" + p.pet.health + "/" + p.pet.happiness + ")")
+        : (p.tombstones && p.tombstones.length ? "🪦 RIP " + p.tombstones[p.tombstones.length - 1] : "—");
       return '<div class="paper-card" style="padding:.6em .8em;margin-bottom:.5em">' +
         "<b>" + p.name + "</b> · " + per(p.code).name + " · Score " + E.score(st, p) +
         '<div class="stat-rows" style="margin-top:.3em">' +

@@ -111,7 +111,8 @@
     if (p.location === toId) return { tu: 0, far: false, path: null };
     var path = PATHS[p.location + "|" + toId];
     var far = path.length > ASSUME.nearPathPx;
-    var costs = ASSUME.moveCost[transportOf(p)];
+    // CAR BROKE DOWN (E07): transport counts as Walking for the rest of the turn
+    var costs = ASSUME.moveCost[p.forceWalk ? "walk" : transportOf(p)];
     var raw = costs[far ? 1 : 0];
     return { tu: raw === 0 ? 0 : Math.max(1, Math.floor(raw * TU_SCALE)), far: far, path: path };
   }
@@ -127,10 +128,13 @@
       tu: DATA.settings.timeUnitsPerTurn, tuPenaltyNext: 0,
       ate: false, turnsSinceRelax: 0, sleptThisTurn: false,
       foodSupply: 0, premiumSupply: false, petFoodLeft: 0,
-      items: [], pet: null, petDied: false,
+      items: [], pet: null, petDied: false, tombstones: [],
       job: null, degrees: [], degreeProgress: 0,
       flags: {}, debts: [], booster: null,
-      rentPaid: false, warnings: []
+      rentPaid: false, warnings: [],
+      // Weekend Update system (v3)
+      holdings: [], rentMod: 1, forceWalk: false,
+      turnFlags: {}, prevTurn: {}, weekend: [], pendingWeekend: []
     };
   }
 
@@ -141,6 +145,7 @@
       maxRounds: (config.maxRounds != null) ? config.maxRounds : ASSUME.maxRoundsDefault,
       seed: (config.seed != null) ? config.seed : Math.floor(Math.random() * 1e9),
       turn: 1, activeIdx: 0, over: false, endAfterRound: false,
+      weekendOff: config.weekendCards === false,   // setup toggle (spec: testable off-switch)
       players: config.players.map(function (pl, i) { return newPlayer(i, pl.name, pl.code, pl.isBot); }),
       log: [], _rngCalls: 0
     };
@@ -255,9 +260,27 @@
         case "promotionEligible":
           if (!p.job) return "Need a job";
           if (!bestPromotion(state, p)) return "No promotion available yet"; break;
+        // --- Weekend Update card requirements ---
+        case "ownsAnyTech":
+          if (!ownsAnyOf(p, ASSUME.weekend.techItems)) return "Need a tech item"; break;
+        case "ownsAnyTechOrAppliance":
+          if (!ownsAnyOf(p, ASSUME.weekend.techItems.concat(ASSUME.weekend.applianceItems)))
+            return "Need tech or an appliance"; break;
+        case "ownsAnyFurnOrTech":
+          if (!ownsAnyOf(p, ASSUME.weekend.techItems) &&
+              !p.items.some(function (n) { return ITEMS[n] && ITEMS[n].group === "Furniture"; }))
+            return "Need furniture or tech"; break;
+        case "prevAteRegret": if (!p.prevTurn.ateRegret) return "Didn't eat there last turn"; break;
+        case "prevGym": if (!p.prevTurn.gym) return "Didn't hit the gym last turn"; break;
+        case "hasHolding":
+          if (!p.holdings.some(function (h) { return h !== "savings"; }))
+            return "Nothing to sell (savings don't count)"; break;
       }
     }
     return null;
+  }
+  function ownsAnyOf(p, names) {
+    return names.some(function (n) { return p.items.indexOf(n) !== -1; });
   }
   function statName(s) {
     return { connection: "Connection", health: "Health", career: "Career", happiness: "Happiness",
@@ -327,8 +350,15 @@
   }
   function annotate(state, p, a) {
     var cost = Math.round(a.costPct * state.T);
+    // rent-modifier events (E25/E26) scale the PURE rent bills only — the
+    // move-in/rehouse bundles include deposits, which landlords can't inflate
+    if ((a.id === "X006" || a.id === "X007") && p.rentMod !== 1)
+      cost = Math.round(a.costPct * state.T * p.rentMod);
     var tu = tuCost(a);
     var why = checkReq(state, p, a.req, a);
+    // Debtstreet portfolio buys: one position per asset (Weekend system)
+    var asset = !state.weekendOff && ASSUME.weekend.assets[a.id];
+    if (!why && asset && p.holdings.indexOf(asset) !== -1) why = "Already holding " + asset;
     if (!why && p.tu < tu) why = "Not enough Time Units";
     if (!why && money(p) < cost) why = "Not enough money ($" + cost + ")";
     return { action: a, id: a.id, name: a.name, tu: tu, cost: cost, ok: !why, why: why };
@@ -357,6 +387,16 @@
       if (!p.isBot) return { ok: true, needsChoice: "course" };
       choice = { course: ASSUME.courses[Math.floor(rand(state) * ASSUME.courses.length)].name };
     }
+    // Panic Sell: pick which position to dump (auto when only one qualifies)
+    var needsSell = a.fx.some(function (f) { return f.kind === "panicSell"; });
+    if (needsSell && !choice) {
+      var sellable = p.holdings.filter(function (h) { return h !== "savings"; });
+      if (sellable.length === 1 || p.isBot) choice = { asset: sellable.indexOf("crypto") !== -1 ? "crypto" : sellable[0] };
+      else return { ok: true, needsChoice: "sell", assets: sellable };
+    }
+    // Debtstreet buys become held positions (Weekend system): the sheet's
+    // instant money gain + gamble fx are replaced by weekly resolution cards
+    var buysAsset = !state.weekendOff && ASSUME.weekend.assets[a.id];
 
     // pay the bill
     p.tu -= ann.tu;
@@ -370,7 +410,7 @@
     var isGenericWork = (a.name === "Work");
 
     // stat gains (with modifiers)
-    if (!isGenericWork) a.gains.forEach(function (g) {
+    if (!isGenericWork && !buysAsset) a.gains.forEach(function (g) {
       var d = gainStat(state, p, g.stat, g.pct);
       if (d) summary.push("+" + d + " " + statName(g.stat));
     });
@@ -407,7 +447,7 @@
         case "petToy": p.flags.petToy = true; break;
         case "adoptPet":
           p.pet = { code: choice.pet, health: Math.round(ASSUME.petStartPct * state.T),
-                    happiness: Math.round(ASSUME.petStartPct * state.T), fedThisTurn: true, dead: false };
+                    happiness: Math.round(ASSUME.petStartPct * state.T), fedThisTurn: true, dead: false, missed: 0 };
           log(state, p, "Adopted the " + DATA.personalities[choice.pet].name + " pet!", "good");
           break;
         case "degreeProgress": {
@@ -455,7 +495,7 @@
             });
           }
           break;
-        case "payRent": p.rentPaid = true; result.sfx.push("money"); break;
+        case "payRent": p.rentPaid = true; p.rentMod = 1; result.sfx.push("money"); break;
         case "rehouse":
           p.homeless = false; p.housing = "low"; p.rentPaid = true;
           log(state, p, "Back on their feet — rented a Low Cost room again.", "good");
@@ -470,7 +510,20 @@
           summary.push("+$" + amt + " support cheque"); result.sfx.push("money");
           break;
         case "sleepRough": break;
+        case "panicSell": {
+          var sold = choice.asset;
+          var idx = p.holdings.indexOf(sold);
+          if (idx === -1) { result.ok = false; result.why = "Not holding " + sold; return; }
+          p.holdings.splice(idx, 1);
+          var refund = Math.round(ASSUME.weekend.assetCostPct[sold] * state.T * ASSUME.weekend.sellRefundPct);
+          addStat(state, p, "money", refund);
+          summary.push("sold " + sold + " (+$" + refund + ")");
+          log(state, p, "📉 Panic-sold their " + sold + " for $" + refund + ". No regrets. Some regrets.", "");
+          result.sfx.push("money");
+          break;
+        }
         case "invest": {
+          if (buysAsset) break;   // Weekend system: no instant gamble on portfolio buys
           var odds = ASSUME.invest[f.risk];
           var win = odds.win + (p.flags.tinyPrint ? ASSUME.tinyPrintBonus : 0);
           if (f.risk !== "low" && rand(state) > win) {
@@ -525,6 +578,17 @@
 
     // booster special-case: temporary modifier with a crash later
     if (a.id === "A045") p.booster = { turnsLeft: ASSUME.booster.turns };
+    // Weekend system: the buy opens a position that resolves weekly from now on
+    if (buysAsset) {
+      p.holdings.push(buysAsset);
+      summary.push("now holding " + buysAsset);
+      log(state, p, "📈 Opened a " + buysAsset + " position — resolves every weekend from now on.", "");
+      result.sfx.push("money");
+    }
+    // last-weekend memory for event cards (E21 food poisoning, E22 gym gains)
+    if (a.building === "regretBurger" && a.fx.some(function (f) { return f.kind === "eat"; }))
+      p.turnFlags.ateRegret = true;
+    if (p.location === "gym") p.turnFlags.gym = true;
     // Work actions use the player's actual job numbers (Jobs_Named is canonical)
     if (a.name === "Work" && p.job) { applyWork(state, p); result.sfx.push("money"); }
     if (a.category === "Food" || a.fx.some(function (f) { return f.kind === "eat"; })) {
@@ -565,11 +629,116 @@
     if (p.homeless) return "park";
     return p.housing === "lux" ? "luxury" : "lowCost";
   }
+  // ---------- Weekend Update cards (v3 §12) ----------
+  var WCARDS = {};
+  (DATA.weekend.cards || []).forEach(function (c) { WCARDS[c.id] = c; });
+
+  // Standing from the live provisional score; ties break by Money, then turn order.
+  function weekendStanding(state, p) {
+    var ranked = state.players.slice().sort(function (a, b) {
+      var d = score(state, b) - score(state, a);
+      if (d) return d;
+      if (b.stats.money !== a.stats.money) return b.stats.money - a.stats.money;
+      return a.id - b.id;
+    });
+    var i = ranked.indexOf(p);
+    if (i === 0) return "first";
+    if (i === ranked.length - 1) return "last";
+    return "mid";
+  }
+
+  function cardFace(id, extra) {
+    var c = WCARDS[id] || { id: id, name: id, type: "event" };
+    var face = { id: c.id, name: c.name, type: c.type, polarity: c.polarity,
+                 effectText: c.effectText || "", flavor: c.flavor || "" };
+    for (var k in (extra || {})) face[k] = extra[k];
+    return face;
+  }
+
+  // One weighted pick from {key: weight}; deterministic via the shared stream.
+  function weightedPick(state, table) {
+    var keys = Object.keys(table), total = 0;
+    keys.forEach(function (k) { total += table[k]; });
+    var r = rand(state) * total, acc = 0;
+    for (var i = 0; i < keys.length; i++) { acc += table[keys[i]]; if (r <= acc) return keys[i]; }
+    return keys[keys.length - 1];
+  }
+
+  function resolveInvestments(state, p) {
+    var out = [];
+    p.holdings.forEach(function (asset) {
+      var odds = DATA.weekend.investOdds[asset], fx = DATA.weekend.investFx[asset];
+      var pick, delta, cardId;
+      if (odds === "safe") {
+        cardId = fx.pay[0]; delta = Math.round(fx.pay[1] * state.T);
+      } else {
+        var standing = weekendStanding(state, p);
+        var o = odds[standing].slice();   // [bigGain, smallGain, smallLoss, bigLoss]
+        if (p.flags.tinyPrint) {          // Read Tiny Print: shift odds toward the gains
+          var shift = Math.min(ASSUME.weekend.tinyPrintShiftPp, o[3] > 0 ? o[3] : o[2]);
+          if (o[3] > 0) o[3] -= shift; else o[2] = Math.max(0, o[2] - shift);
+          o[0] += shift;
+        }
+        pick = weightedPick(state, { bigGain: o[0], smallGain: o[1], smallLoss: o[2], bigLoss: o[3] });
+        cardId = fx[pick][0]; delta = Math.round(fx[pick][1] * state.T);
+      }
+      addStat(state, p, "money", delta);
+      out.push(cardFace(cardId, { delta: delta, asset: asset }));
+      log(state, p, (delta >= 0 ? "📈 " : "📉 ") + WCARDS[cardId].name + " — " + asset +
+        (delta >= 0 ? " +$" : " -$") + Math.abs(delta), delta >= 0 ? "good" : "bad");
+    });
+    return out;
+  }
+
+  function cardEligible(state, p, c) {
+    return !checkReq(state, p, c.req || []);
+  }
+  function drawEventCard(state, p) {
+    var standing = weekendStanding(state, p);
+    var weights = DATA.weekend.weights[standing];
+    var events = DATA.weekend.cards.filter(function (c) { return c.type === "event"; });
+    var cls = weightedPick(state, weights);
+    var pool = events.filter(function (c) { return c.cls === cls && cardEligible(state, p, c); });
+    if (!pool.length) {   // redraw rule: degrade to same polarity, then anything eligible
+      var pos = cls === "majPos" || cls === "minPos";
+      pool = events.filter(function (c) {
+        return (c.polarity === (pos ? "positive" : "negative")) && cardEligible(state, p, c);
+      });
+    }
+    if (!pool.length) pool = events.filter(function (c) { return cardEligible(state, p, c); });
+    if (!pool.length) return null;
+    var c = pool[Math.floor(rand(state) * pool.length)];
+    // apply: stat deltas land flat (no personality multipliers — windfalls read exactly as printed)
+    var bits = [];
+    c.stats.forEach(function (s) {
+      var d = addStat(state, p, s.stat, Math.round(s.pct * state.T));
+      if (d) bits.push((d > 0 ? "+" : "") + d + " " + statName(s.stat));
+    });
+    (c.fx || []).forEach(function (f) {
+      switch (f.kind) {
+        case "rentMod":
+          p.rentMod = f.mult;
+          bits.push(f.mult > 1 ? "next rent +" + Math.round((f.mult - 1) * 100) + "%"
+                               : "next rent -" + Math.round((1 - f.mult) * 100) + "%");
+          break;
+        case "forceWalk": p.forceWalk = true; bits.push("walking this turn"); break;
+        case "clearFood":
+          if (p.foodSupply > 0) bits.push(p.foodSupply + " wk of groceries spoiled");
+          p.foodSupply = 0; p.premiumSupply = false; break;
+      }
+    });
+    log(state, p, "🗞️ " + c.name + (bits.length ? " (" + bits.join(", ") + ")" : ""),
+      c.polarity === "positive" ? "good" : "bad");
+    return cardFace(c.id, { deck: standing, detail: bits.join(" · ") });
+  }
+
   function startTurn(state) {
     var p = active(state);
     p.tu = DATA.settings.timeUnitsPerTurn;
     p.location = homeOf(p);   // every turn starts at home (Austin 2026-07-09)
     p.warnings = [];
+    p.forceWalk = false;
+    p.weekend = [];
     // debts collected at the start of the turn they're due
     p.debts = p.debts.filter(function (d) {
       if (state.turn >= d.dueTurn) {
@@ -580,11 +749,22 @@
       }
       return true;
     });
+    // 1) status cards queued by last turn's endTurn (hunger / stress / pet strikes)
+    (p.pendingWeekend || []).forEach(function (q) { p.weekend.push(cardFace(q.id, q)); });
+    p.pendingWeekend = [];
     if (p.tuPenaltyNext > 0) {
-      p.tu = Math.max(Math.floor(TU_SCALE), p.tu - p.tuPenaltyNext);
+      p.tu = Math.max(DATA.weekend.statusTu.minTu, p.tu - p.tuPenaltyNext);
       p.warnings.push("Lost " + p.tuPenaltyNext + " Time Units (" + p.penaltyReason + ")");
       log(state, p, "Starts the turn with only " + p.tu + " TU (" + p.penaltyReason + ")", "bad");
       p.tuPenaltyNext = 0; p.penaltyReason = "";
+    }
+    // 2) investment outcomes, one per held asset  3) exactly one event card
+    if (!state.weekendOff) {
+      resolveInvestments(state, p).forEach(function (c) { p.weekend.push(c); });
+      if (state.turn >= ASSUME.weekend.eventStartTurn) {
+        var ev = drawEventCard(state, p);
+        if (ev) p.weekend.push(ev);
+      }
     }
     if (isRentTurn(state) && !p.homeless) p.warnings.push("RENT IS DUE this turn!");
     if (p.homeless) p.warnings.push("You're homeless — recover at the Park / rent a room");
@@ -594,49 +774,67 @@
     }
   }
 
+  // v3 3-strike feeding rule: the label IS the strike count
   function petState(state, p) {
-    var f = p.pet.health / state.T, b = ASSUME.petStateBands;
-    if (f >= b.hungry) return "Healthy";
-    if (f >= b.sick) return "Hungry";
-    if (f >= b.critical) return "Sick";
-    if (p.pet.health > 0) return "Critical";
-    return "Dead";
+    var m = p.pet.missed || 0;
+    if (m <= 0) return "Healthy";
+    if (m === 1) return "Sad";
+    return "Starving";
   }
 
   function endTurn(state) {
     var p = active(state), events = [];
-    // 1) hunger
+    var stu = DATA.weekend.statusTu;
+    // 1) hunger (S01 — announced by a Weekend card at the start of next turn)
     if (!p.ate) {
-      p.tuPenaltyNext += Math.floor(ASSUME.hungerTuPenalty * TU_SCALE);
+      p.tuPenaltyNext += stu.hunger;
       p.penaltyReason = "hunger";
-      events.push(p.name + " didn't eat — will lose " + ASSUME.hungerTuPenalty + " TU next turn");
+      p.pendingWeekend.push({ id: "S01", detail: "-" + stu.hunger + " Time Units" });
+      events.push(p.name + " didn't eat — will lose " + stu.hunger + " TU next turn");
       log(state, p, "Didn't eat this turn! Hunger penalty next turn.", "bad");
     }
     p.ate = false;
-    // 2) stress
+    // 2) stress (S02)
     p.turnsSinceRelax += 1;
     if (p.turnsSinceRelax > 2) {
-      p.tuPenaltyNext += Math.floor(ASSUME.stressTuPenalty * TU_SCALE);
+      p.tuPenaltyNext += stu.stress;
       p.penaltyReason = (p.penaltyReason ? p.penaltyReason + " + " : "") + "stress";
-      events.push(p.name + " is stressed out — will lose " + ASSUME.stressTuPenalty + " TU next turn");
+      p.pendingWeekend.push({ id: "S02", detail: "-" + stu.stress + " Time Units" });
+      events.push(p.name + " is stressed out — will lose " + stu.stress + " TU next turn");
       log(state, p, "Too stressed (no relaxing for " + p.turnsSinceRelax + " turns).", "bad");
     }
-    // 3) pet upkeep
+    // 3) pet upkeep — v3 3-strike feeding rule (Sad -> Starving -> Dead)
     if (p.pet && !p.pet.dead) {
-      if (!p.pet.fedThisTurn) addStat(state, p, "petHealth", -Math.round(ASSUME.petHealthDecayPct * state.T));
       addStat(state, p, "petHappiness", -Math.round(ASSUME.petHappinessDecayPct * state.T));
       if (p.flags.petToy || p.items.indexOf("Pet Toys") !== -1)
         addStat(state, p, "petHappiness", Math.round(ASSUME.petToyPassivePct * state.T));
-      p.pet.fedThisTurn = false;
-      var band = petState(state, p);
-      if (band === "Dead") {
-        p.pet.dead = true; p.petDied = true;
-        p.stats.happiness = 0;
-        events.push("💀 " + p.name + "'s pet DIED. Happiness reset to 0.");
-        log(state, p, "💀 Their pet died from neglect. Happiness drops to 0.", "bad");
-      } else if (band !== "Healthy") {
-        events.push(p.name + "'s pet is " + band);
+      var petName = (ASSUME.petNames || {})[p.pet.code] || "your pet";
+      if (p.pet.fedThisTurn) {
+        p.pet.missed = 0;
+      } else {
+        p.pet.missed = (p.pet.missed || 0) + 1;
+        if (p.pet.missed === 1) {
+          addStat(state, p, "petHappiness", -Math.round(0.05 * state.T));
+          p.pendingWeekend.push({ id: "S03", petName: petName });
+          events.push("🐾 " + petName + " is SAD (missed a feeding)");
+          log(state, p, "🐾 " + petName + " missed a feeding and is Sad.", "bad");
+        } else if (p.pet.missed === 2) {
+          addStat(state, p, "petHealth", -Math.round(0.08 * state.T));
+          addStat(state, p, "petHappiness", -Math.round(0.08 * state.T));
+          p.pendingWeekend.push({ id: "S04", petName: petName });
+          events.push("⚠️ " + petName + " is STARVING — one more missed feeding is fatal");
+          log(state, p, "⚠️ " + petName + " is STARVING. FINAL WARNING.", "bad");
+        } else if (p.pet.missed >= 3) {
+          p.pet.dead = true; p.petDied = true;
+          p.tombstones.push(petName);
+          p.pet = null;               // slot opens for re-adoption; the tombstone stays
+          p.stats.happiness = 0;
+          p.pendingWeekend.push({ id: "S05", petName: petName });
+          events.push("💀 " + petName + " DIED. " + p.name + "'s Happiness reset to 0.");
+          log(state, p, "💀 " + petName + " died from neglect. A tombstone appears at home. Happiness drops to 0.", "bad");
+        }
       }
+      if (p.pet) p.pet.fedThisTurn = false;
     }
     // 4) booster crash
     if (p.booster) {
@@ -649,12 +847,14 @@
     }
     // 5) rent resolution for THIS player on rent turns
     if (isRentTurn(state) && !p.homeless && !p.rentPaid) {
-      p.homeless = true;
+      p.homeless = true; p.rentMod = 1;
       addStat(state, p, "happiness", -Math.round(ASSUME.homelessHappinessHitPct * state.T));
       p.location = "park";
       events.push("🏚️ " + p.name + " couldn't pay rent and is now HOMELESS (living at the Park)");
       log(state, p, "🏚️ Evicted! Couldn't pay rent — now living at Almost Fine Park.", "bad");
     }
+    // what happened this turn becomes "last turn" for next weekend's event reqs
+    p.prevTurn = p.turnFlags; p.turnFlags = {};
     // 6) endgame trigger
     var maxed = MAIN.every(function (s) { return p.stats[s] >= state.T; });
     if (maxed && !state.endAfterRound) {
@@ -713,6 +913,7 @@
     newGame: newGame, active: active, actionsAt: actionsAt, perform: perform,
     moveTo: moveTo, moveCost: moveCost, endTurn: endTurn, startTurn: startTurn,
     score: score, podium: podium, isRentTurn: isRentTurn, petState: petState, clubGate: clubGate,
+    weekendStanding: weekendStanding,
     jobsWithStatus: jobsWithStatus, bestPromotion: bestPromotion, statName: statName,
     personalityMult: personalityMult, totalMult: totalMult, transportOf: transportOf,
     shortestPath: shortestPath, PATHS: PATHS, NODE_POS: NODE_POS, log: log,

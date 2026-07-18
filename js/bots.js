@@ -131,10 +131,11 @@
     var here = E.actionsAt(state, p);
     function findHere(pred) { return here.filter(function (x) { return x.ok && pred(x); })[0]; }
 
-    // 0) a Sick/Critical pet outranks everything — the death penalty is brutal
+    // 0) a Sad/Starving pet outranks everything — strike 3 is fatal AND zeroes
+    // Happiness, so a bot never knowingly eats strike 2
     if (p.pet && !p.pet.dead && !p.pet.fedThisTurn) {
       var band0 = E.petState(state, p);
-      if (band0 === "Sick" || band0 === "Critical") {
+      if (band0 === "Sad" || band0 === "Starving") {
         var feedNow = findHere(function (x) { return (x.id === "A007" || x.id === "A105" || x.id === "X008") && x.ok; });
         if (feedNow) return { type: "perform", id: feedNow.id };
         var dest0 = (p.petFoodLeft > 0 && !p.homeless) ? (p.housing === "lux" ? "luxury" : "lowCost") : "petShop";
@@ -190,7 +191,7 @@
         if (buyFood) return { type: "perform", id: buyFood.id };
       }
       var band = E.petState(state, p);
-      var needTrip = (!p.pet.fedThisTurn && (band === "Hungry" || band === "Sick" || band === "Critical"));
+      var needTrip = (!p.pet.fedThisTurn && band !== "Healthy");
       if (needTrip && p.location !== "petShop" && p.location !== "lowCost") {
         var dest = p.petFoodLeft > 0 && !p.homeless ? "lowCost" : "petShop";
         if (E.moveCost(state, p, dest).tu + Math.round(E.TU_SCALE) <= p.tu) return { type: "move", to: dest };

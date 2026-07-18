@@ -20,9 +20,10 @@ var PP_ASSUMPTIONS = {
   lowDepositPct: 0.10,
   luxDepositPct: 0.25,
 
-  // --- Upkeep penalties (Manual says "lose time", never how much) ---
-  hungerTuPenalty: 2,         // TUs lost next turn if you didn't eat this turn
-  stressTuPenalty: 1,         // TUs lost per turn while the 2-turn relax rule is lapsed
+  // --- Upkeep penalties ---
+  // v3 locked these in the sheet (Settings "UPKEEP TIME PENALTIES": hunger -4,
+  // stress -2, floor 1) — the engine now reads DATA.weekend.statusTu, so the
+  // old hungerTuPenalty/stressTuPenalty entries moved out of this file.
 
   // --- Food supply ("weeks" of groceries vs eat-every-turn) ---
   // RULE: 1 turn = 1 week. Groceries add weeks of supply; "Eat at Home" (free
@@ -150,7 +151,12 @@ var PP_ASSUMPTIONS = {
       tu: 0, costPct: 0.50, gains: [], petGains: [], penalties: [],
       req: [{ kind: "rentDue" }, { kind: "isLux" }, { kind: "rentUnpaid" }],
       fx: [{ kind: "payRent", tier: "lux" }],
-      note: "Heelton Heights does not do grace periods." }
+      note: "Heelton Heights does not do grace periods." },
+    { id: "X013", building: "debtstreet", name: "Panic Sell", category: "Money",
+      tu: 1, costPct: 0, gains: [], petGains: [], penalties: [],
+      req: [{ kind: "hasHolding" }],
+      fx: [{ kind: "panicSell" }],
+      note: "Dump a position for 60% of what you paid. Dignity not included." }
   ],
   // Sheet rent rows replaced by synthetic ones above (A008 dual-purposed poorly):
   removedActions: ["A008", "A017"],
@@ -168,7 +174,29 @@ var PP_ASSUMPTIONS = {
     { name: "Group Project Survival", stat: "connection", pct: 0.02, blurb: "Carry the team. Emotionally." }
   ],
   // Buy My Camp is once-per-game; the single purchase hits hard (Austin 2026-07-09):
-  myCampBoost: { enlightenment: 0.10, happiness: 0.05 }
+  myCampBoost: { enlightenment: 0.10, happiness: 0.05 },
+
+  // --- Weekend Update card system: glue the v3 Cards sheet doesn't specify ---
+  weekend: {
+    eventStartTurn: 2,        // no "weekend" happened before turn 1 — first event card on turn 2
+    sellRefundPct: 0.6,       // Panic Sell (X013): recover 60% of the asset's buy-in
+    tinyPrintShiftPp: 0.05,   // Read Tiny Print: 5pp moved from your worst outcome to your best
+    // "Tech" vs "Appliance" split (Items sheet lumps them in one group):
+    techItems: ["Computer", "Mobile Phone", "Camera", "TV", "Blu-ray", "E-reader", "Stereo", "Watch"],
+    applianceItems: ["Fridge", "Stove", "Vacuum", "Cold Plunge", "Hot Tub"],
+    // what each Debtstreet buy action holds, and what that position cost (%T):
+    assets: { A085: "savings", A086: "bonds", A087: "stocks", A088: "crypto" },
+    assetCostPct: { savings: 0, bonds: 0.05, stocks: 0.08, crypto: 0.12 }
+  },
+  // Pet display names — canonical: painted on the Adopt pages of the pet shop art
+  petNames: {
+    ESFJ: "Captain Snuggleton", ENFJ: "King Heartmane", ENFP: "Otter the Explorer",
+    ESFP: "Party Piggy", ESTJ: "Chief Pawton", ENTJ: "CEO Gorillionaire",
+    ENTP: "Sir Honksworth", ESTP: "Hustle Harry", ISFJ: "Nurse Nibbles",
+    INFJ: "Vinnie", INFP: "Fawnie Dreamer", ISFP: "Duchess Meowtilda",
+    ISTJ: "Detective Biscuit", ISTP: "Clutch", INTJ: "Professor Beakman",
+    INTP: "Orylle Overplan"
+  }
 };
 if (typeof window !== "undefined") window.PP_ASSUMPTIONS = PP_ASSUMPTIONS;
 if (typeof module !== "undefined") module.exports = PP_ASSUMPTIONS;
