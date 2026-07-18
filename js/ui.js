@@ -612,7 +612,7 @@
     el.classList.remove("show", "out");
     void el.offsetWidth;                       // restart the enter transition cleanly
     el.classList.add("show");
-    var hold = p.isBot ? 1000 : 1400;
+    var hold = p.isBot ? 1100 : 2400;
     splashT1 = setTimeout(function () {
       el.classList.add("out");
       splashT2 = setTimeout(function () { el.classList.remove("show", "out"); cb && cb(); }, 360);
@@ -660,7 +660,14 @@
     if (c.delta != null) body = (c.asset ? c.asset.toUpperCase() + ": " : "") +
       (c.delta >= 0 ? "+$" : "-$") + Math.abs(c.delta);
     if (c.detail && c.id[0] === "E") body = c.detail || body;
-    return '<div class="wknd-card ' + tone + '">' +
+    // good news erupts: a ring of confetti chips fires when the card pops in
+    var burst = tone === "good"
+      ? '<span class="wk-burst">' + "<i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>" + "</span>"
+      : "";
+    var stamp = tone === "good" ? '<span class="wk-stamp up">NICE!</span>'
+      : tone === "bad" ? '<span class="wk-stamp down">OOF.</span>'
+      : c.id === "S05" ? '<span class="wk-stamp rip">R.I.P.</span>' : "";
+    return '<div class="wknd-card ' + tone + '">' + burst + stamp +
       '<div class="wk-name">' + c.name + "</div>" +
       '<div class="wk-icon">' + (WKND_ICON[c.id] || "🗞️") + "</div>" +
       '<div class="wk-eff">' + body +
@@ -680,13 +687,19 @@
         "<br>😬 " + E.statName(per(p.code).mainWeakness) + " & " + E.statName(per(p.code).upkeepWeakness) +
         '<div class="wk-flavor">' + per(p.code).tag + "</div></div></div>";
     d.querySelector(".turncard-body").innerHTML =
+      '<div class="wknd-kicker">📰 WEEKEND UPDATE</div>' +
       '<h3>' + p.name + " — Turn " + UI.state.turn + "</h3>" +
-      '<div class="wknd-head">📰 WEEKEND UPDATE — what happened while you were out</div>' +
+      '<div class="wknd-head">what happened while you were out</div>' +
       (p.warnings.length
         ? '<div class="wknd-warns">' + p.warnings.map(function (w) { return "<span>⚠️ " + w + "</span>"; }).join("") + "</div>"
         : "") +
       '<div class="wknd-row">' + cardsHtml + "</div>" +
       '<div id="btn-begin-turn" class="wknd-hint">⏰ tap anywhere — sweep the desk and start your week</div>';
+    // each card's entrance (and its follow-up shake/glow) fires off one shared
+    // stagger clock so bad news lands one thud at a time
+    var dealt = d.querySelectorAll(".wknd-card");
+    for (var di = 0; di < dealt.length; di++)
+      dealt[di].style.setProperty("--d", (180 + di * 260) + "ms");
     openDialog("turncard");
     // no Start Turn button: ONE tap anywhere sweeps the cards off the desk and
     // the week begins (the sweep IS the start; the timer waits for it)
