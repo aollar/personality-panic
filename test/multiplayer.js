@@ -77,6 +77,16 @@ var SHOTS = path.join(__dirname, "shots");
   await guest.evaluate(function () { document.querySelector("#btn-begin-turn").click(); });
   await guest.screenshot({ path: path.join(SHOTS, "13-mp-guest-turn.png") });
 
+  // Invalid guest actions must return the host's reason instead of appearing
+  // to do nothing. Turn 1 is not a rent turn, so X007 is authoritatively denied.
+  await guest.evaluate(function () { window.PPUI.doAction("X007"); });
+  await guest.waitForFunction(function () {
+    return Array.prototype.some.call(document.querySelectorAll(".toast"), function (t) {
+      return t.textContent.indexOf("Rent isn't due") !== -1;
+    });
+  }, { timeout: 8000, polling: 100 });
+  console.log("guest received rejected-action feedback");
+
   // guest performs a real intent: enter lowCost and Relax (A002)
   await guest.evaluate(function () { document.querySelector(".hotspot[data-id='lowCost']").click(); });
   await new Promise(function (r) { setTimeout(r, 800); });

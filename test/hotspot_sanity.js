@@ -85,8 +85,44 @@ var PORT = process.env.PORT || "8126";
   if (rent.tabs !== 2 || rent.x006 !== 2) fails.push("lowCost rent: " + JSON.stringify(rent));
   await page.evaluate(function () { document.querySelector("#btn-leave-scene").click(); });
 
+  // 4) Heelton's painted PAY RENT tab pays the active tenant's real bill.
+  // This covers both a canonical luxury bill and a low-cost tenant visiting
+  // Heelton (rent is intentionally payable anywhere).
+  var luxRent = await page.evaluate(function () {
+    var UI = window.PPUI, p = UI.state.players[0];
+    UI.state.turn = 4; p.location = "luxury"; p.housing = "lux";
+    p.homeless = false; p.rentPaid = false; p.stats.money = 100;
+    UI.walker.jumpTo("luxury"); UI.renderAll();
+    document.querySelector(".hotspot[data-id='luxury']").click();
+    var btn = document.querySelector(".paint-btn[data-a='X007']");
+    var unlocked = btn && !btn.classList.contains("locked");
+    if (btn) btn.click();
+    return { count: document.querySelectorAll(".paint-btn[data-a='X007']").length,
+      unlocked: unlocked, money: p.stats.money, paid: p.rentPaid };
+  });
+  if (luxRent.count !== 1 || !luxRent.unlocked || luxRent.money !== 50 || !luxRent.paid)
+    fails.push("luxury rent: " + JSON.stringify(luxRent));
+  await page.evaluate(function () { document.querySelector("#btn-leave-scene").click(); });
+
+  var visitingRent = await page.evaluate(function () {
+    var UI = window.PPUI, p = UI.state.players[0];
+    UI.state.turn = 4; p.location = "luxury"; p.housing = "low";
+    p.homeless = false; p.rentPaid = false; p.stats.money = 100;
+    UI.walker.jumpTo("luxury"); UI.renderAll();
+    document.querySelector(".hotspot[data-id='luxury']").click();
+    var btn = document.querySelector(".paint-btn[data-a='X007']");
+    var unlocked = btn && !btn.classList.contains("locked");
+    var cost = btn && btn.querySelector(".tu-chip").textContent;
+    if (btn) btn.click();
+    return { unlocked: unlocked, cost: cost, money: p.stats.money, paid: p.rentPaid };
+  });
+  if (!visitingRent.unlocked || visitingRent.cost.indexOf("$20") === -1 ||
+      visitingRent.money !== 80 || !visitingRent.paid)
+    fails.push("Heelton visiting rent: " + JSON.stringify(visitingRent));
+  await page.evaluate(function () { document.querySelector("#btn-leave-scene").click(); });
+
   await browser.close();
   if (errs.length) fails.push("page errors: " + errs.join(" | "));
   if (fails.length) { console.error("FAIL\n" + fails.join("\n")); process.exit(1); }
-  console.log("HOTSPOT SANITY PASS — map boxes live, " + scenes.length + " scenes valid, rent tab fixed");
+  console.log("HOTSPOT SANITY PASS — map boxes live, " + scenes.length + " scenes valid, rent paths fixed");
 })().catch(function (e) { console.error("CRASH", e.message); process.exit(1); });

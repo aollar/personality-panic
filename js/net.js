@@ -119,6 +119,12 @@
       if (msg.kind === "move") E.moveTo(UI.state, msg.payload.to);
       else if (msg.kind === "action") {
         var r2 = E.perform(UI.state, msg.payload.id, msg.payload.choice);
+        if (!r2 || !r2.ok) {
+          send(c, { t: "actionError", message: (r2 && r2.why) || "Action unavailable" });
+          NET.broadcastState();
+          UI.renderAll();
+          return;
+        }
         if (r2 && r2.needsChoice) { send(c, { t: "choice", need: r2.needsChoice, group: r2.group, actionId: msg.payload.id }); return; }
       }
       else if (msg.kind === "end") {
@@ -218,6 +224,10 @@
       // host bounced a choice-action back: open the right picker
       if (msg.need === "shop") UI.doActionShopRemote(msg.group, msg.actionId);
       if (msg.need === "course") UI.doActionCourseRemote(msg.actionId);
+    }
+    if (msg.t === "actionError") {
+      UI.toast(msg.message || "Action unavailable", "bad");
+      return;
     }
   }
   NET.sendIntent = function (kind, payload) {
