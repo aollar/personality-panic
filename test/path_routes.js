@@ -53,6 +53,10 @@ buildings.forEach(function (from) {
       if (!E.NODE_POS[node]) fails.push(key + ": unknown node " + node);
       if (E.DATA.buildings[node] && node !== from && node !== to)
         fails.push(key + ": crosses location hub " + node);
+      var hash = node.indexOf("#");
+      var owner = hash === -1 ? null : node.slice(0, hash);
+      if (owner && E.DATA.buildings[owner] && owner !== from && owner !== to)
+        fails.push(key + ": crosses an entrance of " + owner);
       if (i && !allowed[edgeKey(route.nodes[i - 1], node)])
         fails.push(key + ": segment " + route.nodes[i - 1] + " -> " + node + " is not authored");
     });
@@ -76,6 +80,10 @@ buildings.forEach(function (from) {
       route.nodes.forEach(function (node, j) {
         if (E.DATA.buildings[node] && node !== to)
           fails.push(key + ": crosses location hub " + node);
+        var hash = node.indexOf("#");
+        var owner = hash === -1 ? null : node.slice(0, hash);
+        if (owner && E.DATA.buildings[owner] && node !== from + "#" + i && owner !== to)
+          fails.push(key + ": crosses an entrance of " + owner);
         if (j && !allowed[edgeKey(route.nodes[j - 1], node)])
           fails.push(key + ": segment " + route.nodes[j - 1] + " -> " + node + " is not authored");
       });
@@ -85,7 +93,7 @@ buildings.forEach(function (from) {
 
 ["temple|airport", "airport|temple"].forEach(function (key) {
   var route = E.PATHS[key];
-  if (route.nodes.indexOf("park") !== -1)
+  if (route.nodes.some(function (node) { return node === "park" || node.indexOf("park#") === 0; }))
     fails.push(key + ": still shortcuts through the park: " + route.nodes.join(" -> "));
 });
 
