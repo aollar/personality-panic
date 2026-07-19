@@ -105,6 +105,10 @@
       for (var k in dist) if (!seen[k] && dist[k] < ud) { ud = dist[k]; u = k; }
       if (u === null || u === toId) break;
       seen[u] = true;
+      // Buildings are destinations, never roads. In particular, expanding the
+      // park's zero-cost hub here would let a route enter one park edge and
+      // leave another, drawing a straight shortcut across the lawn.
+      if (DATA.buildings[u] && u !== fromId && u !== toId) continue;
       ADJ[u].forEach(function (vw) {
         if (dist[u] + vw[1] < dist[vw[0]]) { dist[vw[0]] = dist[u] + vw[1]; prev[vw[0]] = u; }
       });
@@ -116,7 +120,9 @@
   var PATHS = {}; // "from|to" -> {nodes,length}
   Object.keys(DATA.buildings).forEach(function (a) {
     Object.keys(DATA.buildings).forEach(function (b) {
-      if (a !== b) PATHS[a + "|" + b] = shortestPath(a, b);
+      // Open zones arrive through whichever entrance is closest, but depart
+      // from their canonical entrance so travel cost and animation agree.
+      if (a !== b) PATHS[a + "|" + b] = shortestPath(MULTI[a] ? a + "#0" : a, b);
     });
   });
   // multi-entrance zones: the hub node is bookkeeping, not a place — the walk
