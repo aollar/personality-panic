@@ -59,9 +59,28 @@
     ADJ[e[0]].push([e[1], w]); ADJ[e[1]].push([e[0], w]);
   });
   // connect each building's entrance to its authored door node(s) so routes
-  // approach along the painted road; fall back to the 2 nearest road nodes
+  // approach along the painted road; fall back to the 2 nearest road nodes.
+  // Open zones (the park) may declare MULTIPLE entrance points along their
+  // edges: each becomes a mini-node ("park#0"...) tied to its own roads, and
+  // the building id is a zero-cost hub behind them — so pathfinding picks the
+  // nearest edge and the walker STOPS there instead of crossing to a center.
+  var MULTI = {};
   Object.keys(DATA.buildings).forEach(function (id) {
-    var doors = DATA.buildings[id].doors;
+    var b = DATA.buildings[id];
+    if (b.entrances && b.entrances.length) {
+      MULTI[id] = true;
+      b.entrances.forEach(function (pt, k) {
+        var nm = id + "#" + k;
+        NODE_POS[nm] = pt; ADJ[nm] = [];
+        ((b.entranceDoors || [])[k] || []).forEach(function (n) {
+          var w = segLen(pt, NODE_POS[n]);
+          ADJ[nm].push([n, w]); ADJ[n].push([nm, w]);
+        });
+        ADJ[id].push([nm, 0.01]); ADJ[nm].push([id, 0.01]);
+      });
+      return;
+    }
+    var doors = b.doors;
     if (doors && doors.length) {
       doors.forEach(function (n) {
         var w = segLen(NODE_POS[id], NODE_POS[n]);
@@ -99,6 +118,14 @@
     Object.keys(DATA.buildings).forEach(function (b) {
       if (a !== b) PATHS[a + "|" + b] = shortestPath(a, b);
     });
+  });
+  // multi-entrance zones: the hub node is bookkeeping, not a place — the walk
+  // starts/ends at the actual edge point ("park#3"), so she stands where she
+  // entered instead of marching to a single canonical spot
+  Object.keys(PATHS).forEach(function (k) {
+    var n = PATHS[k].nodes;
+    if (n.length > 1 && MULTI[n[0]]) n.shift();
+    if (n.length > 1 && MULTI[n[n.length - 1]]) n.pop();
   });
 
   function transportOf(p) {

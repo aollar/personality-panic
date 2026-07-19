@@ -19,17 +19,25 @@ def main():
     lay = json.loads(raw)
     nodes, edges = lay["nodes"], lay["edges"]
 
-    doorsteps = {k[1:]: v for k, v in nodes.items() if k.startswith("@")}
+    # "@park", "@park2", "@park3"... = multiple doorsteps for one open zone;
+    # the trailing digits only distinguish the dots
+    def base(k): return re.sub(r"\d+$", "", k[1:])
+    dot_names = sorted([k for k in nodes if k.startswith("@")],
+                       key=lambda k: (base(k), len(k), k))
+    doorsteps = {}          # building -> [pos, pos...] in dot order
+    dot_doors = {}          # dot name -> [road nodes]
+    for k in dot_names:
+        doorsteps.setdefault(base(k), []).append(k)
+        dot_doors[k] = []
     road_nodes = {k: v for k, v in nodes.items() if not k.startswith("@")}
-    doors = {b: [] for b in doorsteps}
     road_edges = []
     for a, b in edges:
         if a.startswith("@") and b.startswith("@"):
             print(f"SKIP door-to-door edge {a}-{b}"); continue
-        if a.startswith("@"): doors[a[1:]].append(b); continue
-        if b.startswith("@"): doors[b[1:]].append(a); continue
+        if a.startswith("@"): dot_doors[a].append(b); continue
+        if b.startswith("@"): dot_doors[b].append(a); continue
         road_edges.append([a, b])
-    missing = [b for b, d in doors.items() if not d]
+    missing = [k for k, d in dot_doors.items() if not d]
     if missing:
         sys.exit("FATAL: doorstep(s) with no line to a road: " + ", ".join(missing))
     dangling = [e for e in road_edges if e[0] not in road_nodes or e[1] not in road_nodes]
@@ -38,13 +46,24 @@ def main():
 
     s = io.open(BUILD, encoding="utf-8").read()
 
-    # entrances + doors inside the buildings dict
-    for b, pos in doorsteps.items():
-        pat = re.compile(r'("%s":[^}]*?"entrance": )\[[0-9., ]+\](, "doors": )\[[^\]]*\]' % b, re.S)
+    # entrances + doors inside the buildings dict. One dot = classic entrance;
+    # several dots = an open zone with "entrances"/"entranceDoors" lists.
+    for b, dots in doorsteps.items():
+        pat = re.compile(
+            r'("%s": \{.*?"entrance": )\[[0-9., ]+\](, "doors": )\[[^\]]*\]'
+            r'(,\s*(?:#[^\n]*\n\s*)?"entrances": \[\[.*?\]\],\s*"entranceDoors": \[\[.*?\]\])?' % b, re.S)
         if not pat.search(s):
             sys.exit("FATAL: could not find building block for " + b)
-        s = pat.sub(lambda m: m.group(1) + json.dumps(pos) + m.group(2) +
-                    json.dumps(sorted(set(doors[b]))), s, count=1)
+        first_pos = nodes[dots[0]]
+        first_doors = sorted(set(dot_doors[dots[0]]))
+        extra = ""
+        if len(dots) > 1:
+            entrances = [nodes[k] for k in dots]
+            edoors = [sorted(set(dot_doors[k])) for k in dots]
+            extra = (',\n                 "entrances": ' + json.dumps(entrances) +
+                     ',\n                 "entranceDoors": ' + json.dumps(edoors))
+        s = pat.sub(lambda m: m.group(1) + json.dumps(first_pos) + m.group(2) +
+                    json.dumps(first_doors) + extra, s, count=1)
 
     # roadNodes dict
     lines = ["    roadNodes = {"]

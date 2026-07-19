@@ -58,11 +58,15 @@ var PORT = process.env.PORT || "8126";
     }
     var end = await p.evaluate(function (to) {
       var E = window.PPEngine, UI = window.PPUI;
-      return { pos: UI.walker.pos.slice(), want: E.NODE_POS[to], inScene: UI.inScene };
+      // multi-entrance zones (the park): arriving at ANY declared edge point is correct
+      var wants = E.DATA.buildings[to].entrances || [E.NODE_POS[to]];
+      return { pos: UI.walker.pos.slice(), wants: wants, inScene: UI.inScene };
     }, to);
-    var dx = Math.abs(end.pos[0] - end.want[0]), dy = Math.abs(end.pos[1] - end.want[1]);
-    if (dx > 0.5 || dy > 0.5)
-      fails.push(from + "->" + to + ": arrived at " + end.pos + " want entrance " + end.want);
+    var hit = end.wants.some(function (w) {
+      return Math.abs(end.pos[0] - w[0]) <= 0.5 && Math.abs(end.pos[1] - w[1]) <= 0.5;
+    });
+    if (!hit)
+      fails.push(from + "->" + to + ": arrived at " + end.pos + " want one of " + JSON.stringify(end.wants));
     if (end.inScene !== to)
       fails.push(from + "->" + to + ": scene did not open (inScene=" + end.inScene + ")");
     console.log(from + " -> " + to + ": " + samples.length + " samples, arrived", end.pos, "scene:", end.inScene);

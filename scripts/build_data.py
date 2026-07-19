@@ -428,7 +428,9 @@ def main():
                    "entrance": [84, 34.8], "doors": ["n7"]},
         # the park is the roundabout's island — open entry from any ring stretch
         "park": {"name": "Almost Fine Park", "scene": "park.jpg", "pos": [55.0, 40.0],
-                 "entrance": [55.5, 48.0], "doors": ["n3", "rE2", "rNE2", "rNW1b", "rS1", "rS2", "rSE1", "rSW1", "rTop", "rW2"]},
+                 "entrance": [57.5, 59.5], "doors": ["rS1", "rS2"],
+                 "entrances": [[57.5, 59.5], [56, 29], [66, 33], [69.5, 44], [47.5, 58.5], [40.5, 40]],
+                 "entranceDoors": [["rS1", "rS2"], ["rTop"], ["n3", "rNE2"], ["rE2", "rSE1"], ["rSW1", "rSW2"], ["rNW1", "rW2"]]},
         "airOne": {"name": "Air One Supermarket", "scene": "air_one_supermarket.jpg", "pos": [22.3, 33.0],
                    "entrance": [24.6, 47.5], "doors": ["n1"]},
         "regretBurger": {"name": "Regret Burger", "scene": "regret_burger.jpg", "pos": [69.0, 73.0],
