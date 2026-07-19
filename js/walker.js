@@ -46,12 +46,11 @@
     if (this.raf) { cancelAnimationFrame(this.raf); this.raf = null; }
     var nodes = (fromId && E.PATHS[fromId + "|" + buildingId])
       ? E.PATHS[fromId + "|" + buildingId].nodes.slice() : [buildingId];
-    var pts = nodes.map(function (n) { return E.NODE_POS[n].slice(); });
-    // leaving an ordinary building: pop out on the road (the path already
-    // starts at the door's blue dot). Open zones like the park keep the
-    // walk-across-the-lawn behavior from wherever she's standing.
     var fromB = fromId && E.DATA.buildings[fromId];
-    if (fromB && !fromB.entrances) this.setPos(pts[0][0], pts[0][1]);
+    var pts = nodes.map(function (n) { return E.NODE_POS[n].slice(); });
+    // Pop out at the route's authored start. For open zones this is the same
+    // canonical entrance used to price the trip, never a line across the zone.
+    if (fromB) this.setPos(pts[0][0], pts[0][1]);
     else if (segLen(this.pos, pts[0]) > 3) pts.unshift(this.pos.slice());
 
     var segs = [], total = 0;

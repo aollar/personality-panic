@@ -65,12 +65,14 @@
   // the building id is a zero-cost hub behind them — so pathfinding picks the
   // nearest edge and the walker STOPS there instead of crossing to a center.
   var MULTI = {};
+  var ENTRANCE_OWNER = {};
   Object.keys(DATA.buildings).forEach(function (id) {
     var b = DATA.buildings[id];
     if (b.entrances && b.entrances.length) {
       MULTI[id] = true;
       b.entrances.forEach(function (pt, k) {
         var nm = id + "#" + k;
+        ENTRANCE_OWNER[nm] = id;
         NODE_POS[nm] = pt; ADJ[nm] = [];
         ((b.entranceDoors || [])[k] || []).forEach(function (n) {
           var w = segLen(pt, NODE_POS[n]);
@@ -105,6 +107,15 @@
       for (var k in dist) if (!seen[k] && dist[k] < ud) { ud = dist[k]; u = k; }
       if (u === null || u === toId) break;
       seen[u] = true;
+      // Buildings are destinations, never roads. In particular, expanding the
+      // park's zero-cost hub here would let a route enter one park edge and
+      // leave another, drawing a straight shortcut across the lawn.
+      if (DATA.buildings[u] && u !== fromId && u !== toId) continue;
+      // A location entrance is also an endpoint, not a road junction. It may
+      // only be expanded for a trip involving its owner (or when that exact
+      // entrance is the route's source).
+      var owner = ENTRANCE_OWNER[u];
+      if (owner && u !== fromId && owner !== fromId && owner !== toId) continue;
       ADJ[u].forEach(function (vw) {
         if (dist[u] + vw[1] < dist[vw[0]]) { dist[vw[0]] = dist[u] + vw[1]; prev[vw[0]] = u; }
       });
@@ -116,7 +127,9 @@
   var PATHS = {}; // "from|to" -> {nodes,length}
   Object.keys(DATA.buildings).forEach(function (a) {
     Object.keys(DATA.buildings).forEach(function (b) {
-      if (a !== b) PATHS[a + "|" + b] = shortestPath(a, b);
+      // Open zones arrive through whichever entrance is closest, but depart
+      // from their canonical entrance so travel cost and animation agree.
+      if (a !== b) PATHS[a + "|" + b] = shortestPath(MULTI[a] ? a + "#0" : a, b);
     });
   });
   // multi-entrance zones: the hub node is bookkeeping, not a place — the walk
