@@ -429,8 +429,8 @@ def main():
         # the park is the roundabout's island — open entry from any ring stretch
         "park": {"name": "Almost Fine Park", "scene": "park.jpg", "pos": [55.0, 40.0],
                  "entrance": [57.5, 59.5], "doors": ["rS1", "rS2"],
-                 "entrances": [[57.5, 59.5], [56, 29], [66, 33], [69.5, 44], [47.5, 58.5], [40.5, 40]],
-                 "entranceDoors": [["rS1", "rS2"], ["rTop"], ["n3", "rNE2"], ["rE2", "rSE1"], ["rSW1", "rSW2"], ["rNW1", "rW2"]]},
+                 "entrances": [[57.5, 59.5], [52.4, 30.2], [64.7, 33], [64.4, 55.7], [45.6, 57.8], [40.5, 40]],
+                 "entranceDoors": [["rS1", "rS2"], ["clubFront", "rTop"], ["n3", "rNE2"], ["rS1", "rSE2"], ["rSW1", "rSW2"], ["rNW1", "rW2"]]},
         "airOne": {"name": "Air One Supermarket", "scene": "air_one_supermarket.jpg", "pos": [22.3, 33.0],
                    "entrance": [24.6, 47.5], "doors": ["n1"]},
         "regretBurger": {"name": "Regret Burger", "scene": "regret_burger.jpg", "pos": [69.0, 73.0],
@@ -448,7 +448,7 @@ def main():
         "debtstreet": {"name": "Debtstreet Capital", "scene": "debtstreet_capital.jpg", "pos": [74.3, 38.0],
                        "entrance": [76.8, 52.9], "doors": ["debtFront"]},
         "airport": {"name": "Emotional Baggage Airport", "scene": "emotional_baggage_airport.jpg", "pos": [64.5, 12.0],
-                    "entrance": [64.5, 25.1], "doors": ["rNE2", "rTop"]},
+                    "entrance": [64.5, 25.1], "doors": ["n3", "rNE2", "rTop"]},
         "petShop": {"name": "Ethical Pet Shop", "scene": "ethical_pet_shop.jpg", "pos": [82.5, 76.0],
                     "entrance": [83, 88.1], "doors": ["n13"]},
         "mall": {"name": "Mall", "scene": "mall.jpg", "pos": [56.0, 72.0],
@@ -462,9 +462,9 @@ def main():
         "rTop": [56.6, 26.3],
         "rNE2": [68.2, 31.5],
         "rE1": [71.5, 36],
-        "rE2": [72, 42],
+        "rE2": [71.5, 41.8],
         "rSE1": [70.5, 48],
-        "rSE2": [67.8, 56.4],
+        "rSE2": [68.2, 55.5],
         "rS1": [62.4, 61.7],
         "rS2": [54.8, 63.3],
         "rSW1": [47.5, 61.5],
@@ -496,7 +496,7 @@ def main():
         "dLux1": [74.7, 32.4],
         "n1": [30.8, 46.6],
         "n2": [32.9, 72.8],
-        "n3": [63.3, 28.2],
+        "n3": [64.1, 28.4],
         "n4": [35.5, 50.5],
         "n6": [38.5, 56.9],
         "n7": [79.8, 34.2],
@@ -562,6 +562,7 @@ def main():
         ["n1", "rW2"],
         ["n3", "rNE2"],
         ["n7", "dLux1"],
+        ["n2", "swC3"],
     ]
 
     data = {
