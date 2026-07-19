@@ -5773,59 +5773,59 @@ var PP_DATA = {
    "name": "Low Cost Housing",
    "scene": "low_cost_housing.jpg",
    "pos": [
-    47.3,
-    74.0
+    44.5,
+    72.0
    ],
    "entrance": [
-    48.8,
-    82.5
+    44.0,
+    87.0
    ],
    "doors": [
-    "bvdLow"
+    "lowFront"
    ]
   },
   "luxury": {
    "name": "Luxury Apartments",
    "scene": "luxury_apartments.jpg",
    "pos": [
-    87.3,
-    19.0
+    86.5,
+    15.0
    ],
    "entrance": [
-    86.5,
-    35.0
+    85.0,
+    32.5
    ],
    "doors": [
-    "luxPlaza"
+    "luxFront"
    ]
   },
   "park": {
    "name": "Almost Fine Park",
    "scene": "park.jpg",
    "pos": [
-    57.7,
-    44.0
+    55.0,
+    40.0
    ],
    "entrance": [
-    56.0,
-    48.0
+    55.5,
+    50.0
    ],
    "doors": [
-    "parkPath",
-    "ringSW1",
-    "nwJoin"
+    "rS2",
+    "rNW1",
+    "rNE1"
    ]
   },
   "airOne": {
    "name": "Air One Supermarket",
    "scene": "air_one_supermarket.jpg",
    "pos": [
-    24.5,
-    37.0
+    22.3,
+    33.0
    ],
    "entrance": [
-    31.2,
-    40.0
+    23.5,
+    45.5
    ],
    "doors": [
     "aoFront"
@@ -5835,12 +5835,12 @@ var PP_DATA = {
    "name": "Regret Burger",
    "scene": "regret_burger.jpg",
    "pos": [
-    72.7,
-    74.5
+    69.0,
+    73.0
    ],
    "entrance": [
-    74.5,
-    88.0
+    68.5,
+    87.5
    ],
    "doors": [
     "burgerFront"
@@ -5850,12 +5850,12 @@ var PP_DATA = {
    "name": "Bro Science Gym",
    "scene": "bro_science_gym.jpg",
    "pos": [
-    32.0,
-    78.0
+    28.5,
+    77.0
    ],
    "entrance": [
-    39.2,
-    82.3
+    29.5,
+    90.0
    ],
    "doors": [
     "gymFront"
@@ -5866,12 +5866,12 @@ var PP_DATA = {
    "scene": null,
    "video": "bdc_scene.mp4",
    "pos": [
-    51.7,
-    16.0
+    47.5,
+    13.0
    ],
    "entrance": [
-    62.8,
-    28.3
+    48.0,
+    27.5
    ],
    "doors": [
     "clubFront"
@@ -5881,12 +5881,12 @@ var PP_DATA = {
    "name": "Re-Education Temple",
    "scene": "re_education_temple.jpg",
    "pos": [
-    30.0,
-    57.0
+    26.0,
+    52.0
    ],
    "entrance": [
-    29.8,
-    67.5
+    27.5,
+    60.0
    ],
    "doors": [
     "templeFront"
@@ -5896,12 +5896,12 @@ var PP_DATA = {
    "name": "High IQ University",
    "scene": "high_iq_university.jpg",
    "pos": [
-    33.3,
-    19.0
+    28.5,
+    15.0
    ],
    "entrance": [
-    35.2,
-    33.9
+    29.5,
+    33.0
    ],
    "doors": [
     "uniFront"
@@ -5911,12 +5911,12 @@ var PP_DATA = {
    "name": "Corporate Soul Exchange",
    "scene": "corporate_soul_exchange.jpg",
    "pos": [
-    92.5,
-    51.0
+    91.5,
+    43.0
    ],
    "entrance": [
-    90.3,
-    68.3
+    88.0,
+    61.5
    ],
    "doors": [
     "soulFront"
@@ -5926,42 +5926,42 @@ var PP_DATA = {
    "name": "Debtstreet Capital",
    "scene": "debtstreet_capital.jpg",
    "pos": [
-    79.7,
-    41.0
+    74.3,
+    38.0
    ],
    "entrance": [
-    76.8,
-    55.3
+    74.0,
+    53.5
    ],
    "doors": [
-    "seTaxi"
+    "debtFront"
    ]
   },
   "airport": {
    "name": "Emotional Baggage Airport",
    "scene": "emotional_baggage_airport.jpg",
    "pos": [
-    67.3,
-    14.0
+    64.5,
+    12.0
    ],
    "entrance": [
-    67.4,
-    26.5
+    62.0,
+    24.2
    ],
    "doors": [
-    "airportFront"
+    "apFront"
    ]
   },
   "petShop": {
    "name": "Ethical Pet Shop",
    "scene": "ethical_pet_shop.jpg",
    "pos": [
-    85.7,
-    75.5
+    82.5,
+    76.0
    ],
    "entrance": [
-    84.7,
-    87.0
+    79.0,
+    88.5
    ],
    "doors": [
     "petFront"
@@ -5971,12 +5971,12 @@ var PP_DATA = {
    "name": "Mall",
    "scene": "mall.jpg",
    "pos": [
-    58.7,
-    71.5
+    56.0,
+    72.0
    ],
    "entrance": [
-    58.4,
-    86.8
+    56.0,
+    86.0
    ],
    "doors": [
     "mallFront"
@@ -5984,559 +5984,435 @@ var PP_DATA = {
   }
  },
  "roadNodes": {
-  "ringTop": [
-   58.0,
-   29.0
+  "rTop": [
+   55.0,
+   24.5
   ],
-  "clubFront": [
-   62.9,
-   29.4
+  "rNE1": [
+   62.0,
+   26.5
   ],
-  "airportFront": [
-   67.0,
-   30.4
-  ],
-  "neJunction": [
-   70.4,
-   30.9
-  ],
-  "ringNE2": [
-   71.7,
-   34.5
-  ],
-  "ringE1": [
-   73.6,
-   38.6
-  ],
-  "ringE2": [
-   74.2,
-   43.5
-  ],
-  "ringE3": [
-   73.5,
-   48.4
-  ],
-  "ringSE1": [
-   72.0,
-   52.7
-  ],
-  "seTaxi": [
-   70.0,
-   56.5
-  ],
-  "ringSE2": [
-   67.0,
-   58.3
-  ],
-  "ringSE3": [
-   63.0,
-   59.8
-  ],
-  "ringS": [
-   58.8,
-   60.2
-  ],
-  "ringSW1": [
-   54.0,
-   60.3
-  ],
-  "ringSW2": [
-   48.2,
-   59.7
-  ],
-  "ringSW3": [
-   44.6,
-   57.6
-  ],
-  "ringW1": [
-   42.1,
-   54.0
-  ],
-  "ringW2": [
-   41.0,
-   49.8
-  ],
-  "ringW3": [
-   40.2,
-   44.3
-  ],
-  "ringNW1": [
-   41.2,
-   39.0
-  ],
-  "ringNW2": [
-   43.5,
-   34.6
-  ],
-  "ringNW3": [
-   46.2,
-   30.9
-  ],
-  "nwJoin": [
-   50.0,
-   31.2
-  ],
-  "ringN0": [
-   53.8,
-   29.8
-  ],
-  "nwFork": [
-   43.8,
-   22.5
-  ],
-  "nwRoad1": [
-   45.3,
-   25.3
-  ],
-  "nwRoad2": [
-   47.6,
-   28.6
-  ],
-  "uniRoad1": [
-   41.8,
-   25.5
-  ],
-  "uniRoad2": [
-   39.5,
+  "rNE2": [
+   68.0,
    30.5
   ],
-  "uniFront": [
-   36.4,
-   34.8
+  "rE1": [
+   71.5,
+   36.0
   ],
-  "aoFront": [
-   34.3,
-   40.3
+  "rE2": [
+   72.0,
+   42.0
   ],
-  "vRoad1": [
-   38.0,
-   39.5
+  "rSE1": [
+   70.5,
+   48.0
   ],
-  "vRoad2": [
-   38.2,
-   43.0
+  "rSE2": [
+   66.5,
+   53.5
   ],
-  "vRoad3": [
-   38.1,
-   46.3
+  "rS1": [
+   61.0,
+   57.0
   ],
-  "vMerge": [
-   39.4,
-   51.5
-  ],
-  "swRoad1": [
-   40.3,
+  "rS2": [
+   54.0,
    58.5
   ],
-  "swRoad2": [
-   40.3,
-   63.0
+  "rSW1": [
+   47.5,
+   57.0
   ],
-  "swRoad3": [
-   39.8,
-   68.0
+  "rSW2": [
+   42.5,
+   53.0
   ],
-  "swRoad4": [
-   39.3,
-   73.5
+  "rW1": [
+   40.0,
+   47.0
   ],
-  "templeFront": [
-   32.8,
-   65.5
+  "rW2": [
+   39.5,
+   40.0
   ],
-  "gymBend1": [
-   34.5,
-   70.8
+  "rNW1": [
+   41.0,
+   33.0
   ],
-  "gymBend2": [
-   37.0,
-   74.5
+  "rNW2": [
+   45.0,
+   27.5
   ],
-  "gymFront": [
-   42.0,
-   81.0
+  "rNW3": [
+   50.0,
+   25.0
   ],
-  "gymCorner": [
-   41.3,
-   88.1
+  "clubFront": [
+   48.0,
+   27.5
   ],
-  "parkPath": [
-   44.8,
+  "apFront": [
+   62.0,
+   24.8
+  ],
+  "uniRoad": [
+   33.5,
+   28.5
+  ],
+  "uniFront": [
+   29.5,
+   33.0
+  ],
+  "leftRd1": [
+   27.5,
+   40.0
+  ],
+  "aoFront": [
+   23.5,
    45.5
   ],
-  "bvdLow": [
-   47.5,
-   87.8
+  "leftRd2": [
+   26.0,
+   53.0
   ],
-  "bvdClock": [
-   52.5,
-   88.0
-  ],
-  "bvdJoin": [
-   56.0,
-   88.6
-  ],
-  "mallFront": [
-   58.3,
-   89.3
-  ],
-  "bvdMid1": [
-   64.5,
-   90.8
-  ],
-  "burgerFront": [
-   74.8,
-   90.8
-  ],
-  "bvdMid2": [
-   78.5,
-   91.3
-  ],
-  "petFront": [
-   84.8,
-   90.3
-  ],
-  "bvdEast": [
-   88.2,
-   85.7
-  ],
-  "luxRoad1": [
-   72.8,
-   28.8
-  ],
-  "luxRoad2": [
-   75.5,
-   26.0
-  ],
-  "luxRoad3": [
-   79.5,
-   26.8
-  ],
-  "luxPlaza": [
-   83.5,
-   30.0
-  ],
-  "eRoad1": [
-   76.0,
-   57.9
-  ],
-  "eRoad2": [
-   77.5,
+  "templeFront": [
+   27.5,
    60.5
   ],
-  "eRoad3": [
-   80.2,
-   60.9
+  "swRd2": [
+   25.5,
+   74.0
   ],
-  "eRoad4": [
-   84.9,
-   63.2
+  "swRd3": [
+   26.0,
+   83.0
+  ],
+  "swC1": [
+   40.0,
+   60.0
+  ],
+  "swC2": [
+   38.0,
+   70.0
+  ],
+  "swC3": [
+   37.5,
+   80.0
+  ],
+  "gymFront": [
+   29.5,
+   90.5
+  ],
+  "bW1": [
+   34.0,
+   89.5
+  ],
+  "bJ1": [
+   38.5,
+   88.0
+  ],
+  "lowFront": [
+   44.0,
+   87.5
+  ],
+  "b2": [
+   50.0,
+   87.5
+  ],
+  "mallFront": [
+   56.0,
+   86.5
+  ],
+  "b3": [
+   62.0,
+   87.0
+  ],
+  "burgerFront": [
+   68.5,
+   87.8
+  ],
+  "b4": [
+   73.5,
+   88.5
+  ],
+  "petFront": [
+   79.0,
+   89.0
+  ],
+  "b5": [
+   85.5,
+   90.0
+  ],
+  "bE": [
+   92.0,
+   88.5
+  ],
+  "eR1": [
+   94.5,
+   80.0
+  ],
+  "eR2": [
+   94.0,
+   70.0
+  ],
+  "soulSide": [
+   91.5,
+   65.0
   ],
   "soulFront": [
-   88.8,
-   67.0
+   88.0,
+   61.5
   ],
-  "petRight1": [
-   93.0,
-   72.0
+  "sW1": [
+   82.0,
+   58.0
   ],
-  "petRight2": [
-   93.3,
-   75.5
+  "mE1": [
+   74.0,
+   70.0
   ],
-  "petRight3": [
-   92.3,
-   79.5
+  "debtFront": [
+   74.0,
+   53.5
   ],
-  "petRight4": [
-   89.7,
-   83.3
+  "dLux1": [
+   75.0,
+   31.0
+  ],
+  "dLux2": [
+   80.0,
+   32.0
+  ],
+  "luxFront": [
+   85.0,
+   33.0
   ]
  },
  "roadEdges": [
   [
-   "ringTop",
-   "clubFront"
+   "rTop",
+   "rNE1"
+  ],
+  [
+   "rNE1",
+   "rNE2"
+  ],
+  [
+   "rNE2",
+   "rE1"
+  ],
+  [
+   "rE1",
+   "rE2"
+  ],
+  [
+   "rE2",
+   "rSE1"
+  ],
+  [
+   "rSE1",
+   "rSE2"
+  ],
+  [
+   "rSE2",
+   "rS1"
+  ],
+  [
+   "rS1",
+   "rS2"
+  ],
+  [
+   "rS2",
+   "rSW1"
+  ],
+  [
+   "rSW1",
+   "rSW2"
+  ],
+  [
+   "rSW2",
+   "rW1"
+  ],
+  [
+   "rW1",
+   "rW2"
+  ],
+  [
+   "rW2",
+   "rNW1"
+  ],
+  [
+   "rNW1",
+   "rNW2"
+  ],
+  [
+   "rNW2",
+   "rNW3"
+  ],
+  [
+   "rNW3",
+   "rTop"
   ],
   [
    "clubFront",
-   "airportFront"
+   "rNW3"
   ],
   [
-   "airportFront",
-   "neJunction"
+   "clubFront",
+   "rNW2"
   ],
   [
-   "neJunction",
-   "ringNE2"
+   "apFront",
+   "rNE1"
   ],
   [
-   "ringNE2",
-   "ringE1"
+   "rNW1",
+   "uniRoad"
   ],
   [
-   "ringE1",
-   "ringE2"
-  ],
-  [
-   "ringE2",
-   "ringE3"
-  ],
-  [
-   "ringE3",
-   "ringSE1"
-  ],
-  [
-   "ringSE1",
-   "seTaxi"
-  ],
-  [
-   "seTaxi",
-   "ringSE2"
-  ],
-  [
-   "ringSE2",
-   "ringSE3"
-  ],
-  [
-   "ringSE3",
-   "ringS"
-  ],
-  [
-   "ringS",
-   "ringSW1"
-  ],
-  [
-   "ringSW1",
-   "ringSW2"
-  ],
-  [
-   "ringSW2",
-   "ringSW3"
-  ],
-  [
-   "ringSW3",
-   "ringW1"
-  ],
-  [
-   "ringW1",
-   "ringW2"
-  ],
-  [
-   "ringW2",
-   "ringW3"
-  ],
-  [
-   "ringW3",
-   "ringNW1"
-  ],
-  [
-   "ringNW1",
-   "ringNW2"
-  ],
-  [
-   "ringNW2",
-   "ringNW3"
-  ],
-  [
-   "ringNW3",
-   "nwJoin"
-  ],
-  [
-   "nwJoin",
-   "ringN0"
-  ],
-  [
-   "ringN0",
-   "ringTop"
-  ],
-  [
-   "nwFork",
-   "nwRoad1"
-  ],
-  [
-   "nwRoad1",
-   "nwRoad2"
-  ],
-  [
-   "nwRoad2",
-   "nwJoin"
-  ],
-  [
-   "nwFork",
-   "uniRoad1"
-  ],
-  [
-   "uniRoad1",
-   "uniRoad2"
-  ],
-  [
-   "uniRoad2",
+   "uniRoad",
    "uniFront"
   ],
   [
    "uniFront",
-   "vRoad1"
+   "leftRd1"
   ],
   [
-   "vRoad1",
+   "leftRd1",
    "aoFront"
   ],
   [
    "aoFront",
-   "vRoad2"
+   "leftRd2"
   ],
   [
-   "vRoad1",
-   "vRoad2"
-  ],
-  [
-   "vRoad2",
-   "vRoad3"
-  ],
-  [
-   "vRoad3",
-   "vMerge"
-  ],
-  [
-   "vMerge",
-   "ringW1"
-  ],
-  [
-   "ringW1",
-   "swRoad1"
-  ],
-  [
-   "swRoad1",
-   "swRoad2"
-  ],
-  [
-   "swRoad2",
-   "swRoad3"
-  ],
-  [
-   "swRoad3",
-   "swRoad4"
-  ],
-  [
-   "swRoad4",
-   "gymFront"
+   "leftRd2",
+   "templeFront"
   ],
   [
    "templeFront",
-   "gymBend1"
+   "swRd2"
   ],
   [
-   "gymBend1",
-   "gymBend2"
+   "swRd2",
+   "swRd3"
   ],
   [
-   "gymBend2",
+   "swRd3",
    "gymFront"
   ],
   [
+   "rSW2",
+   "swC1"
+  ],
+  [
+   "swC1",
+   "swC2"
+  ],
+  [
+   "swC2",
+   "swC3"
+  ],
+  [
+   "swC3",
+   "bJ1"
+  ],
+  [
    "gymFront",
-   "gymCorner"
+   "bW1"
   ],
   [
-   "gymCorner",
-   "bvdLow"
+   "bW1",
+   "bJ1"
   ],
   [
-   "vRoad3",
-   "ringW3"
+   "bJ1",
+   "lowFront"
   ],
   [
-   "ringW3",
-   "parkPath"
+   "lowFront",
+   "b2"
   ],
   [
-   "bvdLow",
-   "bvdClock"
-  ],
-  [
-   "bvdClock",
-   "bvdJoin"
-  ],
-  [
-   "bvdJoin",
+   "b2",
    "mallFront"
   ],
   [
    "mallFront",
-   "bvdMid1"
+   "b3"
   ],
   [
-   "bvdMid1",
+   "b3",
    "burgerFront"
   ],
   [
    "burgerFront",
-   "bvdMid2"
+   "b4"
   ],
   [
-   "bvdMid2",
+   "b4",
    "petFront"
   ],
   [
    "petFront",
-   "bvdEast"
+   "b5"
   ],
   [
-   "neJunction",
-   "luxRoad1"
+   "b5",
+   "bE"
   ],
   [
-   "luxRoad1",
-   "luxRoad2"
+   "bE",
+   "eR1"
   ],
   [
-   "luxRoad2",
-   "luxRoad3"
+   "eR1",
+   "eR2"
   ],
   [
-   "luxRoad3",
-   "luxPlaza"
+   "eR2",
+   "soulSide"
   ],
   [
-   "seTaxi",
-   "eRoad1"
-  ],
-  [
-   "eRoad1",
-   "eRoad2"
-  ],
-  [
-   "eRoad2",
-   "eRoad3"
-  ],
-  [
-   "eRoad3",
-   "eRoad4"
-  ],
-  [
-   "eRoad4",
+   "soulSide",
    "soulFront"
   ],
   [
    "soulFront",
-   "petRight1"
+   "sW1"
   ],
   [
-   "petRight1",
-   "petRight2"
+   "sW1",
+   "rSE2"
   ],
   [
-   "petRight2",
-   "petRight3"
+   "b4",
+   "mE1"
   ],
   [
-   "petRight3",
-   "petRight4"
+   "mE1",
+   "debtFront"
   ],
   [
-   "petRight4",
-   "bvdEast"
+   "debtFront",
+   "rSE1"
+  ],
+  [
+   "debtFront",
+   "rSE2"
+  ],
+  [
+   "rNE2",
+   "dLux1"
+  ],
+  [
+   "dLux1",
+   "dLux2"
+  ],
+  [
+   "dLux2",
+   "luxFront"
   ]
  ],
  "weekend": {

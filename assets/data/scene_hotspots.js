@@ -137,21 +137,22 @@ var PP_HOTSPOTS = {
 };
 // Overmap building hotspots: [x, y, w, h] percent boxes traced around each
 // painted building (replaces the old one-size-fits-all box centered on pos).
+// Re-measured 2026-07-19 for the NEW map art ("Game Map (12)")
 var PP_MAP_BOXES = {
-  lowCost:      [41.9, 60.5, 11.0, 23.0],
-  luxury:       [79.8,  4.0, 18.3, 29.0],
-  park:         [50.8, 28.5, 14.4, 26.0],
-  airOne:       [19.7, 22.5, 12.6, 19.5],
-  regretBurger: [68.2, 61.5, 11.3, 24.0],
-  gym:          [24.8, 63.5, 14.4, 27.5],
-  club:         [43.5,  2.0, 14.0, 22.5],
-  temple:       [22.4, 42.0, 15.0, 24.0],
-  university:   [22.1,  3.7, 16.8, 27.5],
-  soulExchange: [84.9, 35.0, 14.4, 30.0],
-  debtstreet:   [76.0, 26.0, 11.0, 30.0],
-  airport:      [59.8,  2.5, 17.4, 18.5],
-  petShop:      [80.4, 62.0, 14.1, 28.0],
-  mall:         [51.7, 57.5, 14.4, 26.0]
+  lowCost:      [37.8, 59.5, 12.0, 29.0],
+  luxury:       [77.5,  4.0, 17.8, 22.0],
+  park:         [40.0, 25.5, 30.0, 31.0],
+  airOne:       [19.3, 23.5,  6.9, 24.0],
+  regretBurger: [63.9, 59.5, 11.4, 29.5],
+  gym:          [20.8, 62.5, 15.5, 30.0],
+  club:         [40.0,  2.0, 16.0, 23.0],
+  temple:       [18.8, 44.0, 14.6, 19.5],
+  university:   [20.5,  2.5, 16.5, 21.0],
+  soulExchange: [84.0, 26.0, 15.5, 37.0],
+  debtstreet:   [69.5, 24.5,  8.0, 29.5],
+  airport:      [56.5,  2.0, 18.5, 24.0],
+  petShop:      [75.5, 61.5, 15.3, 30.5],
+  mall:         [50.0, 57.5, 13.8, 30.0]
 };
 // BDC side-menu card ids -> engine actions
 var PP_BDC_MAP = {

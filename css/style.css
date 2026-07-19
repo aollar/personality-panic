@@ -267,8 +267,9 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
 #turn-timer { display: none !important; }
 /* live turn clock — SAME size in every location (map + every scene), bottom-middle;
    z-index 50 = above scenes (z30), below dialogs (z60). Display-only. */
-#turn-clock { position: absolute; left: 50%; bottom: 3%; transform: translateX(-50%);
-  width: 16%; z-index: 50; pointer-events: none; filter: drop-shadow(0 5px 10px rgba(0,0,0,.4)); }
+/* Austin's picks from the size-finder tool (2026-07-19): 13% at 45.8/1.3 */
+#turn-clock { position: absolute; left: 45.8%; bottom: 1.3%; transform: translateX(-50%);
+  width: 13%; z-index: 50; pointer-events: none; filter: drop-shadow(0 5px 10px rgba(0,0,0,.4)); }
 #turn-clock .pc-svg { width: 100%; height: auto; display: block; overflow: visible; }
 
 /* ---------- Building scene view ---------- */
