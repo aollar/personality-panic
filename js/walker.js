@@ -47,7 +47,12 @@
     var nodes = (fromId && E.PATHS[fromId + "|" + buildingId])
       ? E.PATHS[fromId + "|" + buildingId].nodes.slice() : [buildingId];
     var pts = nodes.map(function (n) { return E.NODE_POS[n].slice(); });
-    if (segLen(this.pos, pts[0]) > 3) pts.unshift(this.pos.slice());
+    // leaving an ordinary building: pop out on the road (the path already
+    // starts at the door's blue dot). Open zones like the park keep the
+    // walk-across-the-lawn behavior from wherever she's standing.
+    var fromB = fromId && E.DATA.buildings[fromId];
+    if (fromB && !fromB.entrances) this.setPos(pts[0][0], pts[0][1]);
+    else if (segLen(this.pos, pts[0]) > 3) pts.unshift(this.pos.slice());
 
     var segs = [], total = 0;
     for (var i = 1; i < pts.length; i++) { var L = segLen(pts[i - 1], pts[i]); segs.push(L); total += L; }

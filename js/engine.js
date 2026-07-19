@@ -121,10 +121,13 @@
   });
   // multi-entrance zones: the hub node is bookkeeping, not a place — the walk
   // starts/ends at the actual edge point ("park#3"), so she stands where she
-  // entered instead of marching to a single canonical spot
+  // entered instead of marching to a single canonical spot.
+  // Ordinary buildings: leaving one starts the walk at the DOOR ROAD NODE
+  // (Austin: step out onto the blue dot in front, don't walk the doorstep leg;
+  // the park keeps its edge-dot behavior).
   Object.keys(PATHS).forEach(function (k) {
     var n = PATHS[k].nodes;
-    if (n.length > 1 && MULTI[n[0]]) n.shift();
+    if (n.length > 1 && (MULTI[n[0]] || DATA.buildings[n[0]])) n.shift();
     if (n.length > 1 && MULTI[n[n.length - 1]]) n.pop();
   });
 
