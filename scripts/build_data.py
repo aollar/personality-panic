@@ -430,25 +430,25 @@ def main():
         "park": {"name": "Almost Fine Park", "scene": "park.jpg", "pos": [55.0, 40.0],
                  "entrance": [55.5, 50.0], "doors": ["rS2", "rNW1", "rNE1"]},
         "airOne": {"name": "Air One Supermarket", "scene": "air_one_supermarket.jpg", "pos": [22.3, 33.0],
-                   "entrance": [23.5, 45.5], "doors": ["aoFront"]},
+                   "entrance": [24.0, 45.8], "doors": ["aoFront"]},
         "regretBurger": {"name": "Regret Burger", "scene": "regret_burger.jpg", "pos": [69.0, 73.0],
-                         "entrance": [68.5, 87.5], "doors": ["burgerFront"]},
+                         "entrance": [70.5, 87.6], "doors": ["burgerFront"]},
         "gym": {"name": "Bro Science Gym", "scene": "bro_science_gym.jpg", "pos": [28.5, 77.0],
                 "entrance": [29.5, 90.0], "doors": ["gymFront"]},
         "club": {"name": "Bad Decisions Club", "scene": None, "video": "bdc_scene.mp4", "pos": [47.5, 13.0],
                  "entrance": [48.0, 27.5], "doors": ["clubFront"]},
         "temple": {"name": "Re-Education Temple", "scene": "re_education_temple.jpg", "pos": [26.0, 52.0],
-                   "entrance": [27.5, 60.0], "doors": ["templeFront"]},
+                   "entrance": [29.0, 58.0], "doors": ["templeFront"]},
         "university": {"name": "High IQ University", "scene": "high_iq_university.jpg", "pos": [28.5, 15.0],
-                       "entrance": [29.5, 33.0], "doors": ["uniFront"]},
+                       "entrance": [30.0, 33.2], "doors": ["uniFront"]},
         "soulExchange": {"name": "Corporate Soul Exchange", "scene": "corporate_soul_exchange.jpg", "pos": [91.5, 43.0],
-                         "entrance": [88.0, 61.5], "doors": ["soulFront"]},
+                         "entrance": [90.0, 64.0], "doors": ["soulFront"]},
         "debtstreet": {"name": "Debtstreet Capital", "scene": "debtstreet_capital.jpg", "pos": [74.3, 38.0],
                        "entrance": [74.0, 53.5], "doors": ["debtFront"]},
         "airport": {"name": "Emotional Baggage Airport", "scene": "emotional_baggage_airport.jpg", "pos": [64.5, 12.0],
                     "entrance": [62.0, 24.2], "doors": ["apFront"]},
         "petShop": {"name": "Ethical Pet Shop", "scene": "ethical_pet_shop.jpg", "pos": [82.5, 76.0],
-                    "entrance": [79.0, 88.5], "doors": ["petFront"]},
+                    "entrance": [80.5, 88.8], "doors": ["petFront"]},
         "mall": {"name": "Mall", "scene": "mall.jpg", "pos": [56.0, 72.0],
                  "entrance": [56.0, 86.0], "doors": ["mallFront"]},
     }
@@ -460,41 +460,44 @@ def main():
         # park ring (clockwise from the top)
         "rTop": [55.0, 24.5], "rNE1": [62.0, 26.5], "rNE2": [68.0, 30.5],
         "rE1": [71.5, 36.0], "rE2": [72.0, 42.0], "rSE1": [70.5, 48.0],
-        "rSE2": [66.5, 53.5], "rS1": [61.0, 57.0], "rS2": [54.0, 58.5],
-        "rSW1": [47.5, 57.0], "rSW2": [42.5, 53.0], "rW1": [40.0, 47.0],
-        "rW2": [39.5, 40.0], "rNW1": [41.0, 33.0], "rNW2": [45.0, 27.5],
+        "rSE2": [66.5, 53.5], "rS1": [61.0, 55.8], "rS2": [54.0, 56.8],
+        "rSW1": [47.5, 56.3], "rSW2": [42.5, 53.0], "rW1": [38.5, 47.0],
+        "rW2": [38.3, 40.0], "rNW1": [40.2, 32.2], "rNW1b": [42.4, 29.6], "rNW2": [45.0, 27.5],
         "rNW3": [50.0, 25.0],
         # doorsteps on / just off the ring
         "clubFront": [48.0, 27.5], "apFront": [62.0, 24.8],
         # left S-road: ring NW -> university -> Air One -> temple -> gym
-        "uniRoad": [33.5, 28.5], "uniFront": [29.5, 33.0],
-        "leftRd1": [27.5, 40.0], "aoFront": [23.5, 45.5],
-        "leftRd2": [26.0, 53.0], "templeFront": [27.5, 60.5],
+        "uniRoad": [33.8, 27.8], "uniFront": [30.0, 33.5],
+        "leftRd1": [27.5, 40.0], "aoFront": [24.0, 46.3],
+        "leftRd2": [29.0, 50.5], "templeFront": [29.5, 58.5],
+        "tRd1": [33.0, 55.0], "tRd2": [34.5, 61.0], "wDown1": [35.8, 51.5], "hz1": [28.0, 67.5],
         "swRd2": [25.5, 74.0], "swRd3": [26.0, 83.0],
         # SW connector: ring -> boulevard between gym and Low Cost
         "swC1": [40.0, 60.0], "swC2": [38.0, 70.0], "swC3": [37.5, 80.0],
         # bottom boulevard, west -> east
         "gymFront": [29.5, 90.5], "bW1": [34.0, 89.5], "bJ1": [38.5, 88.0],
         "lowFront": [44.0, 87.5], "b2": [50.0, 87.5], "mallFront": [56.0, 86.5],
-        "b3": [62.0, 87.0], "burgerFront": [68.5, 87.8], "b4": [73.5, 88.5],
-        "petFront": [79.0, 89.0], "b5": [85.5, 90.0], "bE": [92.0, 88.5],
+        "b3": [62.0, 87.0], "burgerFront": [70.5, 88.0], "b4": [73.5, 88.5],
+        "petFront": [80.5, 89.3], "b5": [85.5, 90.0], "bE": [92.0, 88.5],
         # east riser: boulevard -> Soul Exchange
         "eR1": [94.5, 80.0], "eR2": [94.0, 70.0], "soulSide": [91.5, 65.0],
-        "soulFront": [88.0, 61.5], "sW1": [82.0, 58.0],
+        "soulFront": [90.5, 64.5], "sW1": [82.0, 58.0],
         # mid-east riser: boulevard (burger/pet gap) -> Debtstreet -> ring
         "mE1": [74.0, 70.0], "debtFront": [74.0, 53.5],
         # NE diagonal: ring -> Heelton Heights
         "dLux1": [75.0, 31.0], "dLux2": [80.0, 32.0], "luxFront": [85.0, 33.0],
     }
     _ring = ["rTop", "rNE1", "rNE2", "rE1", "rE2", "rSE1", "rSE2", "rS1", "rS2",
-             "rSW1", "rSW2", "rW1", "rW2", "rNW1", "rNW2", "rNW3", "rTop"]
+             "rSW1", "rSW2", "rW1", "rW2", "rNW1", "rNW1b", "rNW2", "rNW3", "rTop"]
     roadEdges = [[_ring[i], _ring[i + 1]] for i in range(len(_ring) - 1)] + [
         # doorsteps on the ring
         ["clubFront", "rNW3"], ["clubFront", "rNW2"], ["apFront", "rNE1"],
         # left S-road
         ["rNW1", "uniRoad"], ["uniRoad", "uniFront"], ["uniFront", "leftRd1"],
-        ["leftRd1", "aoFront"], ["aoFront", "leftRd2"], ["leftRd2", "templeFront"],
-        ["templeFront", "swRd2"], ["swRd2", "swRd3"], ["swRd3", "gymFront"],
+        ["leftRd1", "aoFront"], ["aoFront", "leftRd2"], ["leftRd2", "tRd1"],
+        ["tRd1", "templeFront"], ["rW1", "wDown1"], ["wDown1", "tRd1"],
+        ["tRd1", "tRd2"], ["tRd2", "swC2"], ["swC2", "hz1"], ["hz1", "swRd2"],
+        ["swRd2", "swRd3"], ["swRd3", "gymFront"],
         # SW connector
         ["rSW2", "swC1"], ["swC1", "swC2"], ["swC2", "swC3"], ["swC3", "bJ1"],
         # bottom boulevard

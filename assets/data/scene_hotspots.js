@@ -148,10 +148,10 @@ var PP_MAP_BOXES = {
   club:         [40.0,  2.0, 16.0, 23.0],
   temple:       [18.8, 44.0, 14.6, 19.5],
   university:   [20.5,  2.5, 16.5, 21.0],
-  soulExchange: [84.0, 26.0, 15.5, 37.0],
-  debtstreet:   [69.5, 24.5,  8.0, 29.5],
+  soulExchange: [84.5, 26.0, 15.0, 38.0],
+  debtstreet:   [73.0, 27.5,  9.3, 26.5],
   airport:      [56.5,  2.0, 18.5, 24.0],
-  petShop:      [75.5, 61.5, 15.3, 30.5],
+  petShop:      [75.5, 61.5, 13.5, 30.5],
   mall:         [50.0, 57.5, 13.8, 30.0]
 };
 // BDC side-menu card ids -> engine actions
