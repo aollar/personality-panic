@@ -83,6 +83,23 @@
     el.play().catch(function () {});
     return el;
   }
+  // Canonical per-action cue files (Manual v2.4 §15.2) — same pool + guard,
+  // addressed by path instead of by the generic DATA.sfx name table.
+  function cue(relPath) {
+    if (!relPath || !st.unlocked) return null;
+    var now = (window.performance && performance.now) ? performance.now() : Date.now();
+    if (sfxLast[relPath] && now - sfxLast[relPath] < 45) return null;
+    sfxLast[relPath] = now;
+    var el;
+    if (sfxPool.length < SFX_POOL_MAX) { el = new Audio(); el.onerror = function () {}; sfxPool.push(el); }
+    else { el = sfxPool[sfxIdx]; sfxIdx = (sfxIdx + 1) % SFX_POOL_MAX; }
+    if (el._f !== relPath) { el.src = SFX_DIR + relPath; el._f = relPath; }
+    try { el.pause(); el.currentTime = 0; } catch (e) {}
+    el.volume = sfxVol();
+    el.play().catch(function () {});
+    return el;
+  }
+
   // movement: walking loops; bike/car one-shots — ALL of them stop on arrival
   // (the 2.8s car clip used to keep revving inside the building)
   function startMove(transport) {
@@ -144,7 +161,7 @@
   window.PPAudio = {
     footsteps: footsteps,
     state: st, setScene: setScene, playMusic: playMusic, stopMusic: stopMusic,
-    sfx: sfx, startMove: startMove, stopMove: stopMove, applyVolumes: applyVolumes,
+    sfx: sfx, cue: cue, startMove: startMove, stopMove: stopMove, applyVolumes: applyVolumes,
     set: function (k, v) { st[k] = v; applyVolumes(); }
   };
 })();

@@ -67,7 +67,16 @@
     return r;
   }
   function afterDispatch(kind, payload, r, after) {
-    if (r && r.sfx) r.sfx.forEach(function (s) { A.sfx(s); });
+    // canonical per-action cue (Manual v2.4 §15.2) wins over the generic
+    // click/money/eat sounds; pet interactions speak in the pet's own voice
+    var cuePath = null;
+    if (kind === "action" && r && r.ok && !r.needsChoice && window.PP_SFX_MAP) {
+      cuePath = PP_SFX_MAP.actions[payload.id] || null;
+      if ((payload.id === "A006" || payload.id === "A107") && activeP().pet && PP_SFX_MAP.pets[activeP().pet.code])
+        cuePath = PP_SFX_MAP.pets[activeP().pet.code];
+    }
+    if (cuePath) A.cue(cuePath);
+    else if (r && r.sfx) r.sfx.forEach(function (s) { A.sfx(s); });
     saveGame();
     if (UI.mode === "host") window.PPNet.broadcastState();
     if (UI.state.over) { renderAll(); openPodium(); return; }
