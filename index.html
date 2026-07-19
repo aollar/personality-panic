@@ -93,6 +93,13 @@
            center = timer countdown / ∞). Replaces the plain gold timer face above. -->
       <div id="turn-clock"></div>
 
+      <!-- the map art bakes a VIEW STATS + MENU button bottom-right; these
+           invisible targets make the painted buttons actually work -->
+      <button class="baked-btn" id="baked-stats" title="View Stats"
+              style="left:74.5%; top:93%; width:12.2%; height:6.2%"></button>
+      <button class="baked-btn" id="baked-menu" title="Menu"
+              style="left:88.3%; top:93%; width:11.2%; height:6.2%"></button>
+
       <!-- building scene: painted menus in the art are clipped into live buttons -->
       <div class="scene-view" id="scene-view">
         <div class="backdrop" id="scene-backdrop"></div>

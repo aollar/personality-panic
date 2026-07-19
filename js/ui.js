@@ -1526,6 +1526,9 @@
     safe(initStart, "initStart");
     safe(initSettings, "initSettings");
     safe(function () { if (window.PPClock) UI.clock = window.PPClock.mount($("#turn-clock")); }, "mountClock");
+    // the art's painted bottom-right buttons — same handlers as the HUD chips
+    $("#baked-stats").onclick = function () { click(); openStats(); };
+    $("#baked-menu").onclick = function () { click(); openMenu(); };
     $("#btn-start-game").onclick = function () {
       click();
       if (setup && setup.tuPerTurn) {          // apply the chosen Time Units / turn (costs stay 1-3)
