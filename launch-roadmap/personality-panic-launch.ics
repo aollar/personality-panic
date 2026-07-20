@@ -1,0 +1,163 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Personality Panic//Launch Roadmap 2026//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Personality Panic Launch Roadmap
+X-WR-TIMEZONE:America/Los_Angeles
+BEGIN:VTIMEZONE
+TZID:America/Los_Angeles
+X-LIC-LOCATION:America/Los_Angeles
+BEGIN:DAYLIGHT
+TZOFFSETFROM:-0800
+TZOFFSETTO:-0700
+TZNAME:PDT
+DTSTART:19700308T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:-0700
+TZOFFSETTO:-0800
+TZNAME:PST
+DTSTART:19701101T020000
+RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:foundation-start-20260720@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;VALUE=DATE:20260720
+SUMMARY:Personality Panic — founders build phase begins
+DESCRIPTION:Finish the full loop, run internal matches, set up testing instrumentation, and freeze major-system additions.
+END:VEVENT
+BEGIN:VEVENT
+UID:playtest-wave-one-20260803@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;VALUE=DATE:20260803
+DTEND;VALUE=DATE:20260817
+SUMMARY:Closed Steam Playtest — Wave 1
+DESCRIPTION:Invite 30–50 testers in batches: friends/family, personality-community contacts, and less-affiliated target gamers.
+END:VEVENT
+BEGIN:VEVENT
+UID:steam-nextfest-qa-20260818@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;TZID=America/Los_Angeles:20260818T100000
+DTEND;TZID=America/Los_Angeles:20260818T110000
+SUMMARY:Steam Next Fest live Q&A
+DESCRIPTION:Official Steamworks Q&A for the October 2026 edition.
+URL:https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest/2026october
+END:VEVENT
+BEGIN:VEVENT
+UID:demo-scope-lock-20260820@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;VALUE=DATE:20260820
+SUMMARY:Lock the Personality Panic consumer-demo scope
+DESCRIPTION:One map, complete match, essential building categories, limited types/pets/events, bots, ending, wishlist and feedback CTAs.
+END:VEVENT
+BEGIN:VEVENT
+UID:store-page-target-20260824@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;VALUE=DATE:20260824
+SUMMARY:Target: Steam Coming Soon page public
+DESCRIPTION:Gameplay-first page live and collecting wishlists before Next Fest registration closes.
+END:VEVENT
+BEGIN:VEVENT
+UID:nextfest-register-20260831@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;TZID=America/Los_Angeles:20260831T235900
+DTEND;TZID=America/Los_Angeles:20260901T000000
+SUMMARY:DEADLINE — Register for October Steam Next Fest
+DESCRIPTION:Official registration deadline. Keep marketing materials current for potential official marketing inclusion.
+URL:https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest/2026october
+END:VEVENT
+BEGIN:VEVENT
+UID:nextfest-trailer-pull-20260907@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;VALUE=DATE:20260907
+SUMMARY:Steam pulls trailers for official Next Fest trailer consideration
+DESCRIPTION:Have the strongest current trailer on the base-game store page before this date.
+URL:https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest/2026october
+END:VEVENT
+BEGIN:VEVENT
+UID:nextfest-stay-withdraw-20260908@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;VALUE=DATE:20260908
+SUMMARY:Internal gate — stay in or withdraw from October Next Fest
+DESCRIPTION:Stay only if the demo can represent the game well and remaining risks are polish rather than fundamental design.
+END:VEVENT
+BEGIN:VEVENT
+UID:press-preview-submission-20260921@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;VALUE=DATE:20260921
+SUMMARY:TARGET — Submit demo and store page for Press Preview review
+DESCRIPTION:Official target date to have the demo live at the start of the October 8 Press Preview.
+URL:https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest/2026october
+END:VEVENT
+BEGIN:VEVENT
+UID:nextfest-all-items-20261005@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;VALUE=DATE:20261005
+SUMMARY:DEADLINE — All required Next Fest items submitted
+DESCRIPTION:Official final review-submission date for October Next Fest preparation.
+URL:https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest/2026october
+END:VEVENT
+BEGIN:VEVENT
+UID:nextfest-press-preview-20261008@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;TZID=America/Los_Angeles:20261008T100000
+SUMMARY:Steam Next Fest Press Preview begins
+DESCRIPTION:Opted-in demos are included. Begin concentrated creator and showcase outreach.
+URL:https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest/2026october
+END:VEVENT
+BEGIN:VEVENT
+UID:nextfest-20261019@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;TZID=America/Los_Angeles:20261019T100000
+DTEND;TZID=America/Los_Angeles:20261026T100000
+SUMMARY:Steam Next Fest — October 2026
+DESCRIPTION:Concentrate players in the public demo, operate daily, support creators, and track the funnel.
+URL:https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest/2026october
+END:VEVENT
+BEGIN:VEVENT
+UID:launch-gate-20261027@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;VALUE=DATE:20261027
+SUMMARY:Personality Panic November launch go / no-go
+DESCRIPTION:Decide from full-game readiness, demo behavior, wishlist quality, creator commitments, support capacity, and conservative sales expectations.
+END:VEVENT
+BEGIN:VEVENT
+UID:release-candidate-lock-20261103@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;VALUE=DATE:20261103
+SUMMARY:Target — lock Personality Panic release candidate
+DESCRIPTION:No content changes without a documented blocker and rollback plan.
+END:VEVENT
+BEGIN:VEVENT
+UID:final-launch-approval-20261116@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;VALUE=DATE:20261116
+SUMMARY:Final founder launch approval
+DESCRIPTION:Confirm build, store, discount, support, creator calendar, rollback plan, and launch-week availability.
+END:VEVENT
+BEGIN:VEVENT
+UID:personality-panic-launch-20261117@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;TZID=America/Los_Angeles:20261117T100000
+SUMMARY:PROVISIONAL — Personality Panic Steam launch
+DESCRIPTION:Working plan: $19.99 base price with one 15–25% launch discount lasting 14 days and covering Black Friday.
+END:VEVENT
+BEGIN:VEVENT
+UID:black-friday-20261127@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;VALUE=DATE:20261127
+SUMMARY:Black Friday — reuse the active launch offer
+DESCRIPTION:Use launch reviews, clips, creator coverage, and player stories. Do not plan an immediate second 50% discount.
+END:VEVENT
+BEGIN:VEVENT
+UID:two-week-launch-review-20261201@personality-panic
+DTSTAMP:20260720T120000Z
+DTSTART;VALUE=DATE:20261201
+SUMMARY:Personality Panic two-week launch review
+DESCRIPTION:Review sales, wishlist conversion, reviews, refunds, crashes, acquisition sources, creator performance, and support load.
+END:VEVENT
+END:VCALENDAR
