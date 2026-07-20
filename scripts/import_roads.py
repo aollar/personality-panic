@@ -46,22 +46,32 @@ def main():
 
     s = io.open(BUILD, encoding="utf-8").read()
 
+    # exits: {"building": "roadNode"} — where the walker STANDS when leaving
+    # (editor Exit mode). Validated against the drawn road nodes.
+    exits = lay.get("exits", {})
+    for b, n in list(exits.items()):
+        if b not in doorsteps: sys.exit("FATAL: exit for unknown building " + b)
+        if n not in road_nodes: sys.exit(f"FATAL: exit node {n} for {b} is not a road dot")
+
     # entrances + doors inside the buildings dict. One dot = classic entrance;
     # several dots = an open zone with "entrances"/"entranceDoors" lists.
     for b, dots in doorsteps.items():
         pat = re.compile(
             r'("%s": \{.*?"entrance": )\[[0-9., ]+\](, "doors": )\[[^\]]*\]'
+            r'(, "exit": "[^"]*")?'
             r'(,\s*(?:#[^\n]*\n\s*)?"entrances": \[\[.*?\]\],\s*"entranceDoors": \[\[.*?\]\])?' % b, re.S)
         if not pat.search(s):
             sys.exit("FATAL: could not find building block for " + b)
         first_pos = nodes[dots[0]]
         first_doors = sorted(set(dot_doors[dots[0]]))
         extra = ""
+        if b in exits and len(dots) == 1:
+            extra += ', "exit": ' + json.dumps(exits[b])
         if len(dots) > 1:
             entrances = [nodes[k] for k in dots]
             edoors = [sorted(set(dot_doors[k])) for k in dots]
-            extra = (',\n                 "entrances": ' + json.dumps(entrances) +
-                     ',\n                 "entranceDoors": ' + json.dumps(edoors))
+            extra += (',\n                 "entrances": ' + json.dumps(entrances) +
+                      ',\n                 "entranceDoors": ' + json.dumps(edoors))
         s = pat.sub(lambda m: m.group(1) + json.dumps(first_pos) + m.group(2) +
                     json.dumps(first_doors) + extra, s, count=1)
 

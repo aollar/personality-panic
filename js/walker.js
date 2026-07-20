@@ -34,22 +34,43 @@
     if (color) this.ring.style.background = color;
   };
   Walker.prototype.jumpTo = function (buildingId) {
-    var p = E.NODE_POS[buildingId];
+    // resting at a building = standing at its EXIT dot (front on the road),
+    // not the doorstep — jumpTo runs on every render tick (guest sync, resume,
+    // "not currently animating"), so this must agree with _afterArrive or it
+    // snaps her straight back to the door the instant a render happens.
+    var ex = E.exitNodeOf && E.exitNodeOf(buildingId);
+    var p = E.NODE_POS[ex || buildingId];
     if (p) this.setPos(p[0], p[1]);
   };
   function segLen(a, b) {
     return Math.hypot((a[0] - b[0]) * AR_X, (a[1] - b[1]) * AR_Y);
   }
   // route: engine path {nodes:[ids]} between buildings -> pixel polyline walk
+  // After arriving (scene now covers the map), quietly stand her on the
+  // building's EXIT road dot so leaving later starts from the blue dot with
+  // no visible teleport. A newer walk cancels the pending reposition.
+  Walker.prototype._afterArrive = function (buildingId) {
+    var self = this;
+    var seq = ++this._seq;
+    var ex = E.exitNodeOf ? E.exitNodeOf(buildingId) : null;
+    if (!ex) return;
+    setTimeout(function () {
+      if (self._seq !== seq || self.raf) return;   // she's already walking again
+      var p = E.NODE_POS[ex];
+      self.setPos(p[0], p[1]);
+    }, 700);
+  };
   Walker.prototype.walkTo = function (buildingId, fromId, onArrive) {
     var self = this;
+    this._seq = (this._seq || 0) + 1;
     if (this.raf) { cancelAnimationFrame(this.raf); this.raf = null; }
     var nodes = (fromId && E.PATHS[fromId + "|" + buildingId])
       ? E.PATHS[fromId + "|" + buildingId].nodes.slice() : [buildingId];
     var fromB = fromId && E.DATA.buildings[fromId];
     var pts = nodes.map(function (n) { return E.NODE_POS[n].slice(); });
-    // Pop out at the route's authored start. For open zones this is the same
-    // canonical entrance used to price the trip, never a line across the zone.
+    // Pop out at the route's authored start (via engine.js: the building's
+    // EXIT dot for ordinary locations, the canonical entrance for open zones
+    // like the park) — never a line drawn across the zone from a stale spot.
     if (fromB) this.setPos(pts[0][0], pts[0][1]);
     else if (segLen(this.pos, pts[0]) > 3) pts.unshift(this.pos.slice());
 
@@ -57,7 +78,8 @@
     for (var i = 1; i < pts.length; i++) { var L = segLen(pts[i - 1], pts[i]); segs.push(L); total += L; }
     if (total < 0.5 || pts.length < 2) {
       this.setPos(pts[pts.length - 1][0], pts[pts.length - 1][1]);
-      if (onArrive) onArrive(); return;
+      if (onArrive) onArrive();
+      this._afterArrive(buildingId); return;
     }
     var duration = Math.max(450, (total / WALK_SPEED) * 1000);
     // arrive exactly ONCE no matter what finishes first. rAF stalls in hidden
@@ -72,6 +94,7 @@
       self.img.src = IDLE_SRC;
       self.setPos(pts[pts.length - 1][0], pts[pts.length - 1][1]);
       if (onArrive) onArrive();
+      self._afterArrive(buildingId);
     };
     if (this.watchdog) clearTimeout(this.watchdog);
     if (document.hidden) { done(); return; }

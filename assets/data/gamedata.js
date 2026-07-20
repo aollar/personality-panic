@@ -5782,7 +5782,8 @@ var PP_DATA = {
    ],
    "doors": [
     "lowFront"
-   ]
+   ],
+   "exit": "lowFront"
   },
   "luxury": {
    "name": "Luxury Apartments",
@@ -5797,7 +5798,8 @@ var PP_DATA = {
    ],
    "doors": [
     "n7"
-   ]
+   ],
+   "exit": "n7"
   },
   "park": {
    "name": "Almost Fine Park",
@@ -5881,7 +5883,8 @@ var PP_DATA = {
    ],
    "doors": [
     "n1"
-   ]
+   ],
+   "exit": "n1"
   },
   "regretBurger": {
    "name": "Regret Burger",
@@ -5896,7 +5899,8 @@ var PP_DATA = {
    ],
    "doors": [
     "burgerFront"
-   ]
+   ],
+   "exit": "burgerFront"
   },
   "gym": {
    "name": "Bro Science Gym",
@@ -5911,7 +5915,8 @@ var PP_DATA = {
    ],
    "doors": [
     "bW1"
-   ]
+   ],
+   "exit": "bW1"
   },
   "club": {
    "name": "Bad Decisions Club",
@@ -5927,7 +5932,8 @@ var PP_DATA = {
    ],
    "doors": [
     "clubFront"
-   ]
+   ],
+   "exit": "clubFront"
   },
   "temple": {
    "name": "Re-Education Temple",
@@ -5942,7 +5948,8 @@ var PP_DATA = {
    ],
    "doors": [
     "n2"
-   ]
+   ],
+   "exit": "n2"
   },
   "university": {
    "name": "High IQ University",
@@ -5957,7 +5964,8 @@ var PP_DATA = {
    ],
    "doors": [
     "uniFront"
-   ]
+   ],
+   "exit": "uniFront"
   },
   "soulExchange": {
    "name": "Corporate Soul Exchange",
@@ -5972,7 +5980,8 @@ var PP_DATA = {
    ],
    "doors": [
     "n17"
-   ]
+   ],
+   "exit": "n17"
   },
   "debtstreet": {
    "name": "Debtstreet Capital",
@@ -5987,7 +5996,8 @@ var PP_DATA = {
    ],
    "doors": [
     "debtFront"
-   ]
+   ],
+   "exit": "debtFront"
   },
   "airport": {
    "name": "Emotional Baggage Airport",
@@ -6004,7 +6014,8 @@ var PP_DATA = {
     "n3",
     "rNE2",
     "rTop"
-   ]
+   ],
+   "exit": "n3"
   },
   "petShop": {
    "name": "Ethical Pet Shop",
@@ -6019,7 +6030,8 @@ var PP_DATA = {
    ],
    "doors": [
     "n13"
-   ]
+   ],
+   "exit": "n13"
   },
   "mall": {
    "name": "Mall",
@@ -6034,7 +6046,8 @@ var PP_DATA = {
    ],
    "doors": [
     "n9"
-   ]
+   ],
+   "exit": "n9"
   }
  },
  "roadNodes": {

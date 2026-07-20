@@ -124,23 +124,34 @@
     while (cur !== undefined) { path.unshift(cur); if (cur === fromId) break; cur = prev[cur]; }
     return { nodes: path, length: dist[toId] === Infinity ? segLen(NODE_POS[fromId], NODE_POS[toId]) : dist[toId] };
   }
+  // Every ordinary building has a designated EXIT SPOT on the road (Austin:
+  // entrance and exit are different places — you arrive at the red door dot,
+  // but you leave FROM the blue road dot). b.exit names it; default = first
+  // door. Open zones (park) return null and keep their edge-dot behavior.
+  function exitNodeOf(id) {
+    var b = DATA.buildings[id];
+    if (!b || MULTI[id]) return null;
+    if (b.exit && NODE_POS[b.exit]) return b.exit;
+    return (b.doors && b.doors[0]) || null;
+  }
   var PATHS = {}; // "from|to" -> {nodes,length}
   Object.keys(DATA.buildings).forEach(function (a) {
+    // Open zones arrive through whichever entrance is closest, but depart from
+    // their canonical entrance so travel cost and animation agree. Ordinary
+    // buildings depart from their designated EXIT spot on the road, not the
+    // doorway (exitNodeOf returns null for multi-entrance zones, so this never
+    // fights the canonical-#0 rule above).
+    var src = MULTI[a] ? a + "#0" : (exitNodeOf(a) || a);
     Object.keys(DATA.buildings).forEach(function (b) {
-      // Open zones arrive through whichever entrance is closest, but depart
-      // from their canonical entrance so travel cost and animation agree.
-      if (a !== b) PATHS[a + "|" + b] = shortestPath(MULTI[a] ? a + "#0" : a, b);
+      if (a !== b) PATHS[a + "|" + b] = shortestPath(src, b);
     });
   });
   // multi-entrance zones: the hub node is bookkeeping, not a place — the walk
   // starts/ends at the actual edge point ("park#3"), so she stands where she
-  // entered instead of marching to a single canonical spot.
-  // Ordinary buildings: leaving one starts the walk at the DOOR ROAD NODE
-  // (Austin: step out onto the blue dot in front, don't walk the doorstep leg;
-  // the park keeps its edge-dot behavior).
+  // entered instead of marching to a single canonical spot
   Object.keys(PATHS).forEach(function (k) {
     var n = PATHS[k].nodes;
-    if (n.length > 1 && (MULTI[n[0]] || DATA.buildings[n[0]])) n.shift();
+    if (n.length > 1 && MULTI[n[0]]) n.shift();
     if (n.length > 1 && MULTI[n[n.length - 1]]) n.pop();
   });
 
@@ -956,7 +967,7 @@
     newGame: newGame, active: active, actionsAt: actionsAt, perform: perform,
     moveTo: moveTo, moveCost: moveCost, endTurn: endTurn, startTurn: startTurn,
     score: score, podium: podium, isRentTurn: isRentTurn, petState: petState, clubGate: clubGate,
-    weekendStanding: weekendStanding,
+    weekendStanding: weekendStanding, exitNodeOf: exitNodeOf,
     jobsWithStatus: jobsWithStatus, bestPromotion: bestPromotion, statName: statName,
     personalityMult: personalityMult, totalMult: totalMult, transportOf: transportOf,
     shortestPath: shortestPath, PATHS: PATHS, NODE_POS: NODE_POS, log: log,

@@ -95,8 +95,13 @@ function distanceToAuthoredPath(point) {
     }
     var end = await p.evaluate(function (to) {
       var E = window.PPEngine, UI = window.PPUI;
-      // multi-entrance zones (the park): arriving at ANY declared edge point is correct
+      // multi-entrance zones (the park): arriving at ANY declared edge point is correct.
+      // Ordinary buildings: she arrives at the door (entrance), but any render
+      // after that quietly parks her at the EXIT road dot (Austin's ask — she
+      // stands outside on the road, not glued to the doorstep) — both count.
       var wants = E.DATA.buildings[to].entrances || [E.NODE_POS[to]];
+      var ex = E.exitNodeOf && E.exitNodeOf(to);
+      if (ex) wants = wants.concat([E.NODE_POS[ex]]);
       return { pos: UI.walker.pos.slice(), wants: wants, inScene: UI.inScene };
     }, to);
     var hit = end.wants.some(function (w) {
