@@ -18,13 +18,12 @@ A framework-free, responsive GitHub Pages roadmap for the path from the founders
 
 ## Update the shared plan
 
-Edit `roadmap-data.js`. Most ongoing updates require changing only:
+The roadmap is intentionally plain HTML, CSS, and JavaScript so either founder can edit it directly on GitHub.
 
-- `status`: `not-started`, `in-progress`, `done`, `at-risk`, or `blocked`
-- `owner`: `You`, `Kendrick`, or `Both`
-- task dates, descriptions, and deliverables
-- the provisional launch date and pricing decision
-- targets and decision-gate checks
+- Edit `roadmap-data.js` for phases, dates, targets, demo scope, metrics, campaigns, and working decisions.
+- Edit `roadmap-tasks-01.js` through `roadmap-tasks-07.js` for task dates, owners, descriptions, dependencies, deliverables, priority, and status.
+- Task `status` accepts `not-started`, `in-progress`, `done`, `at-risk`, or `blocked`.
+- Suggested task `owner` values are `You`, `Kendrick`, or `Both`, but they can be replaced with names or roles.
 
 The page calculates the current phase, countdowns, calendar progress, overdue tasks, and task progress automatically.
 
