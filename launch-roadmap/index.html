@@ -3,15 +3,877 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101126">
-  <title>Personality Panic — Launch Command Center</title>
-  <meta http-equiv="refresh" content="0; url=dashboard.html">
-  <link rel="canonical" href="dashboard.html">
-  <script>
-    location.replace(`dashboard.html${location.search}${location.hash}`);
-  </script>
+  <meta name="theme-color" content="#090b1b">
+  <meta name="description" content="Personality Panic launch roadmap from founders build through Steam Next Fest and launch.">
+  <title>Personality Panic · Launch Roadmap</title>
+  <style>
+    :root {
+      --bg: #080a19;
+      --bg-deep: #050715;
+      --panel: #191c35;
+      --panel-2: #111429;
+      --panel-3: #222641;
+      --text: #f7f7fb;
+      --muted: #b8bbcd;
+      --subtle: #9195ad;
+      --line: rgba(255,255,255,.105);
+      --line-soft: rgba(255,255,255,.07);
+      --mint: #9ae9d5;
+      --mint-deep: #55c5aa;
+      --gold: #f0d59a;
+      --gold-border: rgba(225, 185, 105, .34);
+      --purple: #8674f5;
+      --coral: #ed829a;
+      --shadow: 0 28px 70px rgba(0,0,0,.34);
+      --radius: 30px;
+      --radius-md: 21px;
+      --radius-sm: 15px;
+      --max: 1120px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 50% -10%, rgba(125,70,142,.25), transparent 30rem),
+        radial-gradient(circle at 100% 14%, rgba(73,63,139,.15), transparent 28rem),
+        linear-gradient(180deg, var(--bg-deep) 0%, var(--bg) 46%, #0a0d20 100%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input, textarea, select { font: inherit; }
+    .wrap { width: min(var(--max), calc(100% - 32px)); margin: 0 auto; }
+
+    .site-head {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--line-soft);
+      background: rgba(6,8,20,.67);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .site-head-inner {
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .brand {
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: .025em;
+    }
+    .launch-chip {
+      color: #d7d9e5;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 7px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.035);
+      white-space: nowrap;
+    }
+
+    .hero { padding: 38px 0 24px; }
+    .hero-intro { margin: 0 0 18px; }
+    .hero-intro h1 {
+      margin: 0 0 7px;
+      font-size: clamp(31px, 5vw, 52px);
+      line-height: 1.02;
+      letter-spacing: -.045em;
+    }
+    .hero-intro p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 760px;
+    }
+
+    .phase-card {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(24px, 4vw, 38px);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: var(--radius);
+      background:
+        radial-gradient(circle at 93% 2%, rgba(224,91,133,.21), transparent 26%),
+        radial-gradient(circle at 10% 120%, rgba(106,91,225,.13), transparent 34%),
+        linear-gradient(145deg, #24273f 0%, #1b1e37 58%, #171a32 100%);
+      box-shadow: var(--shadow);
+    }
+    .phase-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 19px;
+    }
+    .eyebrow {
+      color: #9fa3ba;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid rgba(112,231,203,.34);
+      border-radius: 999px;
+      background: rgba(112,231,203,.08);
+      color: var(--mint);
+      padding: 8px 13px;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .phase-card h2 {
+      max-width: 870px;
+      margin: 0 0 9px;
+      font-size: clamp(35px, 6vw, 62px);
+      line-height: 1.02;
+      letter-spacing: -.052em;
+    }
+    .phase-description {
+      max-width: 780px;
+      margin: 0;
+      color: #c7cad9;
+      font-size: clamp(16px, 2vw, 19px);
+    }
+    .phase-target {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 19px 0 24px;
+      padding: 9px 12px;
+      color: #e9eaf2;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(8,10,26,.24);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .phase-target strong { color: white; }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 13px;
+      max-width: 640px;
+      margin-bottom: 23px;
+    }
+    .hero-stat {
+      min-height: 120px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 19px;
+      background: rgba(8,10,26,.47);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .hero-stat strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: clamp(42px, 6vw, 58px);
+      line-height: .96;
+      letter-spacing: -.04em;
+    }
+    .hero-stat span {
+      color: #a8acc1;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .progress-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      max-width: 850px;
+      margin-bottom: 8px;
+      color: #aaaec2;
+      font-size: 13px;
+      font-weight: 850;
+    }
+    .progress-track {
+      width: min(850px, 100%);
+      height: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255,255,255,.09);
+    }
+    .progress-track span {
+      display: block;
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--purple), var(--mint-deep));
+      transition: width .5s ease;
+    }
+    .next-milestone {
+      max-width: 850px;
+      margin-top: 23px;
+      padding: 17px 18px;
+      border: 1px solid var(--gold-border);
+      border-radius: 17px;
+      background: rgba(225,185,105,.085);
+    }
+    .next-milestone strong {
+      display: block;
+      margin-bottom: 2px;
+      color: #f5e2b8;
+      font-size: 15px;
+    }
+    .next-milestone span {
+      color: #f0dcae;
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    section.content-section { padding: 66px 0 0; scroll-margin-top: 85px; }
+    .section-head { margin-bottom: 22px; }
+    .section-head .kicker {
+      margin-bottom: 5px;
+      color: var(--mint);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .125em;
+      text-transform: uppercase;
+    }
+    .section-head h2 {
+      margin: 0 0 8px;
+      font-size: clamp(31px, 5vw, 49px);
+      line-height: 1.03;
+      letter-spacing: -.046em;
+    }
+    .section-head p {
+      max-width: 820px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .calendar-card {
+      overflow: hidden;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 25px;
+      background: linear-gradient(145deg, rgba(255,255,255,.055), rgba(255,255,255,.022));
+      box-shadow: var(--shadow);
+    }
+    .month-row {
+      display: grid;
+      grid-template-columns: 12fr 31fr 30fr 31fr 17fr;
+      gap: 1px;
+      margin: 0 11px 11px;
+      color: #969ab0;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .month-row span { text-align: center; }
+    .timeline-window {
+      overflow-x: auto;
+      padding: 18px 10px 13px;
+      scrollbar-width: thin;
+    }
+    .timeline {
+      position: relative;
+      min-width: 880px;
+      height: 142px;
+    }
+    .timeline-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 56px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.09);
+    }
+    .timeline-progress {
+      position: absolute;
+      left: 0;
+      top: 56px;
+      width: 0;
+      height: 4px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--purple), var(--mint-deep));
+      transition: width .5s ease;
+    }
+    .timeline-marker {
+      position: absolute;
+      top: 39px;
+      transform: translateX(-50%);
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 2px solid #737990;
+      background: #171a31;
+      color: #c8cbd8;
+      font-size: 12px;
+      font-weight: 950;
+      box-shadow: 0 0 0 7px rgba(9,11,27,.88);
+    }
+    .timeline-marker.past {
+      border-color: var(--mint-deep);
+      background: #15372f;
+      color: #cbfff1;
+    }
+    .timeline-marker.current {
+      border-color: var(--gold);
+      color: #fff0c9;
+      background: #3a3020;
+      box-shadow: 0 0 0 7px rgba(9,11,27,.9), 0 0 22px rgba(240,213,154,.24);
+    }
+    .timeline-label {
+      position: absolute;
+      top: 85px;
+      width: 112px;
+      transform: translateX(-50%);
+      color: #b8bbcd;
+      font-size: 11px;
+      line-height: 1.25;
+      text-align: center;
+      font-weight: 800;
+    }
+    .timeline-label b {
+      display: block;
+      margin-bottom: 2px;
+      color: #f2f3f8;
+      font-size: 11px;
+    }
+
+    .schedule-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 17px;
+    }
+    .schedule-item {
+      position: relative;
+      min-height: 185px;
+      padding: 21px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: linear-gradient(155deg, rgba(255,255,255,.048), rgba(255,255,255,.019));
+      box-shadow: 0 18px 44px rgba(0,0,0,.18);
+    }
+    .schedule-item.current {
+      border-color: rgba(240,213,154,.42);
+      background: linear-gradient(145deg, rgba(240,213,154,.105), rgba(255,255,255,.02));
+    }
+    .schedule-item.complete { opacity: .75; }
+    .schedule-num {
+      position: absolute;
+      right: 18px;
+      top: 13px;
+      color: rgba(255,255,255,.075);
+      font-size: 48px;
+      font-weight: 950;
+      line-height: 1;
+      letter-spacing: -.05em;
+    }
+    .schedule-date {
+      display: inline-flex;
+      margin-bottom: 12px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(134,116,245,.12);
+      color: #cfc8ff;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .schedule-item.current .schedule-date {
+      background: rgba(240,213,154,.12);
+      color: #f7e7bd;
+    }
+    .schedule-item h3 {
+      max-width: 82%;
+      margin: 0 0 7px;
+      font-size: 20px;
+      line-height: 1.18;
+      letter-spacing: -.025em;
+    }
+    .schedule-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .done-when {
+      display: block;
+      margin-top: 13px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line-soft);
+      color: #d7d9e4;
+      font-size: 12px;
+      font-weight: 750;
+    }
+    .done-when b { color: var(--mint); }
+
+    .wishlist-grid,
+    .campaign-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .wishlist-card,
+    .campaign-card {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: linear-gradient(150deg, rgba(255,255,255,.05), rgba(255,255,255,.019));
+      box-shadow: 0 18px 44px rgba(0,0,0,.18);
+    }
+    .wishlist-range {
+      display: inline-flex;
+      margin-bottom: 14px;
+      padding: 7px 10px;
+      border: 1px solid rgba(134,116,245,.28);
+      border-radius: 999px;
+      background: rgba(134,116,245,.12);
+      color: #d8d2ff;
+      font-size: 13px;
+      font-weight: 950;
+    }
+    .wishlist-card h3,
+    .campaign-card h3 {
+      margin: 0 0 7px;
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: -.02em;
+    }
+    .wishlist-card p,
+    .campaign-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .campaign-num {
+      width: 35px;
+      height: 35px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 13px;
+      border: 1px solid rgba(112,231,203,.2);
+      border-radius: 12px;
+      background: rgba(112,231,203,.09);
+      color: var(--mint);
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    footer {
+      padding: 62px 0 46px;
+      color: #83889f;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .wishlist-grid, .campaign-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .month-row { display: none; }
+    }
+    @media (max-width: 720px) {
+      .site-head { position: static; }
+      .hero { padding-top: 26px; }
+      .hero-stats, .schedule-grid, .wishlist-grid, .campaign-grid { grid-template-columns: 1fr; }
+      .phase-card { border-radius: 25px; }
+      .phase-card h2 { font-size: 42px; }
+      .schedule-item { min-height: 0; }
+      .calendar-card { padding: 14px; }
+      section.content-section { padding-top: 52px; }
+    }
+    @media (max-width: 480px) {
+      .wrap, .site-head-inner { width: min(var(--max), calc(100% - 20px)); }
+      .launch-chip { display: none; }
+      .phase-top { align-items: flex-start; }
+      .status-pill { padding: 7px 10px; }
+      .phase-target { border-radius: 14px; align-items: flex-start; }
+    }
+  </style>
 </head>
 <body>
-  <p><a href="dashboard.html">Open the Personality Panic Launch Command Center</a></p>
+  <header class="site-head">
+    <div class="site-head-inner">
+      <a class="brand" href="#top">🎭 Personality Panic · Launch Roadmap</a>
+      <div class="launch-chip">Target launch · November 17, 2026</div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="wrap">
+        <div class="hero-intro">
+          <h1>Launch plan</h1>
+          <p>Founders build → private playtesting → public demo → Steam Next Fest → launch.</p>
+        </div>
+
+        <article class="phase-card">
+          <div class="phase-top">
+            <div class="eyebrow">Current phase</div>
+            <div class="status-pill" id="phase-status">In progress</div>
+          </div>
+
+          <h2 id="phase-title">Finish the founders build</h2>
+          <p class="phase-description" id="phase-description">Reach a reliable full internal match and stop adding major systems.</p>
+          <div class="phase-target">📅 Target finish: <strong id="phase-target">August 2, 2026</strong></div>
+
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <strong id="days-next-fest">—</strong>
+              <span>days to Next Fest</span>
+            </div>
+            <div class="hero-stat">
+              <strong id="days-launch">—</strong>
+              <span>days to target launch</span>
+            </div>
+          </div>
+
+          <div class="progress-head">
+            <span>Calendar progress</span>
+            <strong id="progress-label">0%</strong>
+          </div>
+          <div class="progress-track"><span id="progress-fill"></span></div>
+
+          <div class="next-milestone">
+            <strong id="next-title">Next: Founders build target</strong>
+            <span id="next-detail">August 2, 2026 · 13 days</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="content-section" id="schedule">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="kicker">Master schedule</div>
+          <h2>The critical path</h2>
+          <p>Ten stages from the founders build through launch. Each stage should produce the proof or deliverable needed to unlock the next one.</p>
+        </div>
+
+        <div class="calendar-card">
+          <div class="month-row" aria-hidden="true">
+            <span>July</span><span>August</span><span>September</span><span>October</span><span>November</span>
+          </div>
+          <div class="timeline-window">
+            <div class="timeline" id="timeline">
+              <div class="timeline-line"></div>
+              <div class="timeline-progress" id="timeline-progress"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="schedule-grid" id="schedule-grid"></div>
+      </div>
+    </section>
+
+    <section class="content-section" id="wishlist">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="kicker">Working targets, not guarantees</div>
+          <h2>Wishlist runway</h2>
+          <p>Use these as directional checkpoints. Qualified wishlists and strong demo behavior matter more than hitting a vanity number.</p>
+        </div>
+
+        <div class="wishlist-grid">
+          <article class="wishlist-card">
+            <div class="wishlist-range">100–300</div>
+            <h3>After the Steam page reveal</h3>
+            <p>Enough to confirm that the store page communicates the hook and your closest relevant audiences respond.</p>
+          </article>
+          <article class="wishlist-card">
+            <div class="wishlist-range">750–1,500</div>
+            <h3>Before the public demo</h3>
+            <p>Built through your existing network, personality-community contacts, early creators, and trailer placements.</p>
+          </article>
+          <article class="wishlist-card">
+            <div class="wishlist-range">1,000–2,500</div>
+            <h3>Entering Next Fest</h3>
+            <p>A useful base so the festival amplifies existing interest instead of being asked to create all awareness from zero.</p>
+          </article>
+          <article class="wishlist-card">
+            <div class="wishlist-range">2,500–5,000</div>
+            <h3>After Next Fest</h3>
+            <p>A credible post-festival outcome if the capsule, trailer, demo, and outreach convert well.</p>
+          </article>
+          <article class="wishlist-card">
+            <div class="wishlist-range">5,000–8,000</div>
+            <h3>Healthy launch base</h3>
+            <p>A stronger position for a small indie team, especially when paired with good demo completion and creator commitments.</p>
+          </article>
+          <article class="wishlist-card">
+            <div class="wishlist-range">10,000+</div>
+            <h3>Stretch outcome</h3>
+            <p>Likely requires several borrowed-audience channels working together and at least one meaningful breakout placement.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section" id="campaigns">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="kicker">Low-budget reach</div>
+          <h2>Six concentrated campaign moments</h2>
+          <p>No daily content hamster wheel. Build a few strong assets, then distribute them during six deliberate moments.</p>
+        </div>
+
+        <div class="campaign-grid">
+          <article class="campaign-card">
+            <div class="campaign-num">01</div>
+            <h3>Steam page reveal</h3>
+            <p>Publish the page with a clear hook, readable capsule art, credible screenshots, and an initial gameplay-forward trailer.</p>
+          </article>
+          <article class="campaign-card">
+            <div class="campaign-num">02</div>
+            <h3>Closed Playtest recruitment</h3>
+            <p>Recruit friends, family, personality-community contacts, target gamers, and a few small creators into controlled testing waves.</p>
+          </article>
+          <article class="campaign-card">
+            <div class="campaign-num">03</div>
+            <h3>Gameplay trailer reveal</h3>
+            <p>Send the polished trailer to upcoming-game channels, indie showcase channels, personality creators, and gaming creators.</p>
+          </article>
+          <article class="campaign-card">
+            <div class="campaign-num">04</div>
+            <h3>Public demo release</h3>
+            <p>Turn the validated slice into a consumer-facing demo and give every outreach contact one clean call to action.</p>
+          </article>
+          <article class="campaign-card">
+            <div class="campaign-num">05</div>
+            <h3>Steam Next Fest</h3>
+            <p>Concentrate traffic on the public demo, host creator sessions, support players quickly, and measure wishlist conversion.</p>
+          </article>
+          <article class="campaign-card">
+            <div class="campaign-num">06</div>
+            <h3>Launch-week coverage push</h3>
+            <p>Re-contact warm creators, distribute release keys, activate Kendrick’s channels, and coordinate launch-day coverage.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">Personality Panic working roadmap · Target launch November 17, 2026</div>
+  </footer>
+
+  <script>
+    const DAY = 86400000;
+    const PLAN_START = new Date('2026-07-20T12:00:00');
+    const NEXT_FEST = new Date('2026-10-19T12:00:00');
+    const LAUNCH = new Date('2026-11-17T12:00:00');
+
+    const schedule = [
+      {
+        number: 1,
+        start: '2026-07-20',
+        end: '2026-08-02',
+        dateLabel: 'July 20 – August 2',
+        timelineLabel: 'Founders build',
+        title: 'Finish the founders build',
+        description: 'Reach a complete, reliable internal match. Stop adding major systems and focus on the loop that already exists.',
+        doneWhen: 'Several full internal matches finish without blockers and normal play no longer needs developer intervention.',
+        heroDescription: 'Reach a reliable full internal match and stop adding major systems.',
+        milestoneTitle: 'Founders build target'
+      },
+      {
+        number: 2,
+        start: '2026-08-03',
+        end: '2026-08-09',
+        dateLabel: 'August 3–9',
+        timelineLabel: 'Playtest A',
+        title: 'Steam Playtest · Batch A',
+        description: 'Invite 8–10 dependable friends or family members to test installation, onboarding, multiplayer, and basic match completion.',
+        doneWhen: 'Outsiders can install, start, and finish a match, and the largest technical or onboarding failures are documented.',
+        heroDescription: 'Run the first small external batch and fix the obvious problems before widening access.',
+        milestoneTitle: 'Playtest Batch A complete'
+      },
+      {
+        number: 3,
+        start: '2026-08-10',
+        end: '2026-08-16',
+        dateLabel: 'August 10–16',
+        timelineLabel: 'Playtest B/C',
+        title: 'Personality and target-player testing',
+        description: 'Expand to personality-community contacts and players who enjoy party games, life simulations, or digital board games.',
+        doneWhen: 'You have uncoached feedback from roughly 30–50 total external testers and a ranked list of the five biggest problems.',
+        heroDescription: 'Test the theme and gameplay with personality-community members and unfamiliar target players.',
+        milestoneTitle: 'First 30–50 testers complete'
+      },
+      {
+        number: 4,
+        start: '2026-08-17',
+        end: '2026-08-23',
+        dateLabel: 'August 17–23',
+        timelineLabel: 'Scope lock',
+        title: 'Analyze feedback and lock the demo scope',
+        description: 'Choose the one-map vertical slice. Preserve every essential building category while reducing events, pets, character breadth, and progression.',
+        doneWhen: 'The public-demo content list is written and locked, with no second map and no unresolved question about the match ending.',
+        heroDescription: 'Use Playtest evidence to define the smallest complete consumer-facing version of the experience.',
+        milestoneTitle: 'Public-demo scope locked'
+      },
+      {
+        number: 5,
+        start: '2026-08-24',
+        end: '2026-08-31',
+        dateLabel: 'August 24–31',
+        timelineLabel: 'Store + register',
+        title: 'Publish the Steam page and register for Next Fest',
+        description: 'Finish the initial gameplay trailer, store copy, capsules, and screenshots. Register the base game before the deadline.',
+        doneWhen: 'The Coming Soon page is public, the trailer is live, and Next Fest registration is confirmed before August 31.',
+        heroDescription: 'Make the game publicly understandable and secure the October Next Fest opportunity.',
+        milestoneTitle: 'Next Fest registration deadline'
+      },
+      {
+        number: 6,
+        start: '2026-09-01',
+        end: '2026-09-20',
+        dateLabel: 'September 1–20',
+        timelineLabel: 'Demo validation',
+        title: 'Validate the exact public-demo branch',
+        description: 'Run a second Playtest wave with unfamiliar target players while polishing the first five minutes, stability, and the Steam-page conversion path.',
+        doneWhen: 'Roughly 50–100 additional players have tested the intended demo and the top complaints are polish issues rather than fundamental design failures.',
+        heroDescription: 'Test the exact consumer-facing slice with unfamiliar players and remove conversion-killing friction.',
+        milestoneTitle: 'Public-demo validation complete'
+      },
+      {
+        number: 7,
+        start: '2026-09-21',
+        end: '2026-10-05',
+        dateLabel: 'September 21 – October 5',
+        timelineLabel: 'Submit + freeze',
+        title: 'Submit the demo and freeze features',
+        description: 'Submit in time for the press preview, then restrict work to bugs, onboarding, performance, balance outliers, and store presentation.',
+        doneWhen: 'The demo is submitted by September 21, all final Next Fest materials are in by October 5, and no new features are being added.',
+        heroDescription: 'Submit the demo, stop expanding scope, and focus only on launch-critical quality.',
+        milestoneTitle: 'Final Next Fest materials due'
+      },
+      {
+        number: 8,
+        start: '2026-10-08',
+        end: '2026-10-18',
+        dateLabel: 'October 8–18',
+        timelineLabel: 'Press preview',
+        title: 'Press preview and creator setup',
+        description: 'Move attention from Steam Playtest to the public demo. Schedule hosted creator sessions and follow up with warm outreach contacts.',
+        doneWhen: 'The public demo is stable, Playtest is no longer splitting the audience, and creator sessions or coverage are actually scheduled.',
+        heroDescription: 'Put the public demo in front of creators and press before the festival begins.',
+        milestoneTitle: 'Press-preview preparation complete'
+      },
+      {
+        number: 9,
+        start: '2026-10-19',
+        end: '2026-10-26',
+        dateLabel: 'October 19–26',
+        timelineLabel: 'Next Fest',
+        title: 'Steam Next Fest',
+        description: 'Keep the public demo live, support players quickly, run creator or community sessions, and track traffic, demo behavior, and wishlist conversion.',
+        doneWhen: 'You have a complete festival performance report and enough market evidence to support the launch decision.',
+        heroDescription: 'Use the polished public demo to reach strangers and measure real market response.',
+        milestoneTitle: 'Steam Next Fest ends'
+      },
+      {
+        number: 10,
+        start: '2026-10-27',
+        end: '2026-11-17',
+        dateLabel: 'October 27 – November 17',
+        timelineLabel: 'Launch',
+        title: 'Go / no-go, release candidate, and launch',
+        description: 'Combine product quality, wishlist momentum, creator commitments, and operational readiness. Lock the release candidate and activate launch coverage.',
+        doneWhen: 'The launch is approved, the release candidate is stable, keys are distributed, support is ready, and the game releases November 17.',
+        heroDescription: 'Make the evidence-based launch call, lock the release candidate, and coordinate release coverage.',
+        milestoneTitle: 'Personality Panic target launch'
+      }
+    ];
+
+    const parseDate = value => new Date(value + 'T12:00:00');
+    const dayDiff = (from, to) => Math.ceil((to - from) / DAY);
+    const formatDate = date => date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const today = new Date();
+    today.setHours(12,0,0,0);
+
+    function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+
+    const activeIndex = schedule.findIndex(item => today >= parseDate(item.start) && today <= parseDate(item.end));
+    const nextIndex = schedule.findIndex(item => today < parseDate(item.start));
+    const currentIndex = activeIndex >= 0 ? activeIndex : (nextIndex >= 0 ? nextIndex : schedule.length - 1);
+    const current = schedule[currentIndex];
+    const currentEnd = parseDate(current.end);
+
+    document.getElementById('phase-title').textContent = current.title;
+    document.getElementById('phase-description').textContent = current.heroDescription;
+    document.getElementById('phase-target').textContent = formatDate(currentEnd);
+    document.getElementById('phase-status').textContent = activeIndex >= 0 ? 'In progress' : (today > LAUNCH ? 'Complete' : 'Upcoming');
+    document.getElementById('days-next-fest').textContent = Math.max(0, dayDiff(today, NEXT_FEST));
+    document.getElementById('days-launch').textContent = Math.max(0, dayDiff(today, LAUNCH));
+
+    const overallProgress = clamp(((today - PLAN_START) / (LAUNCH - PLAN_START)) * 100, 0, 100);
+    document.getElementById('progress-label').textContent = Math.round(overallProgress) + '%';
+    document.getElementById('progress-fill').style.width = overallProgress + '%';
+    document.getElementById('timeline-progress').style.width = overallProgress + '%';
+
+    const nextMilestone = schedule.find(item => parseDate(item.end) >= today) || schedule[schedule.length - 1];
+    const nextDate = parseDate(nextMilestone.end);
+    const remaining = Math.max(0, dayDiff(today, nextDate));
+    document.getElementById('next-title').textContent = 'Next: ' + nextMilestone.milestoneTitle;
+    document.getElementById('next-detail').textContent = formatDate(nextDate) + ' · ' + remaining + (remaining === 1 ? ' day' : ' days');
+
+    const timeline = document.getElementById('timeline');
+    schedule.forEach((item, index) => {
+      const markerDate = parseDate(item.end);
+      const left = clamp(((markerDate - PLAN_START) / (LAUNCH - PLAN_START)) * 100, 1.5, 98.5);
+      const isPast = markerDate < today;
+      const isCurrent = index === currentIndex;
+
+      const marker = document.createElement('div');
+      marker.className = 'timeline-marker' + (isPast ? ' past' : '') + (isCurrent ? ' current' : '');
+      marker.style.left = left + '%';
+      marker.textContent = String(item.number).padStart(2, '0');
+      marker.setAttribute('aria-label', item.title + ', ' + formatDate(markerDate));
+      timeline.appendChild(marker);
+
+      const label = document.createElement('div');
+      label.className = 'timeline-label';
+      label.style.left = left + '%';
+      label.innerHTML = '<b>' + item.timelineLabel + '</b>' + markerDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      timeline.appendChild(label);
+    });
+
+    const grid = document.getElementById('schedule-grid');
+    schedule.forEach((item, index) => {
+      const end = parseDate(item.end);
+      const start = parseDate(item.start);
+      const stateClass = today > end ? ' complete' : (today >= start && today <= end ? ' current' : '');
+      const article = document.createElement('article');
+      article.className = 'schedule-item' + stateClass;
+      article.innerHTML = `
+        <div class="schedule-num">${String(item.number).padStart(2, '0')}</div>
+        <div class="schedule-date">${item.dateLabel}</div>
+        <h3>${item.title}</h3>
+        <p>${item.description}</p>
+        <span class="done-when"><b>Done when:</b> ${item.doneWhen}</span>
+      `;
+      grid.appendChild(article);
+    });
+  </script>
 </body>
 </html>
