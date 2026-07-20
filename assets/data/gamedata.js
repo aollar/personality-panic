@@ -5786,7 +5786,7 @@ var PP_DATA = {
   },
   "luxury": {
    "name": "Luxury Apartments",
-   "scene": "luxury_apartments.jpg",
+   "scene": "luxury_apartments.png",
    "pos": [
     86.5,
     15.0

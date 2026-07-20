@@ -804,18 +804,36 @@
   var PAGES = window.PP_SCENE_PAGES || {};
   var BDC_MAP = window.PP_BDC_MAP || {};
 
+  // Rent is payable anywhere. A painted housing scene may show the other
+  // building's tab, so route that tab to the active tenant's actual bill.
+  function sceneActionId(actionId) {
+    if ((actionId === "X006" || actionId === "X007") &&
+        (UI.inScene === "lowCost" || UI.inScene === "luxury")) {
+      var p = activeP();
+      if (p && !p.homeless) return p.housing === "lux" ? "X007" : "X006";
+    }
+    return actionId;
+  }
+
   function paintedActionIds(id) {
-    if (id === "club") return Object.keys(BDC_MAP).map(function (k) { return BDC_MAP[k]; });
-    if (PAGES[id]) {
-      var ids = {};
+    var ids, keyed;
+    if (id === "club") ids = Object.keys(BDC_MAP).map(function (k) { return BDC_MAP[k]; });
+    else if (PAGES[id]) {
+      keyed = {};
       var cfg = PAGES[id];
       cfg.tabs.forEach(function (t) { t.pages.forEach(function (pg) {
-        pg.hotspots.forEach(function (h) { ids[h.a] = 1; });
+        pg.hotspots.forEach(function (h) { keyed[h.a] = 1; });
       }); });
-      if (cfg.work) ids[cfg.work.a] = 1;
-      return Object.keys(ids);
+      if (cfg.work) keyed[cfg.work.a] = 1;
+      ids = Object.keys(keyed);
     }
-    return (PAINT[id] || []).map(function (h) { return h.a; });
+    else ids = (PAINT[id] || []).map(function (h) { return h.a; });
+    // Either painted rent control can represent the tenant's current bill.
+    if (ids.indexOf("X006") !== -1 || ids.indexOf("X007") !== -1) {
+      if (ids.indexOf("X006") === -1) ids.push("X006");
+      if (ids.indexOf("X007") === -1) ids.push("X007");
+    }
+    return ids;
   }
 
   function openScene(id, spectate) {
@@ -961,7 +979,7 @@
       if (!isMyTurn()) { toast("Not your turn"); return; }
       click();
       hideTip();
-      doAction(h.a, btn._choice);
+      doAction(sceneActionId(h.a), btn._choice);
     };
     return btn;
   }
@@ -1002,6 +1020,7 @@
   }
   function annFor(actionId) {
     var st = UI.state, p = activeP();
+    actionId = sceneActionId(actionId);
     var list = E.actionsAt(st, p);
     return list.filter(function (x) { return x.id === actionId; })[0] || null;
   }

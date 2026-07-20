@@ -424,7 +424,7 @@ def main():
     buildings = {
         "lowCost": {"name": "Low Cost Housing", "scene": "low_cost_housing.jpg", "pos": [44.5, 72.0],
                     "entrance": [45.4, 81.1], "doors": ["lowFront"]},
-        "luxury": {"name": "Luxury Apartments", "scene": "luxury_apartments.jpg", "pos": [86.5, 15.0],
+        "luxury": {"name": "Luxury Apartments", "scene": "luxury_apartments.png", "pos": [86.5, 15.0],
                    "entrance": [84, 34.8], "doors": ["n7"]},
         # the park is the roundabout's island — open entry from any ring stretch
         "park": {"name": "Almost Fine Park", "scene": "park.jpg", "pos": [55.0, 40.0],
