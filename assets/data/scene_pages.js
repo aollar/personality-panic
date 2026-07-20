@@ -143,6 +143,33 @@ var PP_SCENE_PAGES = {
     ]
   },
 
+  luxury: {
+    tabBar: [
+      { tab: "suite", box: [76.3, 9.5, 11.0, 4.3] },
+      { tab: "rent",  box: [87.0, 10.0, 11.3, 4.8] }
+    ],
+    tabs: [
+      { id: "suite", label: "SUITE ACTIONS", pages: [
+        { img: "luxury_apartments.jpg", hotspots: [
+          { a: "A009", box: [76.5, 16.0, 10.0, 17.0] }, // Sleep in Fancy Bed
+          { a: "A010", box: [87.0, 16.0, 11.0, 17.0] }, // Luxury Bath
+          { a: "A011", box: [76.5, 34.0, 10.0, 16.0] }, // Relax in Your Suite
+          { a: "A012", box: [87.0, 34.0, 11.0, 16.0] }, // Condo Gym
+          { a: "A013", box: [76.5, 50.5, 10.0, 15.0] }, // Order Fancy Food
+          { a: "A014", box: [87.0, 50.5, 11.0, 15.0] }, // Host Friends
+          { a: "A015", box: [76.5, 66.0, 10.0, 12.0] }, // Work From Home
+          { a: "A016", box: [87.0, 66.0, 11.0, 12.0] }, // Pet Spa Treatment
+          { a: "A009", box: [76.5, 79.0, 21.5, 17.0] }  // featured: Fancy Bed
+        ]}
+      ]},
+      { id: "rent", label: "PAY RENT", pages: [
+        { img: "luxury_rent.jpg", hotspots: [
+          { a: "X007", box: [75.5, 89.0, 21.7, 7.0] } // big green PAY RENT bar
+        ]}
+      ]}
+    ]
+  },
+
   lowCost: {
     tabBar: [
       { tab: "unit", box: [72.8, 7.8, 12.5, 5.2] },
