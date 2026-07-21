@@ -783,7 +783,7 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
    The source PNG shares the stage canvas, so the image is cropped here to its
    non-transparent 1413x805 bounds rather than baking another derivative. */
 .scene-hud-chip.wide-chip {
-  left: 0; bottom: 1%; width: 26.5%; aspect-ratio: 1413 / 805;
+  left: 0; bottom: 0; width: 26.5%; aspect-ratio: 1413 / 805;
   padding: 0; display: block; overflow: hidden; isolation: isolate;
   background: none; border: none; border-radius: 0; box-shadow: none;
   pointer-events: none;
