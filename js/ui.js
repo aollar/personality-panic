@@ -1377,6 +1377,41 @@
     }).join("");
     openDialog("stats");
   }
+  // The bag: everything the active player owns, grouped like the mall tabs.
+  function openInventory() {
+    var st = UI.state, p = activeP();
+    var groups = { Transportation: [], "Electronics/Appliances": [], Furniture: [], Clothing: [] };
+    p.items.forEach(function (name) {
+      var it = E.ITEMS[name];
+      (groups[it ? it.group : "Clothing"] = groups[it ? it.group : "Clothing"] || []).push({ name: name, slot: it ? it.slot : "" });
+    });
+    var section = function (title, emoji, rows) {
+      if (!rows.length) return "";
+      return '<div class="inv-section"><div class="inv-head">' + emoji + " " + title + '</div><div class="inv-grid">' +
+        rows.map(function (r) { return '<span class="inv-item"><b>' + r.name + "</b>" + (r.slot ? '<span class="inv-slot">' + r.slot + "</span>" : "") + "</span>"; }).join("") +
+        "</div></div>";
+    };
+    var petTxt = p.pet ? per(p.pet.code).name + " pet (" + E.petState(st, p) + ", " + p.pet.health + "/" + p.pet.happiness + ")"
+      : (p.tombstones && p.tombstones.length ? "🪦 RIP " + p.tombstones.join(", ") : "—");
+    var invest = (p.holdings && p.holdings.length) ? p.holdings.join(", ") : "—";
+    var top = '<div class="inv-top">' +
+      '<span class="inv-chip">💵 $' + p.stats.money + "</span>" +
+      '<span class="inv-chip">💼 ' + (p.job ? p.job.name : "No job") + "</span>" +
+      '<span class="inv-chip">🎓 ' + (p.degrees.length ? p.degrees.join(", ") : "No degrees") + "</span>" +
+      '<span class="inv-chip">🏠 ' + (p.homeless ? "Homeless" : (p.housing === "lux" ? "Heelton Heights" : "Low-Cost")) + "</span>" +
+      '<span class="inv-chip">🐾 ' + petTxt + "</span>" +
+      '<span class="inv-chip">🥫 Food: ' + (p.foodSupply || 0) + " wk</span>" +
+      '<span class="inv-chip">📈 ' + invest + "</span></div>";
+    var body = top +
+      section("Transportation", "🚗", groups.Transportation) +
+      section("Tech & Appliances", "📺", groups["Electronics/Appliances"]) +
+      section("Furniture", "🛋", groups.Furniture) +
+      section("Clothing & Style", "👕", groups.Clothing);
+    if (!p.items.length) body += '<div class="inv-empty">Your bag is empty. Buy items at the Mall.</div>';
+    $("#inventory-body").innerHTML = body;
+    openDialog("inventory");
+  }
+  UI.openInventory = openInventory;
   function openLog() {
     $("#log-body").innerHTML = '<div class="log-lines">' +
       UI.state.log.slice(-120).reverse().map(function (l) {
@@ -1542,6 +1577,9 @@
     // the art's painted bottom-right buttons — same handlers as the HUD chips
     $("#baked-stats").onclick = function () { click(); openStats(); };
     $("#baked-menu").onclick = function () { click(); openMenu(); };
+    // inventory bag: click to see everything you own
+    var bag = $("#inv-bag");
+    if (bag) bag.onclick = function () { click(); openInventory(); };
     $("#btn-start-game").onclick = function () {
       click();
       if (setup && setup.tuPerTurn) {          // apply the chosen Time Units / turn (costs stay 1-3)

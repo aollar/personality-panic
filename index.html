@@ -93,6 +93,10 @@
            center = timer countdown / ∞). Replaces the plain gold timer face above. -->
       <div id="turn-clock"></div>
 
+      <!-- inventory bag: same bottom-middle band as the clock, on every scene -->
+      <img id="inv-bag" src="assets/ui/inventory_bag.png" alt="Inventory">
+
+
       <!-- big rent-due banner: only on rent turns, unpaid, your turn -->
       <div id="rent-banner" style="display:none"><span>🏠 RENT IS DUE! 🏠</span></div>
 
@@ -164,6 +168,10 @@
 
     <div class="dialog-veil" id="dlg-stats"><div class="paper-card dialog">
       <button class="close-x">✕</button><h3>Scoreboard</h3><div id="stats-body"></div>
+    </div></div>
+
+    <div class="dialog-veil" id="dlg-inventory"><div class="paper-card dialog">
+      <button class="close-x">✕</button><h3>🎒 Your Bag</h3><div id="inventory-body"></div>
     </div></div>
 
     <div class="dialog-veil" id="dlg-log"><div class="paper-card dialog">
