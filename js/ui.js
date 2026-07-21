@@ -1102,29 +1102,36 @@
     var okCount = extra.filter(function (x) { return x.ok; }).length;
     $("#btn-more").textContent = "✚ More (" + okCount + ")";
     $("#btn-more").style.display = extra.length ? "" : "none";
-    // live player chip covering the baked mockup chip
+    // Live player card covering the baked mockup. The center clock already
+    // owns TU/time, so this card stays focused on money and player metrics.
     var mains = ["connection", "health", "career", "happiness"];
     var chip = $("#scene-tu");
     if (window.PP_CHIP_WIDE) {
-      // Austin's wide card art with live overlays (TUNE the % boxes to the art)
+      // Austin's finished Casey card with live overlays.
       if (!chip._wideBuilt) {
         chip._wideBuilt = true;
         chip.classList.add("wide-chip");
+        var barBoxes = [
+          { left: 50.18, top: 43.23, width: 16.14, height: 2.73 },
+          { left: 77.14, top: 43.48, width: 17.20, height: 2.73 },
+          { left: 50.18, top: 56.52, width: 16.14, height: 2.73 },
+          { left: 77.14, top: 56.77, width: 17.20, height: 2.73 }
+        ];
         chip.innerHTML =
           '<img class="wide-chip-art" src="' + window.PP_CHIP_WIDE + '" alt="">' +
           '<div class="wc-money" id="wc-money"></div>' +
-          '<div class="wc-tu" id="wc-tu"></div>' +
           mains.map(function (stat, i) {
-            var col = i % 2, row = (i / 2) | 0;
-            return '<span class="wc-bar" style="left:' + (37.2 + col * 29.5) + "%;top:" + (30.6 + row * 13.4) + '%">' +
+            var box = barBoxes[i];
+            return '<span class="wc-bar" style="left:' + box.left + "%;top:" + box.top +
+              "%;width:" + box.width + "%;height:" + box.height + '%">' +
               '<i id="wc-bar-' + stat + '" style="background:' + STAT_META[stat].color + '"></i></span>';
           }).join("") +
           ["coolness", "critical", "enlightenment"].map(function (stat, i) {
-            return '<span class="wc-coin" id="wc-coin-' + stat + '" style="left:' + (43.4 + i * 13.3) + '%"></span>';
+            var badgeLeft = [52.51, 71.76, 90.23][i];
+            return '<span class="wc-coin" id="wc-coin-' + stat + '" style="left:' + badgeLeft + '%"></span>';
           }).join("");
       }
-      $("#wc-money").textContent = "\ud83d\udcb5 $" + p.stats.money;
-      $("#wc-tu").textContent = "\u23f3 " + p.tu + " TU \u00b7 " + dayClock(p);
+      $("#wc-money").textContent = "$" + p.stats.money;
       mains.forEach(function (stat) {
         $("#wc-bar-" + stat).style.width = Math.min(100, p.stats[stat] / st.T * 100) + "%";
       });
@@ -1557,11 +1564,11 @@
     });
   }
 
-  // Austin's wide Casey chip art (building HUD): auto-used the moment the file exists.
+  // Austin's finished Casey player card: auto-used the moment the file exists.
   (function probeWideChip() {
     var img = new Image();
     img.onload = function () { window.PP_CHIP_WIDE = img.src; };
-    img.src = "assets/cards/casey_chip_wide.png";
+    img.src = "assets/cards/casey_player_card_empty.png";
   })();
 
   // wire static buttons
