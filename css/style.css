@@ -349,8 +349,11 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
 .paint-btn .lock-chip {
   position: absolute; right: .25em; top: .25em;
   background: rgba(20, 12, 8, .85); color: #ffb3b3; border-radius: 999px;
-  font-size: .8em; padding: .05em .4em; pointer-events: none;
+  font-size: .8em; padding: .05em .4em; pointer-events: none; white-space: nowrap;
 }
+/* one-time-buy item already owned: reads green "✓ OWNED", not a red lock */
+.paint-btn.owned { border-color: rgba(80, 200, 130, .5); }
+.paint-btn.owned .lock-chip { background: rgba(6, 40, 24, .9); color: #7ee6a8; font-weight: 900; font-size: .66em; }
 .paint-btn .tu-chip {
   position: absolute; left: .25em; top: .25em;
   background: rgba(20, 12, 8, .85); color: var(--gold); border-radius: 999px;

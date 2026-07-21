@@ -1085,9 +1085,13 @@
       // (luxury-only appliances, already owned, price) — not just the action's
       var itemName = btn._choice && btn._choice.item;
       var item = itemName && E.ITEMS && E.ITEMS[itemName];
+      var owned = item && p.items.indexOf(item.name) !== -1;   // one-time buy already owned
       if (!locked && item && itemBlockReason(p, item)) locked = true;
       btn.classList.toggle("locked", locked);
-      btn.querySelector(".lock-chip").style.display = locked ? "" : "none";
+      btn.classList.toggle("owned", !!owned);
+      var lc = btn.querySelector(".lock-chip");
+      lc.style.display = locked ? "" : "none";
+      lc.textContent = owned ? "✓ OWNED" : "🔒";
       var tc = btn.querySelector(".tu-chip");
       if (ann) tc.textContent = ann.tu + " TU" + (ann.cost ? " · $" + ann.cost : "");
     });
