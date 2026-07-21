@@ -275,24 +275,31 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
 #turn-timer { display: none !important; }
 /* live turn clock — SAME size in every location (map + every scene), bottom-middle;
    z-index 50 = above scenes (z30), below dialogs (z60). Display-only. */
-/* HUGE rent-due banner (Austin: "Rent is DUE!!!") */
+/* One-shot rent notice. The full-stage layer catches a tap to skip, while the
+   headline stays on one deliberate line at every stage size. */
 #rent-banner {
-  position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
-  z-index: 45; pointer-events: none; text-align: center;
+  position: absolute; inset: 0; z-index: 58;
+  display: grid; place-items: start center; padding-top: 7%;
+  visibility: hidden; opacity: 0; pointer-events: none; text-align: center;
 }
 #rent-banner span {
-  display: inline-block; font-weight: 900; font-size: 3.2vw; letter-spacing: .04em;
-  text-transform: uppercase; color: #fff; padding: .28em .9em; border-radius: .5em;
+  display: inline-flex; align-items: center; justify-content: center; gap: .28em;
+  max-width: 90%; white-space: nowrap;
+  font-weight: 900; font-size: 2.6em; line-height: 1; letter-spacing: .035em;
+  text-transform: uppercase; color: #fff; padding: .3em .82em; border-radius: .5em;
   background: linear-gradient(180deg, #e8402a, #b41f10); border: .18em solid #fff;
   text-shadow: .06em .06em 0 rgba(0,0,0,.55);
   box-shadow: 0 .3em 1.4em rgba(232,64,42,.7), 0 .1em 0 rgba(0,0,0,.4);
-  animation: rentPulse 1.05s ease-in-out infinite;
+  transform: translateY(-.75em) scale(.92); opacity: 0;
+  transition: transform .2s cubic-bezier(.25,1.45,.5,1), opacity .16s ease;
 }
-@keyframes rentPulse {
-  0%,100% { transform: scale(1) rotate(-1.5deg); }
-  50% { transform: scale(1.09) rotate(1.5deg); box-shadow: 0 .3em 2em rgba(232,64,42,.95), 0 .1em 0 rgba(0,0,0,.4); }
+#rent-banner.show { visibility: visible; opacity: 1; pointer-events: auto; }
+#rent-banner.show span { transform: translateY(0) scale(1); opacity: 1; }
+#rent-banner.out { opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+#rent-banner.out span { transform: translateY(-.3em) scale(.98); opacity: 0; transition-duration: .22s; }
+@media (prefers-reduced-motion: reduce) {
+  #rent-banner, #rent-banner span { transition-duration: .01s !important; }
 }
-@media (prefers-reduced-motion: reduce) { #rent-banner span { animation: none; } }
 
 /* invisible click targets over the art's painted bottom-right buttons */
 .baked-btn { position: absolute; z-index: 40; background: transparent; border: none;
@@ -812,8 +819,18 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
   display: block; height: 100%; border-radius: inherit;
   box-shadow: inset 0 .08em .12em rgba(255,255,255,.38), inset 0 -.08em .12em rgba(0,0,0,.28);
 }
+.wc-ring {
+  position: absolute; top: 67.2%; width: 15.29%; aspect-ratio: 1; z-index: 2;
+  border-radius: 50%; pointer-events: none; mix-blend-mode: hard-light;
+  background: conic-gradient(
+    transparent 0 calc(100% - var(--progress)),
+    var(--ring-color) calc(100% - var(--progress)) 100%
+  );
+  -webkit-mask: radial-gradient(circle closest-side, transparent 0 73%, #000 75% 97.5%, transparent 99%);
+  mask: radial-gradient(circle closest-side, transparent 0 73%, #000 75% 97.5%, transparent 99%);
+}
 .wc-coin {
-  position: absolute; top: 83.85%; width: 6.37%; height: 11.18%; z-index: 2;
+  position: absolute; top: 83.85%; width: 6.37%; height: 11.18%; z-index: 3;
   background: rgba(24,13,5,.92); border: .12em solid var(--gold); border-radius: 999px;
   color: #ffe08a; font-weight: 900; font-size: .82em; display: grid; place-items: center;
   box-shadow: 0 .08em .12em rgba(0,0,0,.35);

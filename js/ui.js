@@ -18,6 +18,8 @@
     scenePage: 0,            // active page index within the active tab
     walker: null,
     timerId: null, timerLeft: 0,
+    rentNoticeSeen: {}, rentNoticeTimer: null, rentNoticeDone: null,
+    rentNoticeVisible: false,
     botRunning: false, botFast: false,
     cfg: null
   };
@@ -296,6 +298,8 @@
     UI._hudBuilt = false;          // fresh HUD per game
     UI._logSeen = null;            // spectator feed starts from "now" (no backlog replay)
     UI.botRunning = false;         // never inherit a stuck bot loop across resume
+    UI.rentNoticeSeen = {};
+    hideRentNotice(false);
     show("game");
     if (!UI.walker) UI.walker = new window.PPWalker($("#map-view"));
     buildHotspots();
@@ -513,9 +517,10 @@
     ["coolness", "critical", "enlightenment"].forEach(function (stat) {
       $("#hud-val-" + stat).textContent = p.stats[stat];
     });
-    // BIG rent-due banner over the map (only your turn, unpaid, not homeless)
+    // The large rent notice is an explicit one-shot turn event. Rendering may
+    // hide it when rent stops being due, but must never resurrect it.
     var rentDueNow = E.isRentTurn(st) && !p.rentPaid && !p.homeless && isMyTurn();
-    var rb = $("#rent-banner"); if (rb) rb.style.display = rentDueNow && !UI.inScene ? "" : "none";
+    if ((!rentDueNow || UI.inScene) && UI.rentNoticeVisible) hideRentNotice(false);
     // flags: chips over the portrait's bottom edge (incl. rent + pet + job)
     var flags = [];
     if (rentDueNow)
@@ -569,6 +574,57 @@
           return "<i><b style='width:" + Math.min(100, p.stats[s] / st.T * 100) + "%;background:" + STAT_META[s].color + "'></b></i>";
         }).join("") + "</div></div>";
     }).join("");
+  }
+
+  // ---------------- one-shot rent notice ----------------
+  function rentDueForActive() {
+    if (!UI.state || UI.state.over || UI.inScene || !isMyTurn()) return false;
+    var p = activeP();
+    return !p.isBot && E.isRentTurn(UI.state) && !p.rentPaid && !p.homeless;
+  }
+  function rentNoticeKey() {
+    return [UI.state.seed, UI.state.turn, UI.state.activeIdx].join(":");
+  }
+  function hideRentNotice(runDone) {
+    if (UI.rentNoticeTimer) { clearTimeout(UI.rentNoticeTimer); UI.rentNoticeTimer = null; }
+    var rb = $("#rent-banner");
+    if (rb) { rb.classList.remove("show", "out"); rb.onclick = null; }
+    UI.rentNoticeVisible = false;
+    var done = UI.rentNoticeDone; UI.rentNoticeDone = null;
+    if (runDone && done) done();
+  }
+  function finishRentNotice() {
+    if (!UI.rentNoticeVisible) return;
+    if (UI.rentNoticeTimer) { clearTimeout(UI.rentNoticeTimer); UI.rentNoticeTimer = null; }
+    var rb = $("#rent-banner");
+    if (!rb) { hideRentNotice(true); return; }
+    rb.classList.add("out");
+    rb.onclick = null;
+    UI.rentNoticeTimer = setTimeout(function () { hideRentNotice(true); }, 220);
+  }
+  function showRentNoticeOnce(done, key) {
+    if (!rentDueForActive()) { done(); return; }
+    if (UI.rentNoticeSeen[key]) { done(); return; }
+    var rb = $("#rent-banner");
+    if (!rb) { done(); return; }
+    hideRentNotice(false);
+    UI.rentNoticeSeen[key] = true;
+    UI.rentNoticeDone = done;
+    UI.rentNoticeVisible = true;
+    rb.classList.remove("show", "out");
+    void rb.offsetWidth;
+    rb.classList.add("show");
+    rb.onclick = function () { click(); finishRentNotice(); };
+    UI.rentNoticeTimer = setTimeout(finishRentNotice, 1500);
+  }
+  function startPlayableTurn(expectedKey) {
+    if (!UI.state || UI.state.over || rentNoticeKey() !== expectedKey || !isMyTurn()) return;
+    startTimer();
+    if (UI.mode !== "local" && window.PPNet) window.PPNet.sendBegin();
+  }
+  function beginPlayableTurn() {
+    var key = rentNoticeKey();
+    showRentNoticeOnce(function () { startPlayableTurn(key); }, key);
   }
 
   // ---------------- timer ----------------
@@ -637,6 +693,8 @@
   }
   function turnIntro() {
     var p = activeP();
+    hideRentNotice(false);
+    stopTimer(); UI.timerLeft = null;
     closeAllDialogs();                        // fresh turn: never inherit a stale menu from the last one
     var instantBot = p.isBot && UI.cfg && UI.cfg.skipCpu;   // fast-forwarded CPU turns skip the ceremony
     function after() {
@@ -652,6 +710,8 @@
   }
   // a remote player's turn began/advanced: restart the display clock on this client
   UI.spectateTurnChange = function () {
+    hideRentNotice(false);
+    stopTimer(); UI.timerLeft = null;
     closeAllDialogs();
     showTurnSplash(activeP(), function () { startTimer(); renderAll(); });
   };
@@ -696,6 +756,7 @@
   function openWeekendDesk() {
     var p = activeP();
     var d = $("#dlg-turncard");
+    var deskWarnings = p.warnings.filter(function (w) { return w !== "RENT IS DUE this turn!"; });
     // no weekend before turn 1: deal a single card that introduces your build
     var cardsHtml = (p.weekend && p.weekend.length)
       ? p.weekend.map(weekendCardHtml).join("")
@@ -708,8 +769,8 @@
       '<div class="wknd-kicker">📰 WEEKEND UPDATE</div>' +
       '<h3>' + p.name + " — Turn " + UI.state.turn + "</h3>" +
       '<div class="wknd-head">what happened while you were out</div>' +
-      (p.warnings.length
-        ? '<div class="wknd-warns">' + p.warnings.map(function (w) { return "<span>⚠️ " + w + "</span>"; }).join("") + "</div>"
+      (deskWarnings.length
+        ? '<div class="wknd-warns">' + deskWarnings.map(function (w) { return "<span>⚠️ " + w + "</span>"; }).join("") + "</div>"
         : "") +
       '<div class="wknd-row">' + cardsHtml + "</div>" +
       '<div id="btn-begin-turn" class="wknd-hint">⏰ tap anywhere — sweep the desk and start your week</div>';
@@ -738,13 +799,13 @@
       setTimeout(function () {
         d.onclick = null;
         d.classList.remove("sweeping");
-        closeDialog("turncard"); startTimer();
-        if (UI.mode !== "local" && window.PPNet) window.PPNet.sendBegin();  // sync spectator clocks
+        closeDialog("turncard"); beginPlayableTurn();
       }, cards.length ? 480 + cards.length * 55 : 120);
     };
   }
   function endTurnClicked(auto) {
     if (UI.state.over) return;
+    hideRentNotice(false);
     stopTimer();
     closeAllDialogs();              // turn's over -> cut off any open menu (jobs/shop/pets/more)
     if (UI.inScene) closeScene();
@@ -1105,6 +1166,11 @@
     // Live player card covering the baked mockup. The center clock already
     // owns TU/time, so this card stays focused on money and player metrics.
     var mains = ["connection", "health", "career", "happiness"];
+    var secondary = [
+      { stat: "coolness", ringLeft: 43.10, badgeLeft: 52.51, color: "rgba(0,201,242,.98)" },
+      { stat: "critical", ringLeft: 62.07, badgeLeft: 71.76, color: "rgba(191,132,246,.88)" },
+      { stat: "enlightenment", ringLeft: 80.82, badgeLeft: 90.23, color: "rgba(255,211,0,.98)" }
+    ];
     var chip = $("#scene-tu");
     if (window.PP_CHIP_WIDE) {
       // Austin's finished Casey card with live overlays.
@@ -1126,17 +1192,23 @@
               "%;width:" + box.width + "%;height:" + box.height + '%">' +
               '<i id="wc-bar-' + stat + '" style="background:' + STAT_META[stat].color + '"></i></span>';
           }).join("") +
-          ["coolness", "critical", "enlightenment"].map(function (stat, i) {
-            var badgeLeft = [52.51, 71.76, 90.23][i];
-            return '<span class="wc-coin" id="wc-coin-' + stat + '" style="left:' + badgeLeft + '%"></span>';
+          secondary.map(function (m) {
+            return '<span class="wc-ring" id="wc-ring-' + m.stat + '" aria-hidden="true" style="left:' +
+              m.ringLeft + '%;--ring-color:' + m.color + ';--progress:0%"></span>' +
+              '<span class="wc-coin" id="wc-coin-' + m.stat + '" style="left:' + m.badgeLeft + '%"></span>';
           }).join("");
       }
       $("#wc-money").textContent = "$" + p.stats.money;
       mains.forEach(function (stat) {
         $("#wc-bar-" + stat).style.width = Math.min(100, p.stats[stat] / st.T * 100) + "%";
       });
-      ["coolness", "critical", "enlightenment"].forEach(function (stat) {
-        $("#wc-coin-" + stat).textContent = p.stats[stat];
+      secondary.forEach(function (m) {
+        var value = p.stats[m.stat];
+        var pct = Math.max(0, Math.min(100, value / st.T * 100));
+        var ring = $("#wc-ring-" + m.stat);
+        ring.style.setProperty("--progress", pct + "%");
+        ring.dataset.value = pct;
+        $("#wc-coin-" + m.stat).textContent = value;
       });
       return;
     }
@@ -1440,7 +1512,7 @@
     $("#m-quit").onclick = function () {
       click();
       if (!confirm("Quit to title? The game is saved and can be continued.")) return;
-      closeAllDialogs(); stopTimer(); show("start"); initStart();
+      closeAllDialogs(); hideRentNotice(false); stopTimer(); show("start"); initStart();
     };
   }
   function openDebug() {
@@ -1463,6 +1535,7 @@
 
   // ---------------- podium ----------------
   function openPodium() {
+    hideRentNotice(false);
     stopTimer();
     clearSave();
     var st = UI.state, pod = E.podium(st);
