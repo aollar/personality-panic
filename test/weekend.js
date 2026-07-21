@@ -23,12 +23,12 @@ console.log("1) hunger + stress status cards, stacking, floor");
 (function () {
   var s = fresh(), a = s.players[0];
   cycle(s); // A didn't eat
-  ok(a.tu === 36, "hunger costs 4 TU (40->36), got " + a.tu);
+  ok(a.tu === 30, "hunger costs 25% = 10 TU (40->30), got " + a.tu);
   ok(a.weekend.some(function (c) { return c.id === "S01"; }), "S01 card shown");
-  // starve two more turns without relaxing -> hunger + stress stack
+  // starve two more turns without relaxing -> hunger + stress stack (10 + 6 = 16)
   cycle(s); cycle(s);
   ok(a.weekend.some(function (c) { return c.id === "S02"; }), "S02 stress card shown");
-  ok(a.tu === 34, "hunger+stress stack to -6 (40->34), got " + a.tu);
+  ok(a.tu === 24, "hunger+stress stack to -16 (40->24), got " + a.tu);
   a.tuPenaltyNext = 99; E.startTurn(s);
   ok(a.tu === 1, "TU floor is 1, got " + a.tu);
 })();
@@ -50,10 +50,27 @@ console.log("2) pet 3-strike rule: Sad -> Starving -> dead + tombstone + Happine
   ok(a.tombstones.length === 1 && a.tombstones[0] === "Sir Honksworth", "named tombstone: " + a.tombstones[0]);
   ok(a.stats.happiness === 0, "owner Happiness set to 0");
   ok(a.weekend.some(function (c) { return c.id === "S05"; }), "S05 card shown");
-  // feeding resets the counter (fresh pet, feed each turn)
+  // feeding resets the counter (fresh pet, feed each turn). Keep rent paid so
+  // eviction (which now makes the pet leave) doesn't interfere with this check.
   a.pet = { code: "INTJ", health: 70, happiness: 70, fedThisTurn: true, dead: false, missed: 0 };
+  a.rentPaid = true; a.homeless = false; a.housing = "low";
   cycle(s);
-  ok(a.pet.missed === 0, "feeding resets the strike counter");
+  ok(a.pet && a.pet.missed === 0, "feeding resets the strike counter");
+})();
+
+console.log("2b) eviction: pet leaves, no tombstone, only the homelessness Happiness hit");
+(function () {
+  var s = fresh(), a = s.players[0];
+  a.pet = { code: "ENTP", health: 70, happiness: 70, fedThisTurn: true, dead: false, missed: 0 };
+  a.stats.happiness = 80; a.stats.money = 0;
+  function keep() { a.ate = true; a.turnsSinceRelax = 0; if (a.pet) a.pet.fedThisTurn = true; }
+  while (!E.isRentTurn(s)) { keep(); E.endTurn(s); keep(); E.endTurn(s); }
+  var hapBefore = a.stats.happiness;
+  keep(); E.endTurn(s); // A ends on a rent turn, unpaid -> evicted
+  ok(a.homeless === true, "evicted for unpaid rent");
+  ok(a.pet === null, "pet left on eviction");
+  ok(a.tombstones.length === 0, "no tombstone (pet left, didn't die)");
+  ok(hapBefore - a.stats.happiness <= Math.round(0.10 * 100) + 1, "only the homelessness Happiness hit, no extra for the pet");
 })();
 
 console.log("3) investment holdings: buy once, weekly resolution, EV by standing, sell");

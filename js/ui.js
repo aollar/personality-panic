@@ -513,11 +513,17 @@
     ["coolness", "critical", "enlightenment"].forEach(function (stat) {
       $("#hud-val-" + stat).textContent = p.stats[stat];
     });
+    // BIG rent-due banner over the map (only your turn, unpaid, not homeless)
+    var rentDueNow = E.isRentTurn(st) && !p.rentPaid && !p.homeless && isMyTurn();
+    var rb = $("#rent-banner"); if (rb) rb.style.display = rentDueNow && !UI.inScene ? "" : "none";
     // flags: chips over the portrait's bottom edge (incl. rent + pet + job)
     var flags = [];
-    if (E.isRentTurn(st) && !p.rentPaid && !p.homeless && isMyTurn())
+    if (rentDueNow)
       flags.push('<button class="flag-chip bad" id="hud-rent">\ud83c\udfe0 PAY RENT $' +
         Math.round((p.housing === "lux" ? 0.5 : 0.2) * T) + "</button>");
+    // switch to luxury while housed at low-cost (X003) \u2014 surfaced so it's findable
+    if (!p.homeless && p.housing === "low" && isMyTurn())
+      flags.push('<button class="flag-chip" id="hud-golux">\ud83c\udfd9 GO LUXURY $' + Math.round(0.75 * T) + "</button>");
     if (!p.ate) flags.push('<span class="flag-chip bad">\ud83c\udf54 eat!</span>');
     if (p.turnsSinceRelax >= 2) flags.push('<span class="flag-chip bad">\ud83d\ude35 stressed</span>');
     if (p.homeless && isMyTurn()) {
@@ -547,6 +553,8 @@
       if (rh) rh.onclick = function () { click(); doAction("X005"); };
       var rhl = $("#hud-rehouse-lux");
       if (rhl) rhl.onclick = function () { click(); doAction("X009"); };
+      var glx = $("#hud-golux");
+      if (glx) glx.onclick = function () { click(); doAction("X003"); }; // switch low -> luxury
     }
     $("#hud-end").style.display = isMyTurn() ? "" : "none";
     $("#skip-cpu").style.display = (p.isBot && UI.mode !== "guest") ? "" : "none";
@@ -668,7 +676,8 @@
     if (c.id === "S05") body = c.petName + " is gone. A tombstone appears at home. Happiness set to 0.";
     if (c.delta != null) body = (c.asset ? c.asset.toUpperCase() + ": " : "") +
       (c.delta >= 0 ? "+$" : "-$") + Math.abs(c.delta);
-    if (c.detail && c.id[0] === "E") body = c.detail || body;
+    // status cards (S01 hunger / S02 stress) carry the live penalty in c.detail
+    if (c.detail && (c.id[0] === "E" || c.id === "S01" || c.id === "S02")) body = c.detail || body;
     // good news erupts: a ring of confetti chips fires when the card pops in
     var burst = tone === "good"
       ? '<span class="wk-burst">' + "<i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>" + "</span>"

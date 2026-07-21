@@ -246,16 +246,23 @@ def parse_weekend(wb):
         "bonds":   {"pay": ["I07", mag("I07")]},
         "savings": {"pay": ["I08", mag("I08")]},
     }
-    # Upkeep time penalties (Settings sheet, "UPKEEP TIME PENALTIES" block)
-    hunger, stress = 4, 2
+    # Upkeep penalties (Settings "UPKEEP TIME PENALTIES" block). v2-4: values are
+    # FRACTIONS of the turn's Time Units (0.25 = lose 25% of next turn's TU) and
+    # stress also costs Health + Happiness. Legacy absolute values (>1) are read
+    # as a fraction of a 40-TU turn so an old sheet still loads sanely.
+    pen = {"hungerPct": 0.25, "stressPct": 0.15, "stressHappinessPct": 0.05, "stressHealthPct": 0.05}
     for r in wb["Settings"].iter_rows(values_only=True):
         label = str(r[0]) if r[0] else ""
-        if label.startswith("Hunger"): hunger = int(num(r[1]) * -1 if num(r[1]) < 0 else num(r[1]))
-        if label.startswith("Stress"): stress = int(num(r[1]) * -1 if num(r[1]) < 0 else num(r[1]))
+        v = abs(num(r[1]))
+        if v > 1: v = v / 40.0            # legacy absolute TU -> fraction
+        if label.startswith("Hunger"): pen["hungerPct"] = v
+        elif label.startswith("Stress Happiness"): pen["stressHappinessPct"] = v
+        elif label.startswith("Stress Health"): pen["stressHealthPct"] = v
+        elif label.startswith("Stress"): pen["stressPct"] = v
     assert len([c for c in cards if c["type"] == "event"]) == 30, "expected 30 event cards"
     assert len(weights) == 3 and "crypto" in invest_odds, "weights/odds blocks not parsed"
     return {
-        "statusTu": {"hunger": hunger, "stress": stress, "minTu": 1},
+        "statusTu": dict(pen, minTu=1),
         "weights": weights, "investOdds": invest_odds, "investFx": invest_fx,
         "cards": cards,
     }

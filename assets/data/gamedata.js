@@ -6496,8 +6496,10 @@ var PP_DATA = {
  ],
  "weekend": {
   "statusTu": {
-   "hunger": 4,
-   "stress": 2,
+   "hungerPct": 0.25,
+   "stressPct": 0.15,
+   "stressHappinessPct": 0.05,
+   "stressHealthPct": 0.05,
    "minTu": 1
   },
   "weights": {

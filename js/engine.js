@@ -839,23 +839,32 @@
   function endTurn(state) {
     var p = active(state), events = [];
     var stu = DATA.weekend.statusTu;
-    // 1) hunger (S01 — announced by a Weekend card at the start of next turn)
+    var baseTU = DATA.settings.timeUnitsPerTurn;
+    // 1) hunger (S01 — announced by a Weekend card at the start of next turn):
+    // lose 25% of next turn's Time Units (v2-4, % of the turn)
     if (!p.ate) {
-      p.tuPenaltyNext += stu.hunger;
+      var hungerTU = Math.max(1, Math.floor(stu.hungerPct * baseTU));
+      p.tuPenaltyNext += hungerTU;
       p.penaltyReason = "hunger";
-      p.pendingWeekend.push({ id: "S01", detail: "-" + stu.hunger + " Time Units" });
-      events.push(p.name + " didn't eat — will lose " + stu.hunger + " TU next turn");
-      log(state, p, "Didn't eat this turn! Hunger penalty next turn.", "bad");
+      p.pendingWeekend.push({ id: "S01", detail: "-" + hungerTU + " TU (25%)" });
+      events.push(p.name + " didn't eat — will lose " + hungerTU + " TU next turn");
+      log(state, p, "Didn't eat this turn! -" + hungerTU + " TU next turn.", "bad");
     }
     p.ate = false;
-    // 2) stress (S02)
+    // 2) stress (S02): lose 15% of next turn's TU AND some Health + Happiness now
     p.turnsSinceRelax += 1;
     if (p.turnsSinceRelax > 2) {
-      p.tuPenaltyNext += stu.stress;
+      var stressTU = Math.max(1, Math.floor(stu.stressPct * baseTU));
+      p.tuPenaltyNext += stressTU;
       p.penaltyReason = (p.penaltyReason ? p.penaltyReason + " + " : "") + "stress";
-      p.pendingWeekend.push({ id: "S02", detail: "-" + stu.stress + " Time Units" });
-      events.push(p.name + " is stressed out — will lose " + stu.stress + " TU next turn");
-      log(state, p, "Too stressed (no relaxing for " + p.turnsSinceRelax + " turns).", "bad");
+      var hLoss = addStat(state, p, "happiness", -Math.round((stu.stressHappinessPct || 0) * state.T));
+      var htLoss = addStat(state, p, "health", -Math.round((stu.stressHealthPct || 0) * state.T));
+      var statBits = [];
+      if (hLoss) statBits.push(hLoss + " Happiness");
+      if (htLoss) statBits.push(htLoss + " Health");
+      p.pendingWeekend.push({ id: "S02", detail: "-" + stressTU + " TU (15%)" + (statBits.length ? " · " + statBits.join(", ") : "") });
+      events.push(p.name + " is stressed out — lose " + stressTU + " TU next turn" + (statBits.length ? " + " + statBits.join(", ") : ""));
+      log(state, p, "Too stressed (no relaxing for " + p.turnsSinceRelax + " turns). -" + stressTU + " TU" + (statBits.length ? ", " + statBits.join(", ") : ""), "bad");
     }
     // 3) pet upkeep — v3 3-strike feeding rule (Sad -> Starving -> Dead)
     if (p.pet && !p.pet.dead) {
@@ -906,6 +915,14 @@
       p.location = "park";
       events.push("🏚️ " + p.name + " couldn't pay rent and is now HOMELESS (living at the Park)");
       log(state, p, "🏚️ Evicted! Couldn't pay rent — now living at Almost Fine Park.", "bad");
+      // the pet won't tough out park life — it leaves. No extra Happiness hit
+      // beyond eviction itself (Austin 2026-07-20); no tombstone, re-adopt later.
+      if (p.pet && !p.pet.dead) {
+        var petName = (ASSUME.petNames || {})[p.pet.code] || "Their pet";
+        p.pet = null;
+        events.push("🐾 " + petName + " couldn't handle park life and left.");
+        log(state, p, "🐾 " + petName + " left — a pet can't live on a park bench. You can adopt again once you're housed.", "bad");
+      }
     }
     // what happened this turn becomes "last turn" for next weekend's event reqs
     p.prevTurn = p.turnFlags; p.turnFlags = {};

@@ -267,6 +267,25 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
 #turn-timer { display: none !important; }
 /* live turn clock — SAME size in every location (map + every scene), bottom-middle;
    z-index 50 = above scenes (z30), below dialogs (z60). Display-only. */
+/* HUGE rent-due banner (Austin: "Rent is DUE!!!") */
+#rent-banner {
+  position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
+  z-index: 45; pointer-events: none; text-align: center;
+}
+#rent-banner span {
+  display: inline-block; font-weight: 900; font-size: 3.2vw; letter-spacing: .04em;
+  text-transform: uppercase; color: #fff; padding: .28em .9em; border-radius: .5em;
+  background: linear-gradient(180deg, #e8402a, #b41f10); border: .18em solid #fff;
+  text-shadow: .06em .06em 0 rgba(0,0,0,.55);
+  box-shadow: 0 .3em 1.4em rgba(232,64,42,.7), 0 .1em 0 rgba(0,0,0,.4);
+  animation: rentPulse 1.05s ease-in-out infinite;
+}
+@keyframes rentPulse {
+  0%,100% { transform: scale(1) rotate(-1.5deg); }
+  50% { transform: scale(1.09) rotate(1.5deg); box-shadow: 0 .3em 2em rgba(232,64,42,.95), 0 .1em 0 rgba(0,0,0,.4); }
+}
+@media (prefers-reduced-motion: reduce) { #rent-banner span { animation: none; } }
+
 /* invisible click targets over the art's painted bottom-right buttons */
 .baked-btn { position: absolute; z-index: 40; background: transparent; border: none;
   cursor: pointer; border-radius: .6em; }
