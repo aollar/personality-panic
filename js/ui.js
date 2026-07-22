@@ -600,7 +600,7 @@
     if (!rb) { hideRentNotice(true); return; }
     rb.classList.add("out");
     rb.onclick = null;
-    UI.rentNoticeTimer = setTimeout(function () { hideRentNotice(true); }, 220);
+    UI.rentNoticeTimer = setTimeout(function () { hideRentNotice(true); }, 400);
   }
   function showRentNoticeOnce(done, key) {
     if (!rentDueForActive()) { done(); return; }
@@ -611,11 +611,15 @@
     UI.rentNoticeSeen[key] = true;
     UI.rentNoticeDone = done;
     UI.rentNoticeVisible = true;
+    // fill in this player's actual rent amount
+    var amtEl = rb.querySelector(".rb-amount");
+    if (amtEl) { var p = activeP(); amtEl.textContent = "$" + Math.round((p.housing === "lux" ? 0.5 : 0.2) * UI.state.T); }
     rb.classList.remove("show", "out");
     void rb.offsetWidth;
     rb.classList.add("show");
+    if (window.PPAudio && PPAudio.sfx) PPAudio.sfx("money");  // a beat of weight on the alarm
     rb.onclick = function () { click(); finishRentNotice(); };
-    UI.rentNoticeTimer = setTimeout(finishRentNotice, 1500);
+    UI.rentNoticeTimer = setTimeout(finishRentNotice, 1600);
   }
   function startPlayableTurn(expectedKey) {
     if (!UI.state || UI.state.over || rentNoticeKey() !== expectedKey || !isMyTurn()) return;

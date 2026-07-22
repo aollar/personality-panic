@@ -277,28 +277,97 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
    z-index 50 = above scenes (z30), below dialogs (z60). Display-only. */
 /* One-shot rent notice. The full-stage layer catches a tap to skip, while the
    headline stays on one deliberate line at every stage size. */
+/* ============ RENT IS DUE — premium alarm placard ============ */
 #rent-banner {
-  position: absolute; inset: 0; z-index: 58;
-  display: grid; place-items: start center; padding-top: 7%;
-  visibility: hidden; opacity: 0; pointer-events: none; text-align: center;
+  position: absolute; inset: 0; z-index: 58; overflow: hidden;
+  display: grid; place-items: start center; padding-top: 6%;
+  visibility: hidden; pointer-events: none; text-align: center;
+  font-size: min(1.55vw, 2.4vh);   /* controlled base so the placard never clips */
 }
-#rent-banner span {
-  display: inline-flex; align-items: center; justify-content: center; gap: .28em;
-  max-width: 90%; white-space: nowrap;
-  font-weight: 900; font-size: 2.6em; line-height: 1; letter-spacing: .035em;
-  text-transform: uppercase; color: #fff; padding: .3em .82em; border-radius: .5em;
-  background: linear-gradient(180deg, #e8402a, #b41f10); border: .18em solid #fff;
-  text-shadow: .06em .06em 0 rgba(0,0,0,.55);
-  box-shadow: 0 .3em 1.4em rgba(232,64,42,.7), 0 .1em 0 rgba(0,0,0,.4);
-  transform: translateY(-.75em) scale(.92); opacity: 0;
-  transition: transform .2s cubic-bezier(.25,1.45,.5,1), opacity .16s ease;
+#rent-banner.show { visibility: visible; pointer-events: auto; }
+/* red alarm vignette pulsing at the screen edges */
+#rent-banner .rb-vignette {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  box-shadow: inset 0 0 14vw 3vw rgba(232,32,20,.0);
 }
-#rent-banner.show { visibility: visible; opacity: 1; pointer-events: auto; }
-#rent-banner.show span { transform: translateY(0) scale(1); opacity: 1; }
-#rent-banner.out { opacity: 0; pointer-events: none; transition: opacity .22s ease; }
-#rent-banner.out span { transform: translateY(-.3em) scale(.98); opacity: 0; transition-duration: .22s; }
+#rent-banner.show .rb-vignette { animation: rbVig 1.5s ease-in-out infinite; }
+@keyframes rbVig {
+  0%,100% { opacity: .55; box-shadow: inset 0 0 11vw 2vw rgba(232,32,20,.55); }
+  50%     { opacity: 1;   box-shadow: inset 0 0 15vw 4vw rgba(232,32,20,.85); }
+}
+/* the placard: gold ornate frame, deep-red gradient, hazard-striped edges */
+#rent-banner .rb-card {
+  position: relative; min-width: 34%; max-width: 82%; padding: .85em 1.6em 1em;
+  border-radius: .7em; color: #fff;
+  background:
+    linear-gradient(180deg, #f0532f 0%, #cc2413 42%, #9c1608 100%);
+  border: .32em solid #f7d879;
+  box-shadow: 0 0 0 .12em #7a1206, 0 .5em 0 .1em rgba(90,10,4,.6),
+    0 1.2em 2.4em rgba(0,0,0,.55), inset 0 0 2.5em rgba(255,180,120,.28);
+  transform: translateY(-160%) scale(1.08) rotate(-1deg); opacity: 0;
+}
+/* hazard-tape stripe along the top and bottom of the placard */
+#rent-banner .rb-card::before, #rent-banner .rb-card::after {
+  content: ""; position: absolute; left: .5em; right: .5em; height: .5em; border-radius: 1em;
+  background: repeating-linear-gradient(-45deg, #f7d879 0 .7em, #1c0f05 .7em 1.4em);
+  opacity: .9;
+}
+#rent-banner .rb-card::before { top: .32em; }
+#rent-banner .rb-card::after { bottom: .32em; }
+#rent-banner .rb-siren {
+  font-size: 2.3em; line-height: 1; margin-bottom: .05em;
+  filter: drop-shadow(0 .12em 0 rgba(0,0,0,.5)); display: inline-block;
+}
+#rent-banner .rb-title {
+  font-family: Impact, Haettenschweiler, "Arial Narrow", sans-serif; font-weight: 400;
+  font-size: 3.1em; line-height: .92; letter-spacing: .04em; text-transform: uppercase;
+  text-shadow: .05em .05em 0 #7a1206, .11em .11em 0 rgba(0,0,0,.5);
+}
+#rent-banner .rb-amount {
+  font-family: Impact, Haettenschweiler, "Arial Narrow", sans-serif; font-weight: 400;
+  font-size: 2.6em; line-height: 1; color: #ffe9a8; letter-spacing: .02em;
+  text-shadow: .05em .05em 0 #7a1206, 0 0 .5em rgba(255,210,90,.6); margin-top: .02em;
+}
+#rent-banner .rb-sub {
+  font-weight: 800; font-size: 1em; letter-spacing: .06em; text-transform: uppercase;
+  color: #ffd9cf; opacity: .95; margin-top: .3em;
+}
+/* SLAM in: rocket down from above, overshoot, then a sharp impact shake */
+#rent-banner.show .rb-card {
+  animation: rbSlam .42s cubic-bezier(.5,0,.7,.25) forwards, rbShake .5s .42s ease-in-out;
+}
+@keyframes rbSlam {
+  0%   { transform: translateY(-160%) scale(1.12) rotate(-2deg); opacity: 0; }
+  70%  { transform: translateY(6%) scale(.97) rotate(.6deg); opacity: 1; }
+  85%  { transform: translateY(-2%) scale(1.02) rotate(-.3deg); }
+  100% { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+}
+@keyframes rbShake {
+  0%,100% { margin-left: 0; } 12% { margin-left: -.5em; } 24% { margin-left: .45em; }
+  36% { margin-left: -.32em; } 48% { margin-left: .24em; } 60% { margin-left: -.14em; }
+  72% { margin-left: .08em; } 84% { margin-left: -.03em; }
+}
+/* pulsing glow while it holds */
+#rent-banner.show .rb-siren { animation: rbSiren 1.5s ease-in-out infinite; }
+@keyframes rbSiren {
+  0%,100% { transform: rotate(-9deg) scale(1); filter: drop-shadow(0 0 0 rgba(255,80,60,0)); }
+  50%     { transform: rotate(9deg) scale(1.14); filter: drop-shadow(0 0 .5em rgba(255,120,90,.9)); }
+}
+/* EXIT: anticipation punch, then rocket up off-screen with a spin */
+#rent-banner.out { pointer-events: none; }
+#rent-banner.out .rb-vignette { animation: none; opacity: 0; transition: opacity .18s ease; }
+#rent-banner.out .rb-card {
+  animation: rbEject .4s cubic-bezier(.5,-0.4,.75,.2) forwards;
+}
+@keyframes rbEject {
+  0%   { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+  18%  { transform: translateY(7%) scale(1.06) rotate(1.5deg); opacity: 1; }
+  100% { transform: translateY(-190%) scale(.82) rotate(-7deg); opacity: 0; }
+}
 @media (prefers-reduced-motion: reduce) {
-  #rent-banner, #rent-banner span { transition-duration: .01s !important; }
+  #rent-banner.show .rb-card { animation: none; transform: none; opacity: 1; }
+  #rent-banner.show .rb-vignette, #rent-banner.show .rb-siren { animation: none; opacity: .7; }
+  #rent-banner.out .rb-card { animation: none; opacity: 0; transition: opacity .12s; }
 }
 
 /* invisible click targets over the art's painted bottom-right buttons */

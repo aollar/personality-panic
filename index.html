@@ -98,7 +98,15 @@
 
 
       <!-- big rent-due banner: only on rent turns, unpaid, your turn -->
-      <div id="rent-banner" role="status" aria-live="assertive"><span>&#x1F3E0; RENT IS DUE!</span></div>
+      <div id="rent-banner" role="status" aria-live="assertive">
+        <div class="rb-vignette"></div>
+        <div class="rb-card">
+          <div class="rb-siren">&#x1F6A8;</div>
+          <div class="rb-title">Rent Is Due</div>
+          <div class="rb-amount">$0</div>
+          <div class="rb-sub">Pay up &mdash; or pack your bags</div>
+        </div>
+      </div>
 
       <!-- the map art bakes a VIEW STATS + MENU button bottom-right; these
            invisible targets make the painted buttons actually work -->
