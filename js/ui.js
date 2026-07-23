@@ -344,6 +344,8 @@
   function onHotspot(id) {
     if (!UI.state || UI.state.over) return;
     if (!isMyTurn()) { toast("Not your turn"); return; }
+    // your turn hasn't actually begun until you sweep the weekend desk
+    if (isMyTurn() && !UI.turnBegun) { return; }
     var p = activeP();
     click();
     if (p.location === id) { openScene(id); return; }
@@ -430,6 +432,11 @@
     updateHotspotStates();
     renderTimer();
     updateClock();
+    // the map-painted VIEW STATS / MENU buttons only work on the overmap
+    var onMap = !UI.inScene;
+    var bs = $("#baked-stats"), bm = $("#baked-menu");
+    if (bs) bs.style.display = onMap ? "" : "none";
+    if (bm) bm.style.display = onMap ? "" : "none";
     if (UI.inScene) renderSceneUI();
     // guests / non-walking updates: keep avatar on the active player's building
     if (!UI.walker.raf) UI.walker.jumpTo(activeP().location);
@@ -623,6 +630,7 @@
   }
   function startPlayableTurn(expectedKey) {
     if (!UI.state || UI.state.over || rentNoticeKey() !== expectedKey || !isMyTurn()) return;
+    UI.turnBegun = true;   // map + actions unlock only now (after the desk is swept)
     startTimer();
     if (UI.mode !== "local" && window.PPNet) window.PPNet.sendBegin();
   }
@@ -699,6 +707,7 @@
     var p = activeP();
     hideRentNotice(false);
     stopTimer(); UI.timerLeft = null;
+    UI.turnBegun = !isMyTurn();               // locked until you sweep the desk; spectators aren't gated
     closeAllDialogs();                        // fresh turn: never inherit a stale menu from the last one
     var instantBot = p.isBot && UI.cfg && UI.cfg.skipCpu;   // fast-forwarded CPU turns skip the ceremony
     function after() {
@@ -979,6 +988,20 @@
     UI.scenePage = (UI.scenePage + delta + pages.length) % pages.length;
     click(); renderScenePage(); renderSceneUI();
   }
+  // Your pet appears in the home you're renting. Only 4 pets have scene art;
+  // it shows only in your current tier, only while alive, only while housed.
+  var PET_SCENE_CODES = { ENFP: 1, ENFJ: 1, ESFP: 1, ESFJ: 1 };
+  var LUX_PET_MISSING = { ENFJ: 1 };   // no luxury+lion art yet -> blank luxury
+  function homeSceneImg(file) {
+    var p = activeP();
+    if (!p || p.homeless || !p.pet || p.pet.dead) return file;
+    var c = p.pet.code;
+    if (!PET_SCENE_CODES[c]) return file;
+    if (file === "house_unit.jpg" && p.housing === "low") return "low_cost_pet_" + c + ".jpg";
+    if (file === "luxury_apartments.jpg" && p.housing === "lux" && !LUX_PET_MISSING[c])
+      return "luxury_pet_" + c + ".jpg";
+    return file;
+  }
   // Rebuild hotspots immediately; swap the visible backdrop only once decoded.
   // `opening` is passed through when entering the scene fresh (blank vs old page).
   function renderScenePage(opening) {
@@ -986,7 +1009,7 @@
     var tab = cfg.tabs[UI.sceneTab] || cfg.tabs[0];
     var page = tab.pages[UI.scenePage] || tab.pages[0];
     buildPagedLayer(cfg, tab, page);
-    setBackdrop(page.img, opening);
+    setBackdrop(homeSceneImg(page.img), opening);
   }
   function buildPagedLayer(cfg, tab, page) {
     var layer = $("#paint-layer");
