@@ -991,15 +991,13 @@
   // Your pet appears in the home you're renting. Only 4 pets have scene art;
   // it shows only in your current tier, only while alive, only while housed.
   var PET_SCENE_CODES = { ENFP: 1, ENFJ: 1, ESFP: 1, ESFJ: 1 };
-  var LUX_PET_MISSING = { ENFJ: 1 };   // no luxury+lion art yet -> blank luxury
   function homeSceneImg(file) {
     var p = activeP();
     if (!p || p.homeless || !p.pet || p.pet.dead) return file;
     var c = p.pet.code;
     if (!PET_SCENE_CODES[c]) return file;
     if (file === "house_unit.jpg" && p.housing === "low") return "low_cost_pet_" + c + ".jpg";
-    if (file === "luxury_apartments.jpg" && p.housing === "lux" && !LUX_PET_MISSING[c])
-      return "luxury_pet_" + c + ".jpg";
+    if (file === "luxury_apartments.jpg" && p.housing === "lux") return "luxury_pet_" + c + ".jpg";
     return file;
   }
   // Rebuild hotspots immediately; swap the visible backdrop only once decoded.
