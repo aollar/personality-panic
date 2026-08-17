@@ -886,6 +886,7 @@
   var PAINT = window.PP_HOTSPOTS || {};
   var PAGES = window.PP_SCENE_PAGES || {};
   var BDC_MAP = window.PP_BDC_MAP || {};
+  var VISUALS = window.PP_SCENE_VISUALS || { homes: {} };
 
   function paintedActionIds(id) {
     if (id === "club") return Object.keys(BDC_MAP).map(function (k) { return BDC_MAP[k]; });
@@ -920,16 +921,18 @@
     var paged = !!PAGES[id];
     var painted = paged || !!PAINT[id];
     if (b.video) {
+      clearSceneOverlays();
       bd.style.display = "none";
       vid.style.display = "";
       if (!vid.src || vid.src.indexOf(b.video) === -1) vid.src = "assets/video/" + b.video;
       vid.play().catch(function () {});
       frame.style.display = "";
-      if (!frame.src) frame.src = "assets/bdc-menu/index.html?embed=1";
+      if (!frame.src) frame.src = "assets/bdc-menu/index.html?embed=1&static=1";
     } else {
       vid.pause(); vid.style.display = "none";
       frame.style.display = "none";
       bd.style.display = "";
+      if (!paged) clearSceneOverlays();
       if (!paged && b.scene) setBackdrop(b.scene, true);   // blank-then-decode: no old-location flash
     }
     $("#scene-title").textContent = b.name;
@@ -948,10 +951,144 @@
 
   // ---- scene backdrop image cache + decode-gated swap ----
   var _sceneImgs = {};                         // filename -> Image (kept alive = cached+decoded)
+  var _matteImgs = {};                         // filename -> Promise<Canvas>
   function sceneImg(file) {
     var im = _sceneImgs[file];
     if (!im) { im = new Image(); im.src = "assets/scenes/" + file; _sceneImgs[file] = im; }
     return im;
+  }
+  function clearSceneOverlays() {
+    var c = $("#scene-overlays");
+    if (c) c.getContext("2d").clearRect(0, 0, c.width, c.height);
+    UI._overlayKey = null;
+    UI._overlaySeq = (UI._overlaySeq || 0) + 1;
+  }
+  // The supplied furniture and pet exports are opaque RGB on white. Remove
+  // only white pixels connected to the canvas edge, so cream upholstery,
+  // white sheets and highlights inside the objects are never erased.
+  function matteSceneImg(file, compareFile) {
+    var cacheKey = file + "|" + (compareFile || "");
+    if (_matteImgs[cacheKey]) return _matteImgs[cacheKey];
+    _matteImgs[cacheKey] = new Promise(function (resolve, reject) {
+      var im = sceneImg(file), compare = compareFile ? sceneImg(compareFile) : null;
+      function build() {
+        try {
+          var c = document.createElement("canvas"), w = im.naturalWidth, h = im.naturalHeight;
+          c.width = w; c.height = h;
+          var cx = c.getContext("2d", { willReadFrequently: true });
+          cx.drawImage(im, 0, 0);
+          var image = cx.getImageData(0, 0, w, h), d = image.data, total = w * h, base = null;
+          if (compare) {
+            var bc = document.createElement("canvas"); bc.width = w; bc.height = h;
+            var bx = bc.getContext("2d", { willReadFrequently: true }); bx.drawImage(compare, 0, 0, w, h);
+            base = bx.getImageData(0, 0, w, h).data;
+          }
+          var seen = new Uint8Array(total), queue = new Uint32Array(total), head = 0, tail = 0;
+          function white(p) { var i = p * 4; return d[i] >= 250 && d[i + 1] >= 250 && d[i + 2] >= 250; }
+          function add(p) { if (!seen[p] && white(p)) { seen[p] = 1; queue[tail++] = p; } }
+          var x, y, p;
+          for (x = 0; x < w; x++) { add(x); add((h - 1) * w + x); }
+          for (y = 1; y < h - 1; y++) { add(y * w); add(y * w + w - 1); }
+          while (head < tail) {
+            p = queue[head++]; x = p % w; y = (p / w) | 0;
+            if (x) add(p - 1); if (x + 1 < w) add(p + 1);
+            if (y) add(p - w); if (y + 1 < h) add(p + w);
+          }
+          for (p = 0; p < total; p++) {
+            var i = p * 4;
+            if (seen[p]) { d[i + 3] = 0; continue; }
+            // Some source cutouts include small rectangular fragments of the
+            // unchanged room. Remove pixels that match the ghosted base.
+            if (base) {
+              var delta = Math.max(Math.abs(d[i] - base[i]), Math.abs(d[i + 1] - base[i + 1]), Math.abs(d[i + 2] - base[i + 2]));
+              if (delta <= 12) { d[i + 3] = 0; continue; }
+              if (delta < 28) d[i + 3] = Math.min(d[i + 3], Math.round((delta - 12) * 16));
+            }
+            // One-pixel anti-aliased fringe cleanup next to removed white.
+            var nearEdge = (p % w && seen[p - 1]) || (p % w + 1 < w && seen[p + 1]) ||
+              (p >= w && seen[p - w]) || (p + w < total && seen[p + w]);
+            var mn = Math.min(d[i], d[i + 1], d[i + 2]);
+            if (nearEdge && mn >= 235) d[i + 3] = Math.max(0, Math.min(255, (255 - mn) * 13));
+          }
+          cx.putImageData(image, 0, 0); resolve(c);
+        } catch (err) { reject(err); }
+      }
+      function ready() {
+        if (im.complete && im.naturalWidth && (!compare || (compare.complete && compare.naturalWidth))) build();
+      }
+      if (im.complete && im.naturalWidth && (!compare || (compare.complete && compare.naturalWidth))) build();
+      else {
+        im.addEventListener("load", ready, { once: true });
+        im.addEventListener("error", reject, { once: true });
+        if (compare) {
+          compare.addEventListener("load", ready, { once: true });
+          compare.addEventListener("error", reject, { once: true });
+        }
+      }
+    });
+    return _matteImgs[cacheKey];
+  }
+  function loadedSceneImg(file) {
+    var im = sceneImg(file);
+    if (im.complete && im.naturalWidth) return Promise.resolve(im);
+    return new Promise(function (resolve, reject) {
+      im.addEventListener("load", function () { resolve(im); }, { once: true });
+      im.addEventListener("error", reject, { once: true });
+    });
+  }
+  function homeIsComplete(home, p) {
+    return !!(home && home.complete && home.complete.groups.every(function (group) {
+      return group.some(function (name) { return p.items.indexOf(name) !== -1; });
+    }));
+  }
+  function renderHomeOverlays(page) {
+    var canvas = $("#scene-overlays"), keyName = page && page.homeLayer;
+    if (!canvas || !keyName || !VISUALS.homes || !VISUALS.homes[keyName]) {
+      if (canvas) canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+      UI._overlayKey = null;
+      return;
+    }
+    var p = activeP(), home = VISUALS.homes[keyName];
+    var correctHome = keyName === "lowCost" ? (!p.homeless && p.housing === "low") : (!p.homeless && p.housing === "lux");
+    if (!correctHome) { clearSceneOverlays(); return; }
+    var stateKey = UI.inScene + "|" + UI.sceneTab + "|" + UI.scenePage + "|" +
+      p.items.slice().sort().join(",") + "|" + (p.pet && !p.pet.dead ? p.pet.code : "");
+    if (UI._overlayKey === stateKey) return;
+    UI._overlayKey = stateKey;
+    var ops = [];
+    var complete = homeIsComplete(home, p);
+    if (complete) {
+      if (!home.completeBackdrop) ops.push({ file: home.sourceRoot + home.complete.src, clips: null });
+    } else {
+      (home.layers || []).forEach(function (layer) {
+        var owned = (layer.any || []).some(function (name) { return p.items.indexOf(name) !== -1; });
+        if (owned) ops.push({ file: home.sourceRoot + layer.src, clips: layer.clips || null, polygons: layer.polygons || null });
+      });
+    }
+    if (p.pet && !p.pet.dead && home.pets && home.pets[p.pet.code]) {
+      ops.push({ file: home.sourceRoot + home.pets[p.pet.code], clips: null });
+    }
+    var seq = (UI._overlaySeq = (UI._overlaySeq || 0) + 1);
+    Promise.all(ops.map(function (op) { return home.alpha ? loadedSceneImg(op.file) : matteSceneImg(op.file, home.base); })).then(function (sources) {
+      if (UI._overlaySeq !== seq || UI._overlayKey !== stateKey) return;
+      var cx = canvas.getContext("2d"); cx.clearRect(0, 0, canvas.width, canvas.height);
+      ops.forEach(function (op, i) {
+        if (op.polygons) {
+          cx.save(); cx.beginPath();
+          op.polygons.forEach(function (poly) {
+            poly.forEach(function (pt, pi) { if (!pi) cx.moveTo(pt[0], pt[1]); else cx.lineTo(pt[0], pt[1]); });
+            cx.closePath();
+          });
+          cx.clip(); cx.drawImage(sources[i], 0, 0); cx.restore(); return;
+        }
+        if (!op.clips) { cx.drawImage(sources[i], 0, 0); return; }
+        op.clips.forEach(function (r) { cx.drawImage(sources[i], r[0], r[1], r[2], r[3], r[0], r[1], r[2], r[3]); });
+      });
+    }).catch(function (err) {
+      canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+      UI._overlayKey = null;
+      console.warn("Apartment overlay could not be prepared", err);
+    });
   }
   // Set the scene backdrop, but only once the target image is DECODED, so we never
   // show a half-loaded frame mid-transition. `opening` = entering a NEW scene:
@@ -980,12 +1117,14 @@
   function switchTab(tabIndex) {
     var cfg = pagedCfg(); if (!cfg || !cfg.tabs[tabIndex]) return;
     UI.sceneTab = tabIndex; UI.scenePage = 0;
+    if (isMyTurn()) window.PPNet && window.PPNet.sendView(UI.inScene, UI.sceneTab, UI.scenePage);
     click(); renderScenePage(); renderSceneUI();
   }
   function switchPage(delta) {
     var cfg = pagedCfg(); if (!cfg) return;
     var pages = cfg.tabs[UI.sceneTab].pages;
     UI.scenePage = (UI.scenePage + delta + pages.length) % pages.length;
+    if (isMyTurn()) window.PPNet && window.PPNet.sendView(UI.inScene, UI.sceneTab, UI.scenePage);
     click(); renderScenePage(); renderSceneUI();
   }
   // Your pet appears in the home you're renting. Only 4 pets have scene art;
@@ -1007,7 +1146,10 @@
     var tab = cfg.tabs[UI.sceneTab] || cfg.tabs[0];
     var page = tab.pages[UI.scenePage] || tab.pages[0];
     buildPagedLayer(cfg, tab, page);
-    setBackdrop(homeSceneImg(page.img), opening);
+    var pageImg = homeSceneImg(page.img), home = page.homeLayer && VISUALS.homes && VISUALS.homes[page.homeLayer];
+    if (home && home.completeBackdrop && homeIsComplete(home, activeP())) pageImg = home.completeBackdrop;
+    setBackdrop(pageImg, opening);
+    renderHomeOverlays(page);
   }
   function buildPagedLayer(cfg, tab, page) {
     var layer = $("#paint-layer");
@@ -1028,8 +1170,11 @@
     // override the building-level arrow boxes.
     var arr = page.arrows || cfg.arrows;
     if (arr && tab.pages.length > 1) {
-      layer.appendChild(navButton(arr.prev, "arrow prev", function () { switchPage(-1); }));
-      layer.appendChild(navButton(arr.next, "arrow next", function () { switchPage(1); }));
+      var prev = navButton(arr.prev, "arrow prev", function () { switchPage(-1); });
+      var next = navButton(arr.next, "arrow next", function () { switchPage(1); });
+      if (page.visiblePrevArrow) prev.classList.add("room-arrow");
+      if (page.visibleNextArrow) next.classList.add("room-arrow");
+      layer.appendChild(prev); layer.appendChild(next);
     }
   }
   function navButton(box, cls, onClick) {
@@ -1037,6 +1182,7 @@
     b.className = "nav-btn " + cls;
     b.style.left = box[0] + "%"; b.style.top = box[1] + "%";
     b.style.width = box[2] + "%"; b.style.height = box[3] + "%";
+    if (!box[2] || !box[3]) b.style.display = "none";
     b.onclick = function (e) { e.stopPropagation(); onClick(); };
     return b;
   }
@@ -1063,6 +1209,7 @@
   function closeScene(spectate) {
     if (!spectate && isMyTurn()) window.PPNet && window.PPNet.sendView(null);
     UI.inScene = null;
+    clearSceneOverlays();
     $("#scene-video").pause();
     $("#scene-view").classList.remove("show");
     hideTip();
@@ -1163,6 +1310,11 @@
   function renderSceneUI() {
     var st = UI.state, p = activeP();
     var here = p.location === UI.inScene;
+    var homeCfg = pagedCfg();
+    if (homeCfg && homeCfg.tabs[UI.sceneTab]) {
+      var homePage = homeCfg.tabs[UI.sceneTab].pages[UI.scenePage] || homeCfg.tabs[UI.sceneTab].pages[0];
+      if (homePage) renderHomeOverlays(homePage);
+    }
     // lock states on painted buttons
     $$("#paint-layer .paint-btn").forEach(function (btn) {
       var ann = here ? annFor(btn.dataset.a) : null;
@@ -1331,10 +1483,18 @@
   }
 
   // remote/CPU player entered or left a building: mirror it on this screen
-  UI.spectateScene = function (id) {
+  UI.spectateScene = function (id, tabIndex, pageIndex) {
     if (isMyTurn() && UI.mode !== "local") return;   // never override my own play
+    if (id && !DATA.buildings[id]) return;
     if (id && UI.inScene !== id) openScene(id, true);
     else if (!id && UI.inScene) closeScene(true);
+    if (id && PAGES[id] && tabIndex != null && pageIndex != null) {
+      var cfg = PAGES[id], tab = cfg.tabs[tabIndex];
+      if (tab && tab.pages[pageIndex]) {
+        UI.sceneTab = tabIndex; UI.scenePage = pageIndex;
+        renderScenePage(); renderSceneUI();
+      }
+    }
   };
 
   // ---------------- dialogs ----------------

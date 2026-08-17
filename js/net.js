@@ -103,8 +103,8 @@
     }
     if (msg.t === "view" && UI.state) {
       if (c.slotIdx !== UI.state.activeIdx) return;
-      UI.spectateScene(msg.scene);                       // host mirrors it too
-      NET.conns.forEach(function (o) { if (o !== c) send(o, { t: "view", scene: msg.scene }); });
+      UI.spectateScene(msg.scene, msg.tab, msg.page);     // host mirrors it too
+      NET.conns.forEach(function (o) { if (o !== c) send(o, { t: "view", scene: msg.scene, tab: msg.tab, page: msg.page }); });
       return;
     }
     if (msg.t === "begin" && UI.state) {
@@ -183,7 +183,7 @@
       NET.leave(); UI.showScreen("start");
       return;
     }
-    if (msg.t === "view") { UI.spectateScene(msg.scene); return; }
+    if (msg.t === "view") { UI.spectateScene(msg.scene, msg.tab, msg.page); return; }
     if (msg.t === "walk" && UI.state) {
       if (!UI.walker.raf) {
         window.PPAudio.startMove(msg.transport || "walk");
@@ -229,9 +229,9 @@
     else if (NET.conn) NET.conn.send({ t: "begin" });
   };
   // scene view sync: my open/close building -> everyone's screen
-  NET.sendView = function (scene) {
-    if (NET.isHost) broadcast({ t: "view", scene: scene });
-    else if (NET.conn) NET.conn.send({ t: "view", scene: scene });
+  NET.sendView = function (scene, tab, page) {
+    if (NET.isHost) broadcast({ t: "view", scene: scene, tab: tab, page: page });
+    else if (NET.conn) NET.conn.send({ t: "view", scene: scene, tab: tab, page: page });
   };
   // walk animation relay (host-authoritative); transport lets spectators HEAR it
   NET.relayWalk = function (from, to, transport) {

@@ -35,14 +35,24 @@ var SHOTS = path.join(__dirname, "shots");
   });
   await page.waitForSelector("#dlg-turncard.show", { timeout: 5000 });
   await page.evaluate(function () { document.querySelector("#btn-begin-turn").click(); });
+  await page.waitForFunction(function () { return window.PPUI.turnBegun === true; }, { timeout: 3000 });
   await page.evaluate(function () { document.querySelector(".hotspot[data-id='club']").click(); });
   await page.waitForSelector("#scene-view.show", { timeout: 8000 });
   // iframe menu must load
   await page.waitForFunction(function () {
     var f = document.querySelector("#bdc-frame");
     return f && f.style.display !== "none" && f.contentWindow && f.contentDocument &&
-      f.contentDocument.querySelector(".decision-card");
+      f.contentDocument.body.classList.contains("static-art") && f.contentDocument.querySelector(".decision-card");
   }, { timeout: 10000, polling: 300 });
+  var workCoverage = await page.evaluate(function () {
+    var f = document.querySelector("#bdc-frame"), d = f.contentDocument;
+    var stage = d.querySelector("#menuStage").getBoundingClientRect();
+    var work = d.querySelector("#workButton").getBoundingClientRect();
+    return { left: (work.left - stage.left) / stage.width, width: work.width / stage.width };
+  });
+  if (workCoverage.left > 0.2 || workCoverage.width < 0.78) {
+    console.error("CLUB FAIL: WORK hitbox coverage", workCoverage); process.exit(1);
+  }
   await new Promise(function (r) { setTimeout(r, 1200); });
   await page.screenshot({ path: path.join(SHOTS, "14-club.png") });
 
