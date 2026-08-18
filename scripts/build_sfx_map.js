@@ -21,12 +21,21 @@ var ACTION_OVERRIDES = {
   getorchangejob: "A076",           // "Get / Change Job"
   attendteambuilding: "A079",       // "Attend Team Building Event"
   joinunionmeeting: "A080",         // "...to Fight Evil Corporation"
+  openconceptbathroom: "A003",      // painted Low-Cost bathroom = Take Communal Shower
+  joingroupchant: "A060",           // delivered name omits "Re-Education"
   vamoose: null
 };
 // one cue covering a GROUP of actions (building-level shared cues)
 var GROUP_CUES = [
   { frag: "aironesupermarketpurchase", ids: ["A026", "A027", "A028", "A029", "A031", "A032"] },
   { frag: "debtstreetcapitalfinancialaction", ids: ["A085", "A086", "A087", "A088", "A090", "A091"] },
+  { frag: "highiquniversityfinishdegree", ids: ["A070", "A071", "A072"] },
+  { frag: "luxuryapartmentsluxurybathandpetspa", ids: ["A010", "A016"] },
+  { frag: "ethicalpetshoppurchase", ids: ["A102", "A103", "A104"] },
+  { frag: "mallpurchase", ids: ["A112", "A113", "A114", "A115"] },
+  { frag: "parknaponparkbench", ids: ["A022", "A025"] },
+  { frag: "reeducationtemplepurchase", ids: ["A058", "A059", "A063"] },
+  { frag: "regretburgereatfood", ids: ["A034", "A035", "A036", "A037", "A038", "A039", "A040"] },
 ];
 // audio package spellings that drifted from the painted pet names
 var PET_OVERRIDES = { orvilleoverplan: "INTP", vinniethevibescanner: "INFJ" };

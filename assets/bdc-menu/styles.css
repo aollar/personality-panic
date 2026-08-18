@@ -108,6 +108,8 @@ body.static-art .result-sweep { display: none; }
   background: transparent;
   cursor: pointer;
 }
+.decision-card,
+.work-button { z-index: 20; }
 
 .card-art,
 .work-art,

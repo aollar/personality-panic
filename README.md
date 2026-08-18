@@ -54,6 +54,22 @@ Bad Decisions Club keeps its animated scene video, but its right-side menu is
 temporarily static. The iframe uses the new menu art while retaining the live
 action buttons and engine bridge.
 
+Airport now has two painted pages. Page 2 contains Buy Travel Insurance and
+Airport Lounge Flex; the painted arrows switch pages without leaving the scene.
+
+## Playtest progression rules
+
+- Jobs require at least one completed shift each player-week after the hiring
+  or promotion grace week; missing the full week fires the player.
+- Career ladders are sequential. Players apply only to entry roles, complete
+  two shifts, then use Ask for Promotion to advance exactly one pay rung.
+- The current six university courses are sequential and one-time. Completed
+  courses stay greyed out and only the next course is selectable.
+- Buying groceries satisfies the current turn's meal and stores only the
+  remaining weeks for later Eat at Home actions.
+- The HUD's GO LUXURY action is usable from Low-Cost Housing and moves the
+  player immediately into Heelton Heights after payment.
+
 ## Where the numbers live
 
 | File | What it is |
@@ -100,3 +116,7 @@ node test/multiplayer.js          # host+join over the real PeerJS broker
   still rely on live engine values/tooltips when the baked number differs.
 - Apartment overlays exist only for the supplied item/pet subset; missing
   ownership visuals remain ghosted until additional aligned art is authored.
+- The delivered sound pack has no bus movement cue. Bus Pass movement still
+  uses the walking fallback until a bus file is supplied.
+- Cram All Night, Debate Professor, and University Work do not yet have unique
+  school cues in the delivered pack. Other supplied university actions are mapped.

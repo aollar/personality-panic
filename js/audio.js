@@ -104,8 +104,8 @@
   // (the 2.8s car clip used to keep revving inside the building)
   function startMove(transport) {
     stopMove();
-    if (transport === "Bicycle") { st.moveEl = sfx("bike"); return; }
-    if (transport === "Car") { st.moveEl = sfx("car"); return; }
+    if (transport === "Bicycle") { st.moveEl = cue("cues/WorldMap_Move_BicycleBell_01.mp3") || sfx("bike"); return; }
+    if (transport === "Car") { st.moveEl = cue("cues/WorldMap_Move_CarAcceleration_01.mp3") || sfx("car"); return; }
     var f = window.PP_DATA.sfx.walk;
     if (!f || !st.unlocked) return;
     var el = new Audio(SFX_DIR + f);

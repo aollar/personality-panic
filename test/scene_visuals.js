@@ -30,6 +30,8 @@ assert.strictEqual(pages.luxury.tabs[0].pages[1].homeLayer, "luxuryLounge");
 assert.strictEqual(pages.luxury.tabs[0].pages[0].visibleNextArrow, true);
 assert.strictEqual(pages.university.tabs[0].pages.length, 2);
 assert.deepStrictEqual(Array.from(pages.university.tabs[0].pages[1].hotspots, h => h.a), ["A073", "A074"]);
+assert.strictEqual(pages.airport.tabs[0].pages.length, 2);
+assert.deepStrictEqual(Array.from(pages.airport.tabs[0].pages[1].hotspots, h => h.a), ["A099", "A100"]);
 assert.ok(visuals.homes.lowCost.layers.some(layer => layer.any.includes("Fridge")));
 assert.ok(visuals.homes.luxuryBedroom.layers.some(layer => layer.any.includes("Premium Bed")));
 assert.ok(visuals.homes.luxuryLounge.layers.some(layer => layer.any.includes("Hot Tub")));
@@ -42,7 +44,7 @@ function walk(dir) {
 }
 const v3Files = walk(path.join(root, "assets", "scenes", "v3"))
   .filter(file => file.endsWith(".png") && !path.basename(file).includes("_source"));
-assert.strictEqual(v3Files.length, 32, "only deployable scene and transparent overlay assets should be published");
+assert.strictEqual(v3Files.length, 33, "only deployable scene and transparent overlay assets should be published");
 v3Files.forEach(file => {
   const header = fs.readFileSync(file).subarray(0, 24);
   assert.strictEqual(header.toString("ascii", 1, 4), "PNG", `${file} is not a PNG`);

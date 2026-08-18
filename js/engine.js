@@ -183,7 +183,8 @@
       ate: false, turnsSinceRelax: 0, sleptThisTurn: false,
       foodSupply: 0, premiumSupply: false, petFoodLeft: 0,
       items: [], pet: null, petDied: false, tombstones: [],
-      job: null, degrees: [], degreeProgress: 0,
+      job: null, jobStartedTurn: null, jobShifts: 0, lastPromotionTurn: null, workedThisTurn: false,
+      degrees: [], degreeProgress: 0, completedCourses: [],
       flags: {}, debts: [], booster: null,
       rentPaid: false, warnings: [],
       // Weekend Update system (v3)
@@ -313,7 +314,13 @@
         case "notFlag": if (p.flags[r.flag]) return r.msg || "Already done"; break;
         case "promotionEligible":
           if (!p.job) return "Need a job";
-          if (!bestPromotion(state, p)) return "No promotion available yet"; break;
+          if (p.lastPromotionTurn === state.turn) return "Only one promotion per week";
+          if ((p.jobShifts || 0) < 2) return "Work 2 shifts in your current role first (" + (p.jobShifts || 0) + "/2)";
+          var nextJob = nextPromotionJob(p);
+          if (!nextJob) return "Already at the top of this career ladder";
+          var nextWhy = jobReqMet(state, p, nextJob);
+          if (nextWhy) return "Next: " + nextJob.name + " — " + nextWhy;
+          break;
         // --- Weekend Update card requirements ---
         case "ownsAnyTech":
           if (!ownsAnyOf(p, ASSUME.weekend.techItems)) return "Need a tech item"; break;
@@ -355,21 +362,29 @@
     }
     return null;
   }
+  function jobApplicationWhy(state, p, job) {
+    var why = jobReqMet(state, p, job);
+    if (why) return why;
+    if (p.job && p.job.name === job.name && p.job.building === job.building) return "Current job";
+    if (job.tier !== "Low") return "Promotion track only — start with an entry role";
+    return null;
+  }
   function jobsWithStatus(state, p) {
     return DATA.jobs.map(function (j) {
-      return { job: j, why: jobReqMet(state, p, j), current: p.job && p.job.name === j.name && p.job.building === j.building };
+      return { job: j, why: jobApplicationWhy(state, p, j), current: p.job && p.job.name === j.name && p.job.building === j.building };
     });
   }
   function bestPromotion(state, p) {
+    if (!p.job || (p.jobShifts || 0) < 2) return null;
+    var next = nextPromotionJob(p);
+    return next && !jobReqMet(state, p, next) ? next : null;
+  }
+  function nextPromotionJob(p) {
     if (!p.job) return null;
-    var best = null;
-    DATA.jobs.forEach(function (j) {
-      if (j.building !== p.job.building) return;
-      if (j.basePayT100 <= p.job.basePayT100) return;
-      if (jobReqMet(state, p, j)) return;
-      if (!best || j.basePayT100 > best.basePayT100) best = j;
-    });
-    return best;
+    var ladder = DATA.jobs.filter(function (j) {
+      return j.building === p.job.building && j.basePayT100 > p.job.basePayT100;
+    }).sort(function (a, b) { return a.basePayT100 - b.basePayT100; });
+    return ladder[0] || null;
   }
   function applyWork(state, p) {
     var j = p.job, scale = state.T / 100;
@@ -380,6 +395,8 @@
       var d = addStat(state, p, e.stat, Math.round(e.amtT100 * scale));
       if (d) bits.push((d > 0 ? "+" : "") + d + " " + statName(e.stat));
     });
+    p.workedThisTurn = true;
+    p.jobShifts = (p.jobShifts || 0) + 1;
     log(state, p, "Worked as " + j.name + " (" + bits.join(", ") + ")", "work");
     return { pay: pay };
   }
@@ -410,6 +427,9 @@
       cost = Math.round(a.costPct * state.T * p.rentMod);
     var tu = tuCost(a);
     var why = checkReq(state, p, a.req, a);
+    if (!why && a.id === "A067" && ASSUME.courses && ASSUME.courses.length &&
+        Array.isArray(p.completedCourses) && p.completedCourses.length >= ASSUME.courses.length)
+      why = "All courses completed";
     // Debtstreet portfolio buys: one position per asset (Weekend system)
     var asset = !state.weekendOff && ASSUME.weekend.assets[a.id];
     if (!why && asset && p.holdings.indexOf(asset) !== -1) why = "Already holding " + asset;
@@ -437,9 +457,16 @@
     if (needsPet && !choice) return { ok: true, needsChoice: "pet" };
     // Take Class: pick a course from the catalog (bots grab whatever's next)
     var needsCourse = a.id === "A067" && ASSUME.courses && ASSUME.courses.length;
-    if (needsCourse && !choice) {
-      if (!p.isBot) return { ok: true, needsChoice: "course" };
-      choice = { course: ASSUME.courses[Math.floor(rand(state) * ASSUME.courses.length)].name };
+    if (needsCourse) {
+      if (!Array.isArray(p.completedCourses)) p.completedCourses = [];
+      var nextCourse = ASSUME.courses.filter(function (c) { return p.completedCourses.indexOf(c.name) === -1; })[0];
+      if (!nextCourse) return { ok: false, why: "All courses completed" };
+      if (!choice) {
+        if (!p.isBot) return { ok: true, needsChoice: "course" };
+        choice = { course: nextCourse.name };
+      }
+      if (!choice.course || choice.course !== nextCourse.name)
+        return { ok: false, why: "Complete " + nextCourse.name + " next" };
     }
     // Panic Sell: pick which position to dump (auto when only one qualifies)
     var needsSell = a.fx.some(function (f) { return f.kind === "panicSell"; });
@@ -490,7 +517,12 @@
           break;
         case "relax": p.turnsSinceRelax = 0; break;
         case "foodSupply":
-          p.foodSupply += f.weeks; if (f.premium) p.premiumSupply = true; break;
+          // The purchase supplies and consumes this week's meal immediately;
+          // only the remaining weeks stay in the pantry for Eat at Home.
+          p.foodSupply += Math.max(0, f.weeks - 1);
+          if (f.premium && f.weeks > 1) p.premiumSupply = true;
+          p.ate = true;
+          break;
         case "petFood": p.petFoodLeft += f.feedings; break;
         case "feedPet":
           if (p.pet && !p.pet.dead) {
@@ -510,6 +542,8 @@
           var crs = (choice && choice.course && ASSUME.courses)
             ? ASSUME.courses.filter(function (c) { return c.name === choice.course; })[0] : null;
           if (crs) {
+            if (!Array.isArray(p.completedCourses)) p.completedCourses = [];
+            if (p.completedCourses.indexOf(crs.name) === -1) p.completedCourses.push(crs.name);
             summary.push("📚 " + crs.name);
             var cd = gainStat(state, p, crs.stat, crs.pct);
             if (cd) summary.push("+" + cd + " " + statName(crs.stat));
@@ -526,17 +560,28 @@
         case "openJobDialog":
           var jb = DATA.jobs.filter(function (j) { return j.name === choice.job && j.building === choice.building; })[0];
           if (!jb) return;
-          var whyJ = jobReqMet(state, p, jb);
+          var whyJ = jobApplicationWhy(state, p, jb);
           if (whyJ) { result.ok = false; result.why = whyJ; return; }
           p.job = jb;
+          p.jobStartedTurn = state.turn;
+          p.jobShifts = 0;
+          p.lastPromotionTurn = null;
+          p.workedThisTurn = false;
           log(state, p, "Took the job: " + jb.name + " at " + DATA.buildings[jb.building].name, "good");
           break;
         case "promote":
           var promo = bestPromotion(state, p);
-          if (promo) { p.job = promo; log(state, p, "🎉 Promoted to " + promo.name + "!", "good"); }
+          if (promo) {
+            p.job = promo; p.jobStartedTurn = state.turn; p.jobShifts = 0;
+            p.lastPromotionTurn = state.turn; p.workedThisTurn = false;
+            log(state, p, "🎉 Promoted to " + promo.name + "!", "good");
+          }
           break;
         case "quitJob":
-          if (p.job) { log(state, p, "Quit being a " + p.job.name + ". Freedom (temporarily).", ""); p.job = null; }
+          if (p.job) {
+            log(state, p, "Quit being a " + p.job.name + ". Freedom (temporarily).", "");
+            p.job = null; p.jobStartedTurn = null; p.jobShifts = 0; p.lastPromotionTurn = null; p.workedThisTurn = false;
+          }
           break;
         case "unlock":
           p.flags[f.flag] = true;
@@ -556,6 +601,8 @@
           break;
         case "moveIn":
           p.housing = f.tier;
+          p.homeless = false;
+          p.location = f.tier === "lux" ? "luxury" : "lowCost";
           log(state, p, f.tier === "lux" ? "Moved into Heelton Heights Luxury Apartments! 🏙️" : "Moved back to Low Cost Housing.", "");
           break;
         case "supportCheque":
@@ -645,10 +692,19 @@
     if (p.location === "gym") p.turnFlags.gym = true;
     // Work actions use the player's actual job numbers (Jobs_Named is canonical)
     if (a.name === "Work" && p.job) { applyWork(state, p); result.sfx.push("money"); }
+    // Heelton's authored Work From Home action counts for weekly attendance,
+    // but keeps its own sheet-authored gains instead of paying a second salary.
+    if (a.id === "A015" && p.job) {
+      p.workedThisTurn = true;
+      p.jobShifts = (p.jobShifts || 0) + 1;
+      log(state, p, "Worked remotely for the week (" + p.jobShifts + " shifts in current role).", "work");
+    }
     if (a.category === "Food" || a.fx.some(function (f) { return f.kind === "eat"; })) {
       if (a.building === "regretBurger") result.sfx.push("eat");
     }
-    if (ann.cost > 0 || summary.some(function (s) { return s.indexOf("$") !== -1; })) result.sfx.push("money");
+    if (ann.cost > 0 || a.gains.some(function (g) { return g.stat === "money"; }) ||
+        a.penalties.some(function (g) { return g.stat === "money"; }) ||
+        summary.some(function (s) { return s.indexOf("$") !== -1; })) result.sfx.push("money");
 
     if (a.name !== "Work") log(state, p, a.name + (summary.length ? " (" + summary.join(", ") + ")" : ""), "");
     return result;
@@ -788,6 +844,11 @@
 
   function startTurn(state) {
     var p = active(state);
+    // Save compatibility: an existing job receives one grace week after load.
+    if (p.workedThisTurn == null) p.workedThisTurn = false;
+    if (p.job && p.jobStartedTurn == null) p.jobStartedTurn = state.turn;
+    if (p.jobShifts == null) p.jobShifts = 0;
+    if (!Array.isArray(p.completedCourses)) p.completedCourses = [];
     p.tu = DATA.settings.timeUnitsPerTurn;
     p.location = homeOf(p);   // every turn starts at home (Austin 2026-07-09)
     p.warnings = [];
@@ -840,6 +901,15 @@
     var p = active(state), events = [];
     var stu = DATA.weekend.statusTu;
     var baseTU = DATA.settings.timeUnitsPerTurn;
+    // Jobs require one completed Work action per player-week. Hiring and
+    // promotion weeks are grace periods so a new role cannot fire instantly.
+    if (p.job && p.jobStartedTurn != null && p.jobStartedTurn < state.turn && !p.workedThisTurn) {
+      var firedFrom = p.job.name;
+      p.job = null; p.jobStartedTurn = null; p.jobShifts = 0; p.lastPromotionTurn = null;
+      events.push("💼 " + p.name + " was fired from " + firedFrom + " for missing work all week");
+      log(state, p, "💼 Fired from " + firedFrom + " — didn't work a shift this week.", "bad");
+    }
+    p.workedThisTurn = false;
     // 1) hunger (S01 — announced by a Weekend card at the start of next turn):
     // lose 25% of next turn's Time Units (v2-4, % of the turn)
     if (!p.ate) {

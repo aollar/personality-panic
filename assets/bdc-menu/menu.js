@@ -21,6 +21,9 @@
   }
   if (params.get("static") === "1") {
     document.body.classList.add("static-art");
+    const staticMenuArt = new Image();
+    staticMenuArt.onload = () => document.body.classList.add("static-ready");
+    staticMenuArt.src = "../scenes/v3/bdc_menu.png";
   }
   if (params.get("cardGlow") === "overlay") {
     document.body.classList.add("card-glow-overlay");

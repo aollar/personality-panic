@@ -74,7 +74,10 @@
     var cuePath = null;
     if (kind === "action" && r && r.ok && !r.needsChoice && window.PP_SFX_MAP) {
       cuePath = PP_SFX_MAP.actions[payload.id] || null;
-      if ((payload.id === "A006" || payload.id === "A107") && activeP().pet && PP_SFX_MAP.pets[activeP().pet.code])
+      if (payload.id === "A007" || payload.id === "X008")
+        cuePath = "cues/EthicalPetShop_FeedAnimals_Eating_01.mp3";
+      else if ((payload.id === "A006" || payload.id === "A107") &&
+          activeP().pet && PP_SFX_MAP.pets[activeP().pet.code])
         cuePath = PP_SFX_MAP.pets[activeP().pet.code];
     }
     if (cuePath) A.cue(cuePath);
@@ -554,7 +557,7 @@
     if (p.holdings && p.holdings.length)
       flags.push('<span class="flag-chip">\ud83d\udcc8 ' + p.holdings.join(" \u00b7 ") + "</span>");
     if (p.foodSupply > 0) flags.push('<span class="flag-chip">\ud83e\udd55 \u00d7' + p.foodSupply + "</span>");
-    if (p.job) flags.push('<span class="flag-chip">\ud83d\udcbc ' + p.job.name + "</span>");
+    if (p.job) flags.push('<span class="flag-chip">\ud83d\udcbc ' + p.job.name + " \u00b7 " + Math.min(2, p.jobShifts || 0) + "/2 shifts</span>");
     var fl = $("#hud-flags");
     if (fl._last !== flags.join("")) {   // only touch the DOM when content changed
       fl._last = flags.join("");
@@ -1112,6 +1115,8 @@
   function preloadAllScenes() {
     Object.keys(DATA.buildings).forEach(function (id) { var b = DATA.buildings[id]; if (b.scene) sceneImg(b.scene); });
     Object.keys(PAGES).forEach(function (id) { preloadScenePages(id); });
+    var clubFrame = $("#bdc-frame");
+    if (clubFrame && !clubFrame.src) clubFrame.src = "assets/bdc-menu/index.html?embed=1&static=1";
   }
   function pagedCfg() { return PAGES[UI.inScene] || null; }
   function switchTab(tabIndex) {
@@ -1478,6 +1483,7 @@
     if (r.needsChoice === "sell") { openSellChoice(id, r.assets); return; }
     if (id === "A018") A.footsteps(1800);          // Take a Walk: audible footsteps
     afterDispatch("action", { id: id }, r);
+    if (UI.inScene && activeP().location !== UI.inScene) closeScene(true);
     var last = UI.state.log[UI.state.log.length - 1];
     if (last && last.who === activeP().name) toast(last.text, last.cls);
   }
@@ -1552,6 +1558,10 @@
   function openCourses(actionId) {
     var st = UI.state, p = activeP();
     var courses = (window.PP_ASSUMPTIONS && window.PP_ASSUMPTIONS.courses) || [];
+    var completed = Array.isArray(p.completedCourses) ? p.completedCourses : [];
+    var nextCourseIndex = courses.map(function (c) { return c.name; }).findIndex(function (name) {
+      return completed.indexOf(name) === -1;
+    });
     var ann = annFor(actionId);
     // where the degree track stands: next milestone at 3 / 6 / 10 classes
     var next = p.degrees.indexOf("Undergrad") === -1 ? ["Undergrad", 3]
@@ -1564,10 +1574,13 @@
       (next ? " · " + next[0] + " unlocks at " + next[1] : " · every degree earned 🎓") +
       (ann ? " · each class: " + ann.tu + " TU · $" + ann.cost : "") + "</div>" +
       courses.map(function (c, i) {
-        return '<button class="shop-item" data-i="' + i + '">' +
+        var done = completed.indexOf(c.name) !== -1;
+        var available = !done && i === nextCourseIndex;
+        var status = done ? "✓ Completed" : available ? c.blurb : "🔒 Complete the previous course first";
+        return '<button class="shop-item ' + (done ? "owned" : "") + '" data-i="' + i + '" ' + (available ? "" : "disabled") + '>' +
           '<div class="s-name">' + c.name + "</div>" +
           '<div class="s-fx">+1 class · +' + Math.round(c.pct * st.T) + " " + E.statName(c.stat) + "</div>" +
-          '<div class="s-cost">' + c.blurb + "</div></button>";
+          '<div class="s-cost">' + status + "</div></button>";
       }).join("");
     openDialog("shop");
     $$("#shop-grid .shop-item").forEach(function (b) {

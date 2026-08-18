@@ -102,6 +102,34 @@
     ] }]
   };
 
+  // Airport page 2 contains the two utility actions omitted from page 1.
+  PAGES.airport = {
+    tabBar: [],
+    work: { a: "A101", box: [74.16, 85.65, 24.28, 13.15] },
+    tabs: [{ id: "escape", label: "ESCAPE PLAN", pages: [
+      {
+        img: V3 + "airport.png",
+        arrows: { prev: [0, 0, 0, 0], next: [89.60, 78.43, 3.40, 6.10] },
+        hotspots: [
+          { a: "A093", box: [73.9, 10.6, 11.5, 24.5] },
+          { a: "A094", box: [85.8, 10.6, 12.9, 24.5] },
+          { a: "A095", box: [73.9, 37.0, 11.5, 22.5] },
+          { a: "A096", box: [85.8, 37.0, 12.9, 22.5] },
+          { a: "A097", box: [73.9, 60.1, 11.5, 21.7] },
+          { a: "A098", box: [85.8, 60.1, 12.9, 21.7] }
+        ]
+      },
+      {
+        img: V3 + "airport_page_2.png",
+        arrows: { prev: [81.82, 78.43, 3.40, 6.10], next: [0, 0, 0, 0] },
+        hotspots: [
+          { a: "A099", box: [73.86, 10.95, 12.20, 25.08] },
+          { a: "A100", box: [86.12, 10.95, 12.20, 25.08] }
+        ]
+      }
+    ] }]
+  };
+
   var PET_FILES = {
     ESFJ: "pet_dog.png",
     ENFJ: "pet_lion.png",
