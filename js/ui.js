@@ -1205,8 +1205,9 @@
   function makePaintBtn(h) {
     var btn = document.createElement("button");
     btn.className = "paint-btn";
-    var resident = !activeP().homeless && activeP().housing === "lux";
-    var actionId = h.aByHousing ? h.aByHousing[resident ? "resident" : "visitor"] : h.a;
+    var p = activeP();
+    var housingKey = p.homeless ? "homeless" : p.housing;
+    var actionId = h.aByHousing ? (h.aByHousing[housingKey] || h.a) : h.a;
     var activeH = actionId === h.a ? h : Object.assign({}, h, { a: actionId });
     btn.dataset.a = actionId;
     if (h.choice) btn._choice = h.choice;
@@ -1423,7 +1424,12 @@
   function extraActions() {
     var st = UI.state, p = activeP();
     var painted = paintedActionIds(UI.inScene);
-    return E.actionsAt(st, p).filter(function (x) { return painted.indexOf(x.id) === -1; });
+    return E.actionsAt(st, p).filter(function (x) {
+      if (painted.indexOf(x.id) !== -1) return false;
+      // Housing recovery, switching and rent payment belong at the two housing
+      // offices. They should never create or clutter a generic More drawer.
+      return x.action.category !== "Housing" && x.action.category !== "Rent";
+    });
   }
   function actionItemsHtml(actions, mine) {
     return actions.map(function (x, i) {

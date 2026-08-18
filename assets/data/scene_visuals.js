@@ -34,6 +34,10 @@
   PAGES.lowCost.tabs[0].pages[0].img = V3 + "low-cost/unit_empty.png";
   PAGES.lowCost.tabs[0].pages[0].homeLayer = "lowCost";
   PAGES.lowCost.tabs[1].pages[0].img = V3 + "low-cost/rent_office.png";
+  PAGES.lowCost.tabs[1].pages[0].hotspots = [
+    { a: "X006", aByHousing: { low: "X006", lux: "X004", homeless: "X005" }, box: [74.4, 14.3, 11.5, 23.2] },
+    { a: "X006", aByHousing: { low: "X006", lux: "X004", homeless: "X005" }, box: [72.3, 86.5, 26.0, 9.0] }
+  ];
 
   // Heelton Heights has two navigable rooms. The bedroom view was supplied
   // without its arrow, so its only live arrow receives a visible CSS treatment.
@@ -74,7 +78,7 @@
   ];
   PAGES.luxury.tabs[1].pages[0].img = V3 + "heelton/rent_office.png";
   PAGES.luxury.tabs[1].pages[0].hotspots = [
-    { a: "X007", aByHousing: { resident: "X007", visitor: "X003" }, box: [75.5, 89.0, 21.7, 7.0] }
+    { a: "X007", aByHousing: { lux: "X007", low: "X003", homeless: "X009" }, box: [75.5, 89.0, 21.7, 7.0] }
   ];
 
   // University now exposes the supplied PAGE 1 / PAGE 2 art and actions.

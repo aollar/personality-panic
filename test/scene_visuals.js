@@ -36,7 +36,9 @@ assert.strictEqual(pages.airport.tabs[0].pages.length, 2);
 assert.deepStrictEqual(Array.from(pages.airport.tabs[0].pages[1].hotspots, h => h.a), ["A099", "A100"]);
 assert.deepStrictEqual(Array.from(hotspots.airOne, h => h.a), ["A026", "A027", "A028", "A029", "A031", "A032", "A030", "A033"]);
 assert.deepStrictEqual(JSON.parse(JSON.stringify(pages.luxury.tabs[1].pages[0].hotspots[0].aByHousing)),
-  { resident: "X007", visitor: "X003" });
+  { lux: "X007", low: "X003", homeless: "X009" });
+assert.deepStrictEqual(JSON.parse(JSON.stringify(pages.lowCost.tabs[1].pages[0].hotspots[0].aByHousing)),
+  { low: "X006", lux: "X004", homeless: "X005" });
 assert.ok(visuals.homes.lowCost.layers.some(layer => layer.any.includes("Fridge")));
 assert.ok(visuals.homes.luxuryBedroom.layers.some(layer => layer.any.includes("Premium Bed")));
 assert.ok(visuals.homes.luxuryLounge.layers.some(layer => layer.any.includes("Hot Tub")));
