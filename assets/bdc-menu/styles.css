@@ -75,10 +75,7 @@ body.static-art .menu-stage::after {
   content: ""; position: absolute; top: 0; bottom: 0; width: 2.45%;
   background: #030407; z-index: 12; pointer-events: none;
 }
-/* Stop the left seam cover above the robot. The parent foreground supplies the
-   robot's portion left of the iframe; leaving this mask full-height sliced a
-   black bar through the authored character. */
-body.static-art .menu-stage::before { left: 0; bottom: 19.2%; }
+body.static-art .menu-stage::before { left: 0; }
 body.static-art .menu-stage::after { right: 0; }
 body.static-art .card-art,
 body.static-art .work-art,

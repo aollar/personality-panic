@@ -55,7 +55,7 @@ function walk(dir) {
 }
 const v3Files = walk(path.join(root, "assets", "scenes", "v3"))
   .filter(file => file.endsWith(".png") && !path.basename(file).includes("_source"));
-assert.strictEqual(v3Files.length, 33, "only deployable scene and transparent overlay assets should be published");
+assert.strictEqual(v3Files.length, 34, "only deployable scene and transparent overlay assets should be published");
 v3Files.forEach(file => {
   const header = fs.readFileSync(file).subarray(0, 24);
   assert.strictEqual(header.toString("ascii", 1, 4), "PNG", `${file} is not a PNG`);
@@ -68,5 +68,7 @@ alphaFiles.forEach(file => {
   const ihdr = fs.readFileSync(file).subarray(0, 26);
   assert.strictEqual(ihdr[25], 6, `${file} must remain RGBA PNG color type 6`);
 });
+const bdcRobot = fs.readFileSync(path.join(root, "assets", "scenes", "v3", "bdc_robot.png")).subarray(0, 26);
+assert.strictEqual(bdcRobot[25], 6, "BDC robot must remain a transparent RGBA PNG");
 
 console.log("scene visuals: OK");

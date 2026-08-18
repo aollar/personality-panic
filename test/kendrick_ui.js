@@ -112,21 +112,22 @@ var SHOTS = path.join(__dirname, "shots");
   });
   await page.waitForFunction(function () {
     var f = document.querySelector("#bdc-frame");
-    if (!f || !f.contentDocument || !f.contentDocument.body.classList.contains("static-ready")) return false;
-    var c = document.querySelector("#scene-overlays"), d = c.getContext("2d").getImageData(1100, 760, 1, 1).data;
-    return d[3] > 0;
+    var robot = document.querySelector("#bdc-robot");
+    return f && f.contentDocument && f.contentDocument.body.classList.contains("static-ready") &&
+      robot && robot.style.display !== "none" && robot.complete && robot.naturalWidth;
   }, { timeout: 10000 });
   await new Promise(function (resolve) { setTimeout(resolve, 250); });
   var stack = await page.evaluate(function () {
     var frame = document.querySelector("#bdc-frame"), video = document.querySelector("#scene-video"), r = frame.getBoundingClientRect();
     var top = document.elementFromPoint(r.left + r.width * 0.5, r.top + r.height * 0.35);
-    var canvas = document.querySelector("#scene-overlays"), robotPixel = canvas.getContext("2d").getImageData(1100, 760, 1, 1).data;
+    var robot = document.querySelector("#bdc-robot"), rr = robot.getBoundingClientRect();
     return { frameZ: Number(getComputedStyle(frame).zIndex), videoZ: Number(getComputedStyle(video).zIndex), topId: top && top.id,
-      frameBg: getComputedStyle(frame).backgroundColor, robotAlpha: robotPixel[3],
+      frameBg: getComputedStyle(frame).backgroundColor, robotZ: Number(getComputedStyle(robot).zIndex),
+      robotBox: [rr.left / innerWidth, rr.top / innerHeight, rr.width / innerWidth, rr.height / innerHeight],
       resultHidden: getComputedStyle(frame.contentDocument.querySelector("#resultBox")).display === "none" };
   });
   if (!(stack.frameZ > stack.videoZ) || stack.topId !== "bdc-frame" || stack.frameBg === "rgba(0, 0, 0, 0)" ||
-      !stack.robotAlpha || !stack.resultHidden)
+      !(stack.robotZ > stack.frameZ) || !stack.resultHidden)
     throw new Error("BDC stacking failed: " + JSON.stringify(stack));
   await page.screenshot({ path: path.join(SHOTS, "kendrick-bdc-front.png") });
 

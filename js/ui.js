@@ -931,20 +931,22 @@
       tomb.textContent = "🪦 RIP " + tp.tombstones.join(" · ");
       sv.appendChild(tomb);
     }
-    var bd = $("#scene-backdrop"), vid = $("#scene-video"), frame = $("#bdc-frame");
+    var bd = $("#scene-backdrop"), vid = $("#scene-video"), frame = $("#bdc-frame"), robot = $("#bdc-robot");
     var paged = !!PAGES[id];
     var painted = paged || !!PAINT[id];
     if (b.video) {
-      renderClubMenuOverlay();
+      clearSceneOverlays();
       bd.style.display = "none";
       vid.style.display = "";
       if (!vid.src || vid.src.indexOf(b.video) === -1) vid.src = "assets/video/" + b.video;
       vid.play().catch(function () {});
       frame.style.display = "";
+      robot.style.display = "";
       if (!frame.src) frame.src = "assets/bdc-menu/index.html?embed=1&static=1";
     } else {
       vid.pause(); vid.style.display = "none";
       frame.style.display = "none";
+      robot.style.display = "none";
       bd.style.display = "";
       if (!paged) clearSceneOverlays();
       if (!paged && b.scene) setBackdrop(b.scene, true);   // blank-then-decode: no old-location flash
@@ -1041,31 +1043,6 @@
       }
     });
     return _matteImgs[cacheKey];
-  }
-  // The Club's supplied menu is a full-scene RGB export: white on the left,
-  // menu + robot on the right. The iframe crops to the menu column, which used
-  // to cut the robot in half. Matte the connected white field at runtime and
-  // draw the complete authored foreground above the video; iframe controls stay
-  // above this pointer-free canvas and remain fully clickable.
-  function renderClubMenuOverlay() {
-    var canvas = $("#scene-overlays");
-    if (!canvas) return;
-    clearSceneOverlays();
-    var key = "club|v3/bdc_menu.png";
-    var seq = (UI._overlaySeq = (UI._overlaySeq || 0) + 1);
-    UI._overlayKey = key;
-    matteSceneImg("v3/bdc_menu.png").then(function (source) {
-      if (UI._overlaySeq !== seq || UI._overlayKey !== key || UI.inScene !== "club") return;
-      var cx = canvas.getContext("2d");
-      cx.clearRect(0, 0, canvas.width, canvas.height);
-      cx.drawImage(source, 0, 0);
-    }).catch(function (err) {
-      if (UI._overlaySeq === seq) {
-        canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
-        UI._overlayKey = null;
-      }
-      console.warn("Club foreground could not be prepared", err);
-    });
   }
   function loadedSceneImg(file) {
     var im = sceneImg(file);
@@ -1500,7 +1477,7 @@
     if (!isMyTurn()) { bdcSay("Not your turn!"); return; }
     var ann = annFor(aid);
     if (!ann) return;
-    if (!ann.ok) { bdcSay("🔒 " + ann.why); return; }
+    if (!ann.ok) { toast("🔒 " + ann.why, "bad"); return; }
     doAction(aid);
     var last = UI.state.log[UI.state.log.length - 1];
     if (last && UI.mode !== "guest") bdcSay(last.text.slice(0, 90));
