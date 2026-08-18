@@ -313,7 +313,12 @@
     renderAll();
     A.setScene("overmap", E.isRentTurn(UI.state));
     if (!resumed) turnIntro();
-    else { toast("Game resumed — turn " + UI.state.turn, "good"); startTimer(); maybeRunBot(); }
+    else {
+      // A resumed save continues the already-started player turn. Without this
+      // gate reset, map hotspots silently ignore clicks until End Turn.
+      UI.turnBegun = true;
+      toast("Game resumed — turn " + UI.state.turn, "good"); startTimer(); maybeRunBot();
+    }
     // warm all scene backdrops in the background so entering a building is instant
     setTimeout(preloadAllScenes, 1200);
   }
@@ -737,6 +742,10 @@
     E17: "📞", E18: "📷", E19: "⭐", E20: "❤️", E21: "🌡️", E22: "🏋️", E23: "👁️", E24: "🌙",
     E25: "🏠", E26: "％", E27: "🐶", E28: "🛋️", E29: "🔊", E30: "🥗"
   };
+  var WKND_ART = {};
+  if (DATA.weekend && DATA.weekend.cards) DATA.weekend.cards.forEach(function (card) {
+    WKND_ART[card.id] = "assets/cards/weekend/" + card.id + ".webp";
+  });
   var DECK_LABEL = { last: "LUCK DECK · you're in last", mid: "STEADY DECK", first: "KARMA DECK · you're in 1st" };
   function weekendCardHtml(c) {
     var tone = c.type === "status" ? (c.id === "S05" ? "grim" : "warn")
@@ -756,9 +765,13 @@
     var stamp = tone === "good" ? '<span class="wk-stamp up">NICE!</span>'
       : tone === "bad" ? '<span class="wk-stamp down">OOF.</span>'
       : c.id === "S05" ? '<span class="wk-stamp rip">R.I.P.</span>' : "";
+    var art = WKND_ART[c.id]
+      ? '<div class="wk-art"><img src="' + WKND_ART[c.id] + '" width="960" height="720" alt="' +
+        c.name + ' event artwork" decoding="async"></div>'
+      : '<div class="wk-icon">' + (WKND_ICON[c.id] || "🗞️") + "</div>";
     return '<div class="wknd-card ' + tone + '">' + burst + stamp +
       '<div class="wk-name">' + c.name + "</div>" +
-      '<div class="wk-icon">' + (WKND_ICON[c.id] || "🗞️") + "</div>" +
+      art +
       '<div class="wk-eff">' + body +
       (c.flavor ? '<div class="wk-flavor">' + c.flavor + "</div>" : "") + "</div>" +
       (c.deck ? '<div class="wk-deck">' + DECK_LABEL[c.deck] + "</div>" : "") +
@@ -1345,7 +1358,11 @@
     var extra = here ? extraActions() : [];
     var okCount = extra.filter(function (x) { return x.ok; }).length;
     $("#btn-more").textContent = "✚ More (" + okCount + ")";
-    $("#btn-more").style.display = extra.length ? "" : "none";
+    // Do not leave a misleading More (0) button in every completed painted
+    // menu merely because global recovery actions exist but are locked. The
+    // drawer returns automatically whenever at least one unpainted action is
+    // actually usable (including re-housing after eviction).
+    $("#btn-more").style.display = okCount ? "" : "none";
     // Live player card covering the baked mockup. The center clock already
     // owns TU/time, so this card stays focused on money and player metrics.
     var mains = ["connection", "health", "career", "happiness"];

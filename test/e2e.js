@@ -151,6 +151,14 @@ var os = require("os");
   await shot("10-resumed");
   console.log("save/resume OK");
 
+  // A resumed active turn must accept movement immediately—no forced End Turn.
+  await page.evaluate(function () { document.querySelector(".hotspot[data-id='mall']").click(); });
+  await page.waitForFunction(function () {
+    return window.PPUI.state.players[window.PPUI.state.activeIdx].location === "mall" &&
+      document.querySelector("#scene-view").classList.contains("show");
+  }, { timeout: 15000 });
+  console.log("resume movement OK");
+
   // filter benign console errors (audio autoplay, missing favicon, peerjs offline)
   var real = errors.filter(function (e) {
     return !/autoplay|play\(\)|favicon|net::ERR|peerjs|The AudioContext/i.test(e);
