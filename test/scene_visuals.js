@@ -26,10 +26,14 @@ assert.strictEqual(data.buildings.park.scene, "v3/park.png");
 assert.strictEqual(data.buildings.petShop.scene, "ethical_pet_shop.jpg", "Ethical Pet Shop stays unchanged");
 assert.strictEqual(pages.mall.tabs[0].pages[0].img, "v3/mall_style_page_1.png");
 assert.strictEqual(pages.lowCost.tabs[0].pages[0].homeLayer, "lowCost");
+assert.deepStrictEqual(Array.from(pages.lowCost.tabs[0].pages[0].hotspots, h => h.a), ["A001", "A002", "A003", "A004", "A005", "A006", "A007"]);
 assert.strictEqual(pages.luxury.tabs[0].pages.length, 2, "Heelton must expose both rooms");
 assert.strictEqual(pages.luxury.tabs[0].pages[0].homeLayer, "luxuryBedroom");
 assert.strictEqual(pages.luxury.tabs[0].pages[1].homeLayer, "luxuryLounge");
 assert.strictEqual(pages.luxury.tabs[0].pages[0].visibleNextArrow, true);
+pages.luxury.tabs[0].pages.forEach(page => {
+  assert.deepStrictEqual(Array.from(page.hotspots, h => h.a), ["A009", "A010", "A011", "A012", "A013", "A014", "A015", "A016"]);
+});
 assert.strictEqual(pages.university.tabs[0].pages.length, 2);
 assert.deepStrictEqual(Array.from(pages.university.tabs[0].pages[1].hotspots, h => h.a), ["A073", "A074"]);
 assert.strictEqual(pages.airport.tabs[0].pages.length, 2);

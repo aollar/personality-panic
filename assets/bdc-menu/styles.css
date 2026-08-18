@@ -75,7 +75,10 @@ body.static-art .menu-stage::after {
   content: ""; position: absolute; top: 0; bottom: 0; width: 2.45%;
   background: #030407; z-index: 12; pointer-events: none;
 }
-body.static-art .menu-stage::before { left: 0; }
+/* Stop the left seam cover above the robot. The parent foreground supplies the
+   robot's portion left of the iframe; leaving this mask full-height sliced a
+   black bar through the authored character. */
+body.static-art .menu-stage::before { left: 0; bottom: 19.2%; }
 body.static-art .menu-stage::after { right: 0; }
 body.static-art .card-art,
 body.static-art .work-art,
@@ -92,6 +95,9 @@ body.static-art .work-button.pressed,
 body.static-art .work-button.spring { transform: none; transition: none; animation: none; }
 body.static-art .result-scanline,
 body.static-art .result-sweep { display: none; }
+/* The supplied static menu already communicates each action visually. Keep
+   hover/click copy from sitting over the WORK artwork. */
+body.static-art .result-box { display: none; }
 
 /* Every positioned art layer uses the same --l/--t/--w vars (set inline). */
 .decision-card,

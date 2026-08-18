@@ -515,6 +515,10 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
   position: absolute; left: 70.3125%; top: -0.694444%;
   width: 29.609375%; height: 101.25%;
   border: 0; background: #030407; z-index: 10; overflow: hidden;
+  /* Reveal the exact full-scene robot composite beneath the iframe. Without
+     this lower-left notch, the iframe's crop/seam drew a dark slice through
+     the character. The covered area contains no usable card control. */
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 3% 100%, 3% 75%, 0 75%);
 }
 
 /* live chip that COVERS the baked-in mockup HUD in the scene art

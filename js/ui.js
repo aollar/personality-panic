@@ -935,7 +935,7 @@
     var paged = !!PAGES[id];
     var painted = paged || !!PAINT[id];
     if (b.video) {
-      clearSceneOverlays();
+      renderClubMenuOverlay();
       bd.style.display = "none";
       vid.style.display = "";
       if (!vid.src || vid.src.indexOf(b.video) === -1) vid.src = "assets/video/" + b.video;
@@ -1041,6 +1041,31 @@
       }
     });
     return _matteImgs[cacheKey];
+  }
+  // The Club's supplied menu is a full-scene RGB export: white on the left,
+  // menu + robot on the right. The iframe crops to the menu column, which used
+  // to cut the robot in half. Matte the connected white field at runtime and
+  // draw the complete authored foreground above the video; iframe controls stay
+  // above this pointer-free canvas and remain fully clickable.
+  function renderClubMenuOverlay() {
+    var canvas = $("#scene-overlays");
+    if (!canvas) return;
+    clearSceneOverlays();
+    var key = "club|v3/bdc_menu.png";
+    var seq = (UI._overlaySeq = (UI._overlaySeq || 0) + 1);
+    UI._overlayKey = key;
+    matteSceneImg("v3/bdc_menu.png").then(function (source) {
+      if (UI._overlaySeq !== seq || UI._overlayKey !== key || UI.inScene !== "club") return;
+      var cx = canvas.getContext("2d");
+      cx.clearRect(0, 0, canvas.width, canvas.height);
+      cx.drawImage(source, 0, 0);
+    }).catch(function (err) {
+      if (UI._overlaySeq === seq) {
+        canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+        UI._overlayKey = null;
+      }
+      console.warn("Club foreground could not be prepared", err);
+    });
   }
   function loadedSceneImg(file) {
     var im = sceneImg(file);
@@ -1173,9 +1198,9 @@
     layer.classList.add("paged");
     // action hotspots for this page (each may carry a pre-made choice)
     page.hotspots.forEach(function (h) { layer.appendChild(makePaintBtn(h)); });
-    if (cfg.work) layer.appendChild(makePaintBtn(cfg.work));
+    if (page.work || cfg.work) layer.appendChild(makePaintBtn(page.work || cfg.work));
     // tab buttons baked across the top — switch tabs (view-only, always allowed)
-    (cfg.tabBar || []).forEach(function (t, i) {
+    (page.tabBar || cfg.tabBar || []).forEach(function (t, i) {
       var idx = cfg.tabs.map(function (x) { return x.id; }).indexOf(t.tab);
       var b = navButton(t.box, "tab", function () { switchTab(idx); });
       if (idx === UI.sceneTab) b.classList.add("active");
