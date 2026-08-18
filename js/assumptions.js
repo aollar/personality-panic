@@ -105,7 +105,7 @@ var PP_ASSUMPTIONS = {
       req: [{ kind: "housedLux" }, { kind: "hasPet" }, { kind: "petFoodAvailable" }],
       fx: [{ kind: "feedPet" }],
       note: "Prevents the pet warning/death spiral." },
-    { id: "X003", building: "anywhere", name: "Switch to Luxury Suite", category: "Housing",
+    { id: "X003", building: "luxury", name: "Switch to Luxury Suite", category: "Housing",
       tu: 1, costPct: 0.75, gains: [{ stat: "happiness", pct: 0.05 }], petGains: [], penalties: [],
       req: [{ kind: "notHomeless" }, { kind: "notLux" }],
       fx: [{ kind: "moveIn", tier: "lux" }, { kind: "payRent", tier: "lux" }],

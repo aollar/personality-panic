@@ -67,8 +67,8 @@ Airport Lounge Flex; the painted arrows switch pages without leaving the scene.
   courses stay greyed out and only the next course is selectable.
 - Buying groceries satisfies the current turn's meal and stores only the
   remaining weeks for later Eat at Home actions.
-- The HUD's GO LUXURY action is usable from Low-Cost Housing and moves the
-  player immediately into Heelton Heights after payment.
+- Players travel to Heelton Heights and use the Resident Experience Desk's
+  Pay Rent button to lease the suite; successful payment moves them in immediately.
 
 ## Where the numbers live
 

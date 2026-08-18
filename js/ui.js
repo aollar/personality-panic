@@ -536,9 +536,6 @@
     if (rentDueNow)
       flags.push('<button class="flag-chip bad" id="hud-rent">\ud83c\udfe0 PAY RENT $' +
         Math.round((p.housing === "lux" ? 0.5 : 0.2) * T) + "</button>");
-    // switch to luxury while housed at low-cost (X003) \u2014 surfaced so it's findable
-    if (!p.homeless && p.housing === "low" && isMyTurn())
-      flags.push('<button class="flag-chip" id="hud-golux">\ud83c\udfd9 GO LUXURY $' + Math.round(0.75 * T) + "</button>");
     if (!p.ate) flags.push('<span class="flag-chip bad">\ud83c\udf54 eat!</span>');
     if (p.turnsSinceRelax >= 2) flags.push('<span class="flag-chip bad">\ud83d\ude35 stressed</span>');
     if (p.homeless && isMyTurn()) {
@@ -568,8 +565,6 @@
       if (rh) rh.onclick = function () { click(); doAction("X005"); };
       var rhl = $("#hud-rehouse-lux");
       if (rhl) rhl.onclick = function () { click(); doAction("X009"); };
-      var glx = $("#hud-golux");
-      if (glx) glx.onclick = function () { click(); doAction("X003"); }; // switch low -> luxury
     }
     $("#hud-end").style.display = isMyTurn() ? "" : "none";
     $("#skip-cpu").style.display = (p.isBot && UI.mode !== "guest") ? "" : "none";
@@ -897,7 +892,10 @@
       var ids = {};
       var cfg = PAGES[id];
       cfg.tabs.forEach(function (t) { t.pages.forEach(function (pg) {
-        pg.hotspots.forEach(function (h) { ids[h.a] = 1; });
+        pg.hotspots.forEach(function (h) {
+          ids[h.a] = 1;
+          if (h.aByHousing) Object.keys(h.aByHousing).forEach(function (k) { ids[h.aByHousing[k]] = 1; });
+        });
       }); });
       if (cfg.work) ids[cfg.work.a] = 1;
       return Object.keys(ids);
@@ -1194,20 +1192,23 @@
   function makePaintBtn(h) {
     var btn = document.createElement("button");
     btn.className = "paint-btn";
-    btn.dataset.a = h.a;
+    var resident = !activeP().homeless && activeP().housing === "lux";
+    var actionId = h.aByHousing ? h.aByHousing[resident ? "resident" : "visitor"] : h.a;
+    var activeH = actionId === h.a ? h : Object.assign({}, h, { a: actionId });
+    btn.dataset.a = actionId;
     if (h.choice) btn._choice = h.choice;
     btn.style.left = h.box[0] + "%";
     btn.style.top = h.box[1] + "%";
     btn.style.width = h.box[2] + "%";
     btn.style.height = h.box[3] + "%";
     btn.innerHTML = '<span class="tu-chip"></span><span class="lock-chip" style="display:none">🔒</span>';
-    btn.onmouseenter = function () { showTip(btn, h); previewActionClock(h.a); };
+    btn.onmouseenter = function () { showTip(btn, activeH); previewActionClock(actionId); };
     btn.onmouseleave = function () { hideTip(); clockClear(); };
     btn.onclick = function () {
       if (!isMyTurn()) { toast("Not your turn"); return; }
       click();
       hideTip();
-      doAction(h.a, btn._choice);
+      doAction(actionId, btn._choice);
     };
     return btn;
   }

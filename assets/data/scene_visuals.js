@@ -73,6 +73,9 @@
     }
   ];
   PAGES.luxury.tabs[1].pages[0].img = V3 + "heelton/rent_office.png";
+  PAGES.luxury.tabs[1].pages[0].hotspots = [
+    { a: "X007", aByHousing: { resident: "X007", visitor: "X003" }, box: [75.5, 89.0, 21.7, 7.0] }
+  ];
 
   // University now exposes the supplied PAGE 1 / PAGE 2 art and actions.
   PAGES.university = {

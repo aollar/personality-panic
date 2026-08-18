@@ -31,9 +31,11 @@ function rich(p) { p.stats.money = 1000; p.tu = 999; }
   assert.ok(E.perform(st, "A028").ok); assert.strictEqual(p.ate, true); assert.strictEqual(p.foodSupply, 3);
 }
 
-// The HUD-triggered luxury lease is available away from Heelton and moves the player in.
+// The luxury lease is available only after traveling to Heelton and moves the player in.
 {
   const st = game(), p = st.players[0]; rich(p); p.location = "lowCost";
+  assert.ok(!E.actionsAt(st, p).some(a => a.id === "X003"));
+  p.location = "luxury";
   assert.ok(E.actionsAt(st, p).some(a => a.id === "X003" && a.ok));
   const r = E.perform(st, "X003"); assert.ok(r.ok);
   assert.strictEqual(p.housing, "lux"); assert.strictEqual(p.location, "luxury");
