@@ -86,6 +86,24 @@ var SHOTS = path.join(__dirname, "shots");
     throw new Error("Sequential course state failed: " + JSON.stringify(courseState.slice(0, 3)));
   await page.evaluate(function () { document.querySelector("#dlg-shop").classList.remove("show"); });
 
+  // Degree milestones remain visibly locked after earning them, in order.
+  var degreeState = await page.evaluate(function () {
+    var p = window.PPUI.state.players[0]; p.degreeProgress = 10; p.tu = 999; p.stats.money = 1000;
+    ["A070", "A071", "A072"].forEach(function (id) {
+      document.querySelector("#paint-layer .paint-btn[data-a='" + id + "']").click();
+    });
+    return {
+      degrees: p.degrees.slice(),
+      buttons: ["A070", "A071", "A072"].map(function (id) {
+        var b = document.querySelector("#paint-layer .paint-btn[data-a='" + id + "']");
+        return { id: id, locked: b.classList.contains("locked"), chip: b.querySelector(".lock-chip").textContent };
+      })
+    };
+  });
+  if (degreeState.degrees.join(",") !== "Undergrad,Masters,PhD" ||
+      degreeState.buttons.some(function (b) { return !b.locked || b.chip !== "🔒"; }))
+    throw new Error("One-time degree UI failed: " + JSON.stringify(degreeState));
+
   // Static Club menu must be the top parent layer over the animated video.
   await page.evaluate(function () {
     var UI = window.PPUI, p = UI.state.players[0]; document.querySelector("#btn-leave-scene").click();
@@ -109,5 +127,5 @@ var SHOTS = path.join(__dirname, "shots");
 
   await browser.close();
   if (errors.length) throw new Error("Page errors: " + errors.join(" | "));
-  console.log("KENDRICK UI PASS", JSON.stringify({ owned: owned, airportIds: airportIds, stack: stack }));
+  console.log("KENDRICK UI PASS", JSON.stringify({ owned: owned, airportIds: airportIds, degrees: degreeState, stack: stack }));
 })().catch(function (e) { console.error("KENDRICK UI FAIL", e.message); process.exit(1); });

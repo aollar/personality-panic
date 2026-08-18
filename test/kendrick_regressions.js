@@ -57,6 +57,31 @@ function rich(p) { p.stats.money = 1000; p.tu = 999; }
   assert.strictEqual(done.ok, false); assert.match(done.why, /All courses completed/);
 }
 
+// Degrees are sequential, permanent, and each milestone pays out only once.
+{
+  const st = game(), p = st.players[0]; rich(p); p.location = "university";
+  p.degreeProgress = 10;
+  let masters = E.actionsAt(st, p).find(a => a.id === "A071");
+  assert.strictEqual(masters.ok, false); assert.match(masters.why, /Undergrad first/);
+
+  p.degreeProgress = 3; rich(p);
+  assert.ok(E.perform(st, "A070").ok); assert.deepStrictEqual(p.degrees, ["Undergrad"]);
+  const undergradStats = { money: p.stats.money, critical: p.stats.critical, career: p.stats.career, tu: p.tu };
+  let repeat = E.perform(st, "A070");
+  assert.strictEqual(repeat.ok, false); assert.match(repeat.why, /already completed/i);
+  assert.deepStrictEqual({ money: p.stats.money, critical: p.stats.critical, career: p.stats.career, tu: p.tu }, undergradStats);
+
+  p.degreeProgress = 6; rich(p);
+  assert.ok(E.perform(st, "A071").ok); assert.deepStrictEqual(p.degrees, ["Undergrad", "Masters"]);
+  repeat = E.perform(st, "A071");
+  assert.strictEqual(repeat.ok, false); assert.match(repeat.why, /already completed/i);
+
+  p.degreeProgress = 10; rich(p);
+  assert.ok(E.perform(st, "A072").ok); assert.deepStrictEqual(p.degrees, ["Undergrad", "Masters", "PhD"]);
+  repeat = E.perform(st, "A072");
+  assert.strictEqual(repeat.ok, false); assert.match(repeat.why, /already completed/i);
+}
+
 // Jobs: direct applications are entry-level only; two shifts unlock one pay step.
 {
   const st = game(), p = st.players[0]; rich(p); p.location = "soulExchange";

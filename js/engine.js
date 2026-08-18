@@ -275,6 +275,9 @@
   function money(p) { return p.stats.money; }
 
   // ---------- Requirements ----------
+  function hasDegree(p, degree) {
+    return Array.isArray(p.degrees) && p.degrees.indexOf(degree) !== -1;
+  }
   function checkReq(state, p, req, action) {
     for (var i = 0; i < req.length; i++) {
       var r = req[i];
@@ -307,7 +310,7 @@
         case "statGte":
           if ((p.stats[r.stat] || 0) < r.pctT * state.T)
             return "Need " + statName(r.stat) + " " + Math.round(r.pctT * state.T) + "+"; break;
-        case "degree": if (p.degrees.indexOf(r.degree) === -1) return "Need " + r.degree + " first"; break;
+        case "degree": if (!hasDegree(p, r.degree)) return "Need " + r.degree + " first"; break;
         case "degreeProgress":
           if (p.degreeProgress < r.n) return "Study more first (" + p.degreeProgress + "/" + r.n + " progress)"; break;
         case "myCamp": if (!p.flags.myCamp) return "Buy My Camp first"; break;
@@ -427,6 +430,11 @@
       cost = Math.round(a.costPct * state.T * p.rentMod);
     var tu = tuCost(a);
     var why = checkReq(state, p, a.req, a);
+    // Degree milestones are permanent, one-time rewards. Their prerequisite
+    // chain already enforces Undergrad -> Masters -> PhD; this prevents a
+    // completed milestone from charging/granting its rewards again.
+    var degreeFx = a.fx.filter(function (f) { return f.kind === "grantDegree"; })[0];
+    if (!why && degreeFx && hasDegree(p, degreeFx.degree)) why = "Degree already completed";
     if (!why && a.id === "A067" && ASSUME.courses && ASSUME.courses.length &&
         Array.isArray(p.completedCourses) && p.completedCourses.length >= ASSUME.courses.length)
       why = "All courses completed";
@@ -552,7 +560,8 @@
           break;
         }
         case "grantDegree":
-          if (p.degrees.indexOf(f.degree) === -1) {
+          if (!Array.isArray(p.degrees)) p.degrees = [];
+          if (!hasDegree(p, f.degree)) {
             p.degrees.push(f.degree);
             log(state, p, "🎓 Earned " + (f.degree === "Undergrad" ? "an Undergrad degree" : f.degree === "Masters" ? "a Master's" : "a PhD") + "!", "good");
           }
