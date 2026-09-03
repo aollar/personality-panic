@@ -51,6 +51,17 @@ var SHOTS = path.join(__dirname, "shots");
   });
   if (!food.ate || food.supply !== 3 || /eat!/i.test(food.flags)) throw new Error("Grocery HUD failed: " + JSON.stringify(food));
 
+  // The next player turn consumes one stored week automatically: no hidden
+  // Eat at Home click and no contradictory EAT warning.
+  var nextTurnFood = await page.evaluate(function () {
+    var E = window.PPEngine, UI = window.PPUI; UI.state.weekendOff = true;
+    E.endTurn(UI.state); UI.renderAll();
+    var p = UI.state.players[0], flags = document.querySelector("#hud-flags");
+    return { turn: UI.state.turn, ate: p.ate, supply: p.foodSupply, flags: flags.textContent };
+  });
+  if (!nextTurnFood.ate || nextTurnFood.supply !== 2 || /eat!/i.test(nextTurnFood.flags))
+    throw new Error("Automatic stored meal failed: " + JSON.stringify(nextTurnFood));
+
   // Leasing is intentionally located at Heelton, not Low-Cost/HUD.
   await page.evaluate(function () {
     var UI = window.PPUI, p = UI.state.players[0]; document.querySelector("#btn-leave-scene").click();
@@ -69,5 +80,5 @@ var SHOTS = path.join(__dirname, "shots");
 
   await browser.close();
   if (errors.length) throw new Error("Page errors: " + errors.join(" | "));
-  console.log("AIR ONE UI PASS", JSON.stringify({ ids: ids, food: food, lease: lease }));
+  console.log("AIR ONE UI PASS", JSON.stringify({ ids: ids, food: food, nextTurnFood: nextTurnFood, lease: lease }));
 })().catch(function (e) { console.error("AIR ONE UI FAIL", e.message); process.exit(1); });

@@ -90,12 +90,12 @@ var PP_ASSUMPTIONS = {
   extraActions: [
     { id: "X001", building: "lowCost", name: "Eat at Home", category: "Food",
       tu: 1, costPct: 0, gains: [], petGains: [], penalties: [],
-      req: [{ kind: "notHomeless" }, { kind: "foodSupply" }],
+      req: [{ kind: "notHomeless" }, { kind: "foodSupply" }, { kind: "notAte" }],
       fx: [{ kind: "eat" }, { kind: "consumeSupply" }],
       note: "Eats 1 week of groceries. Premium supply also gives +Health." },
     { id: "X002", building: "luxury", name: "Eat at Home", category: "Food",
       tu: 1, costPct: 0, gains: [], petGains: [], penalties: [],
-      req: [{ kind: "housedLux" }, { kind: "foodSupply" }],
+      req: [{ kind: "housedLux" }, { kind: "foodSupply" }, { kind: "notAte" }],
       fx: [{ kind: "eat" }, { kind: "consumeSupply" }],
       note: "Eats 1 week of groceries. Premium supply also gives +Health." },
     // the sheet only lets LOW-COST tenants feed their pet at home — luxury

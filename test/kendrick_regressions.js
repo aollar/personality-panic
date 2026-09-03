@@ -31,6 +31,35 @@ function rich(p) { p.stats.money = 1000; p.tu = 999; }
   assert.ok(E.perform(st, "A028").ok); assert.strictEqual(p.ate, true); assert.strictEqual(p.foodSupply, 3);
 }
 
+// Four-week groceries cover the purchase turn plus the next three turns
+// automatically; hunger returns only after all four covered turns have passed.
+{
+  const st = E.newGame({ T: 100, timerSeconds: 0, maxRounds: 30, seed: 118,
+    weekendCards: false, players: [{ name: "Food Tester", code: "ENFP", isBot: false }] });
+  const p = st.players[0]; rich(p); p.items.push("Fridge"); p.location = "airOne";
+  assert.ok(E.perform(st, "A028").ok);
+  assert.deepStrictEqual([p.ate, p.foodSupply], [true, 3], "purchase turn is meal 1 of 4");
+  for (let remaining = 2; remaining >= 0; remaining--) {
+    E.endTurn(st);
+    assert.strictEqual(p.ate, true, `stored meal should feed turn ${st.turn}`);
+    assert.strictEqual(p.foodSupply, remaining, `turn ${st.turn} pantry count`);
+    assert.ok(!p.weekend.some(card => card.id === "S01"), `no hunger card on covered turn ${st.turn}`);
+  }
+  E.endTurn(st);
+  assert.strictEqual(p.ate, false, "turn 5 is the first uncovered turn");
+  assert.strictEqual(p.foodSupply, 0);
+  E.endTurn(st);
+  assert.ok(p.weekend.some(card => card.id === "S01"), "skipping food on the first uncovered turn restores hunger");
+}
+
+// Older resumed saves without a pantry counter must not produce NaN.
+{
+  const st = game(), p = st.players[0]; rich(p); p.items.push("Fridge"); p.location = "airOne";
+  delete p.foodSupply; delete p.premiumSupply;
+  assert.ok(E.perform(st, "A028").ok);
+  assert.strictEqual(p.foodSupply, 3); assert.strictEqual(p.premiumSupply, false);
+}
+
 // The luxury lease is available only after traveling to Heelton and moves the player in.
 {
   const st = game(), p = st.players[0]; rich(p); p.location = "lowCost";

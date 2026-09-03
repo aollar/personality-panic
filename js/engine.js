@@ -291,7 +291,8 @@
         case "notLux": if (p.housing === "lux" && !p.homeless) return "Already living in luxury"; break;
         case "rentDue": if (!isRentTurn(state)) return "Rent isn't due"; break;
         case "rentUnpaid": if (p.rentPaid) return "Rent already paid"; break;
-        case "foodSupply": if (p.foodSupply < 1) return "No groceries at home"; break;
+        case "foodSupply": if (!Number.isFinite(p.foodSupply) || p.foodSupply < 1) return "No groceries at home"; break;
+        case "notAte": if (p.ate) return "Already ate this turn"; break;
         case "ownsItem": if (p.items.indexOf(r.item) === -1) return "Need " + r.item; break;
         case "hasPet": if (!p.pet || p.pet.dead) return "Need a pet"; break;
         case "noPet": if (p.pet && !p.pet.dead) return "You already have a pet"; break;
@@ -519,17 +520,22 @@
       switch (f.kind) {
         case "eat": p.ate = true; result.sfx.push("eat"); break;
         case "consumeSupply":
-          p.foodSupply -= 1;
+          if (!Number.isFinite(p.foodSupply)) p.foodSupply = 0;
+          if (typeof p.premiumSupply !== "boolean") p.premiumSupply = false;
+          p.foodSupply = Math.max(0, p.foodSupply - 1);
           if (p.premiumSupply) { var d = gainStat(state, p, "health", 0.02); if (d) summary.push("+" + d + " Health"); }
           if (p.foodSupply <= 0) { p.foodSupply = 0; p.premiumSupply = false; }
           break;
         case "relax": p.turnsSinceRelax = 0; break;
         case "foodSupply":
           // The purchase supplies and consumes this week's meal immediately;
-          // only the remaining weeks stay in the pantry for Eat at Home.
+          // remaining weeks auto-feed at the start of later player turns.
+          if (!Number.isFinite(p.foodSupply)) p.foodSupply = 0;
+          if (typeof p.premiumSupply !== "boolean") p.premiumSupply = false;
           p.foodSupply += Math.max(0, f.weeks - 1);
           if (f.premium && f.weeks > 1) p.premiumSupply = true;
           p.ate = true;
+          summary.push(f.weeks > 1 ? "this turn fed; " + p.foodSupply + " stored week" + (p.foodSupply === 1 ? "" : "s") : "this turn fed");
           break;
         case "petFood": p.petFoodLeft += f.feedings; break;
         case "feedPet":
@@ -858,6 +864,8 @@
     if (p.job && p.jobStartedTurn == null) p.jobStartedTurn = state.turn;
     if (p.jobShifts == null) p.jobShifts = 0;
     if (!Array.isArray(p.completedCourses)) p.completedCourses = [];
+    if (!Number.isFinite(p.foodSupply)) p.foodSupply = 0;
+    if (typeof p.premiumSupply !== "boolean") p.premiumSupply = false;
     p.tu = DATA.settings.timeUnitsPerTurn;
     p.location = homeOf(p);   // every turn starts at home (Austin 2026-07-09)
     p.warnings = [];
@@ -889,6 +897,18 @@
         var ev = drawEventCard(state, p);
         if (ev) p.weekend.push(ev);
       }
+    }
+    // Stored groceries cover this player turn automatically. A four-week
+    // purchase feeds its purchase turn immediately, then consumes the three
+    // stored meals here on the next three turns. Weekend event E11 resolves
+    // first and can intentionally spoil the pantry before this meal.
+    if (p.foodSupply > 0) {
+      p.foodSupply -= 1;
+      p.ate = true;
+      if (p.premiumSupply) gainStat(state, p, "health", 0.02);
+      var pantry = p.foodSupply > 0 ? p.foodSupply + " stored week" + (p.foodSupply === 1 ? "" : "s") + " remain" : "pantry now empty";
+      log(state, p, "🥕 Ate stored groceries automatically (" + pantry + ").", "good");
+      if (p.foodSupply <= 0) { p.foodSupply = 0; p.premiumSupply = false; }
     }
     if (isRentTurn(state) && !p.homeless) p.warnings.push("RENT IS DUE this turn!");
     if (p.homeless) p.warnings.push("You're homeless — recover at the Park / rent a room");
