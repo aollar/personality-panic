@@ -19,17 +19,23 @@
   if (params.get("embed") === "1") {
     document.body.classList.add("embedded-menu");
   }
+  if (params.get("static") === "1") {
+    document.body.classList.add("static-art");
+    const staticMenuArt = new Image();
+    staticMenuArt.onload = () => document.body.classList.add("static-ready");
+    staticMenuArt.src = "../scenes/v3/bdc_menu.png";
+  }
   if (params.get("cardGlow") === "overlay") {
     document.body.classList.add("card-glow-overlay");
   }
 
   // per-card hover preview copy (placeholder consequence flavour)
   const PREVIEW = {
-    dance:    "Bust a move. It's free. It's foolish.",
-    flirt:    "Batting eyelashes at $15 a blink.",
-    digits:   "Slide into a stranger's phone. What could go wrong?",
-    shots:    "Liquid courage — $25 a round.",
-    vip:      "The rope is velvet. Your wallet is lighter.",
+    dance:    "Bust a move for $5. It's foolish.",
+    flirt:    "Batting eyelashes at $3 a blink.",
+    digits:   "Get digits for $2. What could go wrong?",
+    shots:    "Liquid courage — $8 a round.",
+    vip:      "The velvet rope costs $16.",
     stranger: "Bold. Reckless. Iconic.",
   };
 

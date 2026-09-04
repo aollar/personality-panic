@@ -74,7 +74,10 @@
     var cuePath = null;
     if (kind === "action" && r && r.ok && !r.needsChoice && window.PP_SFX_MAP) {
       cuePath = PP_SFX_MAP.actions[payload.id] || null;
-      if ((payload.id === "A006" || payload.id === "A107") && activeP().pet && PP_SFX_MAP.pets[activeP().pet.code])
+      if (payload.id === "A007" || payload.id === "X008")
+        cuePath = "cues/EthicalPetShop_FeedAnimals_Eating_01.mp3";
+      else if ((payload.id === "A006" || payload.id === "A107") &&
+          activeP().pet && PP_SFX_MAP.pets[activeP().pet.code])
         cuePath = PP_SFX_MAP.pets[activeP().pet.code];
     }
     if (cuePath) A.cue(cuePath);
@@ -310,7 +313,12 @@
     renderAll();
     A.setScene("overmap", E.isRentTurn(UI.state));
     if (!resumed) turnIntro();
-    else { toast("Game resumed — turn " + UI.state.turn, "good"); startTimer(); maybeRunBot(); }
+    else {
+      // A resumed save continues the already-started player turn. Without this
+      // gate reset, map hotspots silently ignore clicks until End Turn.
+      UI.turnBegun = true;
+      toast("Game resumed — turn " + UI.state.turn, "good"); startTimer(); maybeRunBot();
+    }
     // warm all scene backdrops in the background so entering a building is instant
     setTimeout(preloadAllScenes, 1200);
   }
@@ -533,9 +541,6 @@
     if (rentDueNow)
       flags.push('<button class="flag-chip bad" id="hud-rent">\ud83c\udfe0 PAY RENT $' +
         Math.round((p.housing === "lux" ? 0.5 : 0.2) * T) + "</button>");
-    // switch to luxury while housed at low-cost (X003) \u2014 surfaced so it's findable
-    if (!p.homeless && p.housing === "low" && isMyTurn())
-      flags.push('<button class="flag-chip" id="hud-golux">\ud83c\udfd9 GO LUXURY $' + Math.round(0.75 * T) + "</button>");
     if (!p.ate) flags.push('<span class="flag-chip bad">\ud83c\udf54 eat!</span>');
     if (p.turnsSinceRelax >= 2) flags.push('<span class="flag-chip bad">\ud83d\ude35 stressed</span>');
     if (p.homeless && isMyTurn()) {
@@ -553,8 +558,13 @@
     }
     if (p.holdings && p.holdings.length)
       flags.push('<span class="flag-chip">\ud83d\udcc8 ' + p.holdings.join(" \u00b7 ") + "</span>");
-    if (p.foodSupply > 0) flags.push('<span class="flag-chip">\ud83e\udd55 \u00d7' + p.foodSupply + "</span>");
-    if (p.job) flags.push('<span class="flag-chip">\ud83d\udcbc ' + p.job.name + "</span>");
+    if (p.ate && p.foodSupply > 0)
+      flags.push('<span class="flag-chip">\ud83e\udd55 FED \u00b7 ' + p.foodSupply + " LEFT</span>");
+    else if (p.autoAteStored)
+      flags.push('<span class="flag-chip">\ud83e\udd55 FED \u00b7 PANTRY EMPTY</span>');
+    else if (p.foodSupply > 0)
+      flags.push('<span class="flag-chip">\ud83e\udd55 ' + p.foodSupply + " STORED</span>");
+    if (p.job) flags.push('<span class="flag-chip">\ud83d\udcbc ' + p.job.name + " \u00b7 " + Math.min(2, p.jobShifts || 0) + "/2 shifts</span>");
     var fl = $("#hud-flags");
     if (fl._last !== flags.join("")) {   // only touch the DOM when content changed
       fl._last = flags.join("");
@@ -565,8 +575,6 @@
       if (rh) rh.onclick = function () { click(); doAction("X005"); };
       var rhl = $("#hud-rehouse-lux");
       if (rhl) rhl.onclick = function () { click(); doAction("X009"); };
-      var glx = $("#hud-golux");
-      if (glx) glx.onclick = function () { click(); doAction("X003"); }; // switch low -> luxury
     }
     $("#hud-end").style.display = isMyTurn() ? "" : "none";
     $("#skip-cpu").style.display = (p.isBot && UI.mode !== "guest") ? "" : "none";
@@ -739,6 +747,10 @@
     E17: "📞", E18: "📷", E19: "⭐", E20: "❤️", E21: "🌡️", E22: "🏋️", E23: "👁️", E24: "🌙",
     E25: "🏠", E26: "％", E27: "🐶", E28: "🛋️", E29: "🔊", E30: "🥗"
   };
+  var WKND_ART = {};
+  if (DATA.weekend && DATA.weekend.cards) DATA.weekend.cards.forEach(function (card) {
+    WKND_ART[card.id] = "assets/cards/weekend/" + card.id + ".webp";
+  });
   var DECK_LABEL = { last: "LUCK DECK · you're in last", mid: "STEADY DECK", first: "KARMA DECK · you're in 1st" };
   function weekendCardHtml(c) {
     var tone = c.type === "status" ? (c.id === "S05" ? "grim" : "warn")
@@ -758,9 +770,13 @@
     var stamp = tone === "good" ? '<span class="wk-stamp up">NICE!</span>'
       : tone === "bad" ? '<span class="wk-stamp down">OOF.</span>'
       : c.id === "S05" ? '<span class="wk-stamp rip">R.I.P.</span>' : "";
+    var art = WKND_ART[c.id]
+      ? '<div class="wk-art"><img src="' + WKND_ART[c.id] + '" width="960" height="720" alt="' +
+        c.name + ' event artwork" decoding="async"></div>'
+      : '<div class="wk-icon">' + (WKND_ICON[c.id] || "🗞️") + "</div>";
     return '<div class="wknd-card ' + tone + '">' + burst + stamp +
       '<div class="wk-name">' + c.name + "</div>" +
-      '<div class="wk-icon">' + (WKND_ICON[c.id] || "🗞️") + "</div>" +
+      art +
       '<div class="wk-eff">' + body +
       (c.flavor ? '<div class="wk-flavor">' + c.flavor + "</div>" : "") + "</div>" +
       (c.deck ? '<div class="wk-deck">' + DECK_LABEL[c.deck] + "</div>" : "") +
@@ -886,6 +902,7 @@
   var PAINT = window.PP_HOTSPOTS || {};
   var PAGES = window.PP_SCENE_PAGES || {};
   var BDC_MAP = window.PP_BDC_MAP || {};
+  var VISUALS = window.PP_SCENE_VISUALS || { homes: {} };
 
   function paintedActionIds(id) {
     if (id === "club") return Object.keys(BDC_MAP).map(function (k) { return BDC_MAP[k]; });
@@ -893,7 +910,10 @@
       var ids = {};
       var cfg = PAGES[id];
       cfg.tabs.forEach(function (t) { t.pages.forEach(function (pg) {
-        pg.hotspots.forEach(function (h) { ids[h.a] = 1; });
+        pg.hotspots.forEach(function (h) {
+          ids[h.a] = 1;
+          if (h.aByHousing) Object.keys(h.aByHousing).forEach(function (k) { ids[h.aByHousing[k]] = 1; });
+        });
       }); });
       if (cfg.work) ids[cfg.work.a] = 1;
       return Object.keys(ids);
@@ -916,20 +936,24 @@
       tomb.textContent = "🪦 RIP " + tp.tombstones.join(" · ");
       sv.appendChild(tomb);
     }
-    var bd = $("#scene-backdrop"), vid = $("#scene-video"), frame = $("#bdc-frame");
+    var bd = $("#scene-backdrop"), vid = $("#scene-video"), frame = $("#bdc-frame"), robot = $("#bdc-robot");
     var paged = !!PAGES[id];
     var painted = paged || !!PAINT[id];
     if (b.video) {
+      clearSceneOverlays();
       bd.style.display = "none";
       vid.style.display = "";
       if (!vid.src || vid.src.indexOf(b.video) === -1) vid.src = "assets/video/" + b.video;
       vid.play().catch(function () {});
       frame.style.display = "";
-      if (!frame.src) frame.src = "assets/bdc-menu/index.html?embed=1";
+      robot.style.display = "";
+      if (!frame.src) frame.src = "assets/bdc-menu/index.html?embed=1&static=1";
     } else {
       vid.pause(); vid.style.display = "none";
       frame.style.display = "none";
+      robot.style.display = "none";
       bd.style.display = "";
+      if (!paged) clearSceneOverlays();
       if (!paged && b.scene) setBackdrop(b.scene, true);   // blank-then-decode: no old-location flash
     }
     $("#scene-title").textContent = b.name;
@@ -948,10 +972,144 @@
 
   // ---- scene backdrop image cache + decode-gated swap ----
   var _sceneImgs = {};                         // filename -> Image (kept alive = cached+decoded)
+  var _matteImgs = {};                         // filename -> Promise<Canvas>
   function sceneImg(file) {
     var im = _sceneImgs[file];
     if (!im) { im = new Image(); im.src = "assets/scenes/" + file; _sceneImgs[file] = im; }
     return im;
+  }
+  function clearSceneOverlays() {
+    var c = $("#scene-overlays");
+    if (c) c.getContext("2d").clearRect(0, 0, c.width, c.height);
+    UI._overlayKey = null;
+    UI._overlaySeq = (UI._overlaySeq || 0) + 1;
+  }
+  // The supplied furniture and pet exports are opaque RGB on white. Remove
+  // only white pixels connected to the canvas edge, so cream upholstery,
+  // white sheets and highlights inside the objects are never erased.
+  function matteSceneImg(file, compareFile) {
+    var cacheKey = file + "|" + (compareFile || "");
+    if (_matteImgs[cacheKey]) return _matteImgs[cacheKey];
+    _matteImgs[cacheKey] = new Promise(function (resolve, reject) {
+      var im = sceneImg(file), compare = compareFile ? sceneImg(compareFile) : null;
+      function build() {
+        try {
+          var c = document.createElement("canvas"), w = im.naturalWidth, h = im.naturalHeight;
+          c.width = w; c.height = h;
+          var cx = c.getContext("2d", { willReadFrequently: true });
+          cx.drawImage(im, 0, 0);
+          var image = cx.getImageData(0, 0, w, h), d = image.data, total = w * h, base = null;
+          if (compare) {
+            var bc = document.createElement("canvas"); bc.width = w; bc.height = h;
+            var bx = bc.getContext("2d", { willReadFrequently: true }); bx.drawImage(compare, 0, 0, w, h);
+            base = bx.getImageData(0, 0, w, h).data;
+          }
+          var seen = new Uint8Array(total), queue = new Uint32Array(total), head = 0, tail = 0;
+          function white(p) { var i = p * 4; return d[i] >= 250 && d[i + 1] >= 250 && d[i + 2] >= 250; }
+          function add(p) { if (!seen[p] && white(p)) { seen[p] = 1; queue[tail++] = p; } }
+          var x, y, p;
+          for (x = 0; x < w; x++) { add(x); add((h - 1) * w + x); }
+          for (y = 1; y < h - 1; y++) { add(y * w); add(y * w + w - 1); }
+          while (head < tail) {
+            p = queue[head++]; x = p % w; y = (p / w) | 0;
+            if (x) add(p - 1); if (x + 1 < w) add(p + 1);
+            if (y) add(p - w); if (y + 1 < h) add(p + w);
+          }
+          for (p = 0; p < total; p++) {
+            var i = p * 4;
+            if (seen[p]) { d[i + 3] = 0; continue; }
+            // Some source cutouts include small rectangular fragments of the
+            // unchanged room. Remove pixels that match the ghosted base.
+            if (base) {
+              var delta = Math.max(Math.abs(d[i] - base[i]), Math.abs(d[i + 1] - base[i + 1]), Math.abs(d[i + 2] - base[i + 2]));
+              if (delta <= 12) { d[i + 3] = 0; continue; }
+              if (delta < 28) d[i + 3] = Math.min(d[i + 3], Math.round((delta - 12) * 16));
+            }
+            // One-pixel anti-aliased fringe cleanup next to removed white.
+            var nearEdge = (p % w && seen[p - 1]) || (p % w + 1 < w && seen[p + 1]) ||
+              (p >= w && seen[p - w]) || (p + w < total && seen[p + w]);
+            var mn = Math.min(d[i], d[i + 1], d[i + 2]);
+            if (nearEdge && mn >= 235) d[i + 3] = Math.max(0, Math.min(255, (255 - mn) * 13));
+          }
+          cx.putImageData(image, 0, 0); resolve(c);
+        } catch (err) { reject(err); }
+      }
+      function ready() {
+        if (im.complete && im.naturalWidth && (!compare || (compare.complete && compare.naturalWidth))) build();
+      }
+      if (im.complete && im.naturalWidth && (!compare || (compare.complete && compare.naturalWidth))) build();
+      else {
+        im.addEventListener("load", ready, { once: true });
+        im.addEventListener("error", reject, { once: true });
+        if (compare) {
+          compare.addEventListener("load", ready, { once: true });
+          compare.addEventListener("error", reject, { once: true });
+        }
+      }
+    });
+    return _matteImgs[cacheKey];
+  }
+  function loadedSceneImg(file) {
+    var im = sceneImg(file);
+    if (im.complete && im.naturalWidth) return Promise.resolve(im);
+    return new Promise(function (resolve, reject) {
+      im.addEventListener("load", function () { resolve(im); }, { once: true });
+      im.addEventListener("error", reject, { once: true });
+    });
+  }
+  function homeIsComplete(home, p) {
+    return !!(home && home.complete && home.complete.groups.every(function (group) {
+      return group.some(function (name) { return p.items.indexOf(name) !== -1; });
+    }));
+  }
+  function renderHomeOverlays(page) {
+    var canvas = $("#scene-overlays"), keyName = page && page.homeLayer;
+    if (!canvas || !keyName || !VISUALS.homes || !VISUALS.homes[keyName]) {
+      if (canvas) canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+      UI._overlayKey = null;
+      return;
+    }
+    var p = activeP(), home = VISUALS.homes[keyName];
+    var correctHome = keyName === "lowCost" ? (!p.homeless && p.housing === "low") : (!p.homeless && p.housing === "lux");
+    if (!correctHome) { clearSceneOverlays(); return; }
+    var stateKey = UI.inScene + "|" + UI.sceneTab + "|" + UI.scenePage + "|" +
+      p.items.slice().sort().join(",") + "|" + (p.pet && !p.pet.dead ? p.pet.code : "");
+    if (UI._overlayKey === stateKey) return;
+    UI._overlayKey = stateKey;
+    var ops = [];
+    var complete = homeIsComplete(home, p);
+    if (complete) {
+      if (!home.completeBackdrop) ops.push({ file: home.sourceRoot + home.complete.src, clips: null });
+    } else {
+      (home.layers || []).forEach(function (layer) {
+        var owned = (layer.any || []).some(function (name) { return p.items.indexOf(name) !== -1; });
+        if (owned) ops.push({ file: home.sourceRoot + layer.src, clips: layer.clips || null, polygons: layer.polygons || null });
+      });
+    }
+    if (p.pet && !p.pet.dead && home.pets && home.pets[p.pet.code]) {
+      ops.push({ file: home.sourceRoot + home.pets[p.pet.code], clips: null });
+    }
+    var seq = (UI._overlaySeq = (UI._overlaySeq || 0) + 1);
+    Promise.all(ops.map(function (op) { return home.alpha ? loadedSceneImg(op.file) : matteSceneImg(op.file, home.base); })).then(function (sources) {
+      if (UI._overlaySeq !== seq || UI._overlayKey !== stateKey) return;
+      var cx = canvas.getContext("2d"); cx.clearRect(0, 0, canvas.width, canvas.height);
+      ops.forEach(function (op, i) {
+        if (op.polygons) {
+          cx.save(); cx.beginPath();
+          op.polygons.forEach(function (poly) {
+            poly.forEach(function (pt, pi) { if (!pi) cx.moveTo(pt[0], pt[1]); else cx.lineTo(pt[0], pt[1]); });
+            cx.closePath();
+          });
+          cx.clip(); cx.drawImage(sources[i], 0, 0); cx.restore(); return;
+        }
+        if (!op.clips) { cx.drawImage(sources[i], 0, 0); return; }
+        op.clips.forEach(function (r) { cx.drawImage(sources[i], r[0], r[1], r[2], r[3], r[0], r[1], r[2], r[3]); });
+      });
+    }).catch(function (err) {
+      canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+      UI._overlayKey = null;
+      console.warn("Apartment overlay could not be prepared", err);
+    });
   }
   // Set the scene backdrop, but only once the target image is DECODED, so we never
   // show a half-loaded frame mid-transition. `opening` = entering a NEW scene:
@@ -975,17 +1133,21 @@
   function preloadAllScenes() {
     Object.keys(DATA.buildings).forEach(function (id) { var b = DATA.buildings[id]; if (b.scene) sceneImg(b.scene); });
     Object.keys(PAGES).forEach(function (id) { preloadScenePages(id); });
+    var clubFrame = $("#bdc-frame");
+    if (clubFrame && !clubFrame.src) clubFrame.src = "assets/bdc-menu/index.html?embed=1&static=1";
   }
   function pagedCfg() { return PAGES[UI.inScene] || null; }
   function switchTab(tabIndex) {
     var cfg = pagedCfg(); if (!cfg || !cfg.tabs[tabIndex]) return;
     UI.sceneTab = tabIndex; UI.scenePage = 0;
+    if (isMyTurn()) window.PPNet && window.PPNet.sendView(UI.inScene, UI.sceneTab, UI.scenePage);
     click(); renderScenePage(); renderSceneUI();
   }
   function switchPage(delta) {
     var cfg = pagedCfg(); if (!cfg) return;
     var pages = cfg.tabs[UI.sceneTab].pages;
     UI.scenePage = (UI.scenePage + delta + pages.length) % pages.length;
+    if (isMyTurn()) window.PPNet && window.PPNet.sendView(UI.inScene, UI.sceneTab, UI.scenePage);
     click(); renderScenePage(); renderSceneUI();
   }
   // Your pet appears in the home you're renting. Only 4 pets have scene art;
@@ -1007,7 +1169,10 @@
     var tab = cfg.tabs[UI.sceneTab] || cfg.tabs[0];
     var page = tab.pages[UI.scenePage] || tab.pages[0];
     buildPagedLayer(cfg, tab, page);
-    setBackdrop(homeSceneImg(page.img), opening);
+    var pageImg = homeSceneImg(page.img), home = page.homeLayer && VISUALS.homes && VISUALS.homes[page.homeLayer];
+    if (home && home.completeBackdrop && homeIsComplete(home, activeP())) pageImg = home.completeBackdrop;
+    setBackdrop(pageImg, opening);
+    renderHomeOverlays(page);
   }
   function buildPagedLayer(cfg, tab, page) {
     var layer = $("#paint-layer");
@@ -1015,9 +1180,9 @@
     layer.classList.add("paged");
     // action hotspots for this page (each may carry a pre-made choice)
     page.hotspots.forEach(function (h) { layer.appendChild(makePaintBtn(h)); });
-    if (cfg.work) layer.appendChild(makePaintBtn(cfg.work));
+    if (page.work || cfg.work) layer.appendChild(makePaintBtn(page.work || cfg.work));
     // tab buttons baked across the top — switch tabs (view-only, always allowed)
-    (cfg.tabBar || []).forEach(function (t, i) {
+    (page.tabBar || cfg.tabBar || []).forEach(function (t, i) {
       var idx = cfg.tabs.map(function (x) { return x.id; }).indexOf(t.tab);
       var b = navButton(t.box, "tab", function () { switchTab(idx); });
       if (idx === UI.sceneTab) b.classList.add("active");
@@ -1028,8 +1193,11 @@
     // override the building-level arrow boxes.
     var arr = page.arrows || cfg.arrows;
     if (arr && tab.pages.length > 1) {
-      layer.appendChild(navButton(arr.prev, "arrow prev", function () { switchPage(-1); }));
-      layer.appendChild(navButton(arr.next, "arrow next", function () { switchPage(1); }));
+      var prev = navButton(arr.prev, "arrow prev", function () { switchPage(-1); });
+      var next = navButton(arr.next, "arrow next", function () { switchPage(1); });
+      if (page.visiblePrevArrow) prev.classList.add("room-arrow");
+      if (page.visibleNextArrow) next.classList.add("room-arrow");
+      layer.appendChild(prev); layer.appendChild(next);
     }
   }
   function navButton(box, cls, onClick) {
@@ -1037,32 +1205,38 @@
     b.className = "nav-btn " + cls;
     b.style.left = box[0] + "%"; b.style.top = box[1] + "%";
     b.style.width = box[2] + "%"; b.style.height = box[3] + "%";
+    if (!box[2] || !box[3]) b.style.display = "none";
     b.onclick = function (e) { e.stopPropagation(); onClick(); };
     return b;
   }
   function makePaintBtn(h) {
     var btn = document.createElement("button");
     btn.className = "paint-btn";
-    btn.dataset.a = h.a;
+    var p = activeP();
+    var housingKey = p.homeless ? "homeless" : p.housing;
+    var actionId = h.aByHousing ? (h.aByHousing[housingKey] || h.a) : h.a;
+    var activeH = actionId === h.a ? h : Object.assign({}, h, { a: actionId });
+    btn.dataset.a = actionId;
     if (h.choice) btn._choice = h.choice;
     btn.style.left = h.box[0] + "%";
     btn.style.top = h.box[1] + "%";
     btn.style.width = h.box[2] + "%";
     btn.style.height = h.box[3] + "%";
     btn.innerHTML = '<span class="tu-chip"></span><span class="lock-chip" style="display:none">🔒</span>';
-    btn.onmouseenter = function () { showTip(btn, h); previewActionClock(h.a); };
+    btn.onmouseenter = function () { showTip(btn, activeH); previewActionClock(actionId); };
     btn.onmouseleave = function () { hideTip(); clockClear(); };
     btn.onclick = function () {
       if (!isMyTurn()) { toast("Not your turn"); return; }
       click();
       hideTip();
-      doAction(h.a, btn._choice);
+      doAction(actionId, btn._choice);
     };
     return btn;
   }
   function closeScene(spectate) {
     if (!spectate && isMyTurn()) window.PPNet && window.PPNet.sendView(null);
     UI.inScene = null;
+    clearSceneOverlays();
     $("#scene-video").pause();
     $("#scene-view").classList.remove("show");
     hideTip();
@@ -1163,6 +1337,11 @@
   function renderSceneUI() {
     var st = UI.state, p = activeP();
     var here = p.location === UI.inScene;
+    var homeCfg = pagedCfg();
+    if (homeCfg && homeCfg.tabs[UI.sceneTab]) {
+      var homePage = homeCfg.tabs[UI.sceneTab].pages[UI.scenePage] || homeCfg.tabs[UI.sceneTab].pages[0];
+      if (homePage) renderHomeOverlays(homePage);
+    }
     // lock states on painted buttons
     $$("#paint-layer .paint-btn").forEach(function (btn) {
       var ann = here ? annFor(btn.dataset.a) : null;
@@ -1187,7 +1366,11 @@
     var extra = here ? extraActions() : [];
     var okCount = extra.filter(function (x) { return x.ok; }).length;
     $("#btn-more").textContent = "✚ More (" + okCount + ")";
-    $("#btn-more").style.display = extra.length ? "" : "none";
+    // Do not leave a misleading More (0) button in every completed painted
+    // menu merely because global recovery actions exist but are locked. The
+    // drawer returns automatically whenever at least one unpainted action is
+    // actually usable (including re-housing after eviction).
+    $("#btn-more").style.display = okCount ? "" : "none";
     // Live player card covering the baked mockup. The center clock already
     // owns TU/time, so this card stays focused on money and player metrics.
     var mains = ["connection", "health", "career", "happiness"];
@@ -1248,7 +1431,12 @@
   function extraActions() {
     var st = UI.state, p = activeP();
     var painted = paintedActionIds(UI.inScene);
-    return E.actionsAt(st, p).filter(function (x) { return painted.indexOf(x.id) === -1; });
+    return E.actionsAt(st, p).filter(function (x) {
+      if (painted.indexOf(x.id) !== -1) return false;
+      // Housing recovery, switching and rent payment belong at the two housing
+      // offices. They should never create or clutter a generic More drawer.
+      return x.action.category !== "Housing" && x.action.category !== "Rent";
+    });
   }
   function actionItemsHtml(actions, mine) {
     return actions.map(function (x, i) {
@@ -1294,7 +1482,7 @@
     if (!isMyTurn()) { bdcSay("Not your turn!"); return; }
     var ann = annFor(aid);
     if (!ann) return;
-    if (!ann.ok) { bdcSay("🔒 " + ann.why); return; }
+    if (!ann.ok) { toast("🔒 " + ann.why, "bad"); return; }
     doAction(aid);
     var last = UI.state.log[UI.state.log.length - 1];
     if (last && UI.mode !== "guest") bdcSay(last.text.slice(0, 90));
@@ -1326,15 +1514,24 @@
     if (r.needsChoice === "sell") { openSellChoice(id, r.assets); return; }
     if (id === "A018") A.footsteps(1800);          // Take a Walk: audible footsteps
     afterDispatch("action", { id: id }, r);
+    if (UI.inScene && activeP().location !== UI.inScene) closeScene(true);
     var last = UI.state.log[UI.state.log.length - 1];
     if (last && last.who === activeP().name) toast(last.text, last.cls);
   }
 
   // remote/CPU player entered or left a building: mirror it on this screen
-  UI.spectateScene = function (id) {
+  UI.spectateScene = function (id, tabIndex, pageIndex) {
     if (isMyTurn() && UI.mode !== "local") return;   // never override my own play
+    if (id && !DATA.buildings[id]) return;
     if (id && UI.inScene !== id) openScene(id, true);
     else if (!id && UI.inScene) closeScene(true);
+    if (id && PAGES[id] && tabIndex != null && pageIndex != null) {
+      var cfg = PAGES[id], tab = cfg.tabs[tabIndex];
+      if (tab && tab.pages[pageIndex]) {
+        UI.sceneTab = tabIndex; UI.scenePage = pageIndex;
+        renderScenePage(); renderSceneUI();
+      }
+    }
   };
 
   // ---------------- dialogs ----------------
@@ -1392,6 +1589,10 @@
   function openCourses(actionId) {
     var st = UI.state, p = activeP();
     var courses = (window.PP_ASSUMPTIONS && window.PP_ASSUMPTIONS.courses) || [];
+    var completed = Array.isArray(p.completedCourses) ? p.completedCourses : [];
+    var nextCourseIndex = courses.map(function (c) { return c.name; }).findIndex(function (name) {
+      return completed.indexOf(name) === -1;
+    });
     var ann = annFor(actionId);
     // where the degree track stands: next milestone at 3 / 6 / 10 classes
     var next = p.degrees.indexOf("Undergrad") === -1 ? ["Undergrad", 3]
@@ -1404,10 +1605,13 @@
       (next ? " · " + next[0] + " unlocks at " + next[1] : " · every degree earned 🎓") +
       (ann ? " · each class: " + ann.tu + " TU · $" + ann.cost : "") + "</div>" +
       courses.map(function (c, i) {
-        return '<button class="shop-item" data-i="' + i + '">' +
+        var done = completed.indexOf(c.name) !== -1;
+        var available = !done && i === nextCourseIndex;
+        var status = done ? "✓ Completed" : available ? c.blurb : "🔒 Complete the previous course first";
+        return '<button class="shop-item ' + (done ? "owned" : "") + '" data-i="' + i + '" ' + (available ? "" : "disabled") + '>' +
           '<div class="s-name">' + c.name + "</div>" +
           '<div class="s-fx">+1 class · +' + Math.round(c.pct * st.T) + " " + E.statName(c.stat) + "</div>" +
-          '<div class="s-cost">' + c.blurb + "</div></button>";
+          '<div class="s-cost">' + status + "</div></button>";
       }).join("");
     openDialog("shop");
     $$("#shop-grid .shop-item").forEach(function (b) {

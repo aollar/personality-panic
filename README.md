@@ -33,6 +33,43 @@ NOTE: some prices painted into the art (e.g. Air One's $40 groceries) predate
 the Balance Lock sheet. The tooltips and the engine always use the sheet's
 numbers — trust the tooltip, enjoy the art.
 
+## V3 scene visuals and apartment progression
+
+`assets/data/scene_visuals.js` applies the new scene art without editing the
+generated Balance Lock data. Game Map and Ethical Pet Shop intentionally keep
+their existing visuals. High IQ University now has two painted pages, and
+Heelton Heights has two rooms: the added arrow in the bedroom switches to the
+lounge, while the lounge's painted arrow switches back.
+
+Low-Cost Housing and Heelton begin with ghosted furniture. The aligned RGBA
+overlays in `assets/scenes/v3/low-cost/` and `assets/scenes/v3/heelton/` are
+drawn when the active player owns the corresponding item or supported pet.
+The wall/floor fragments attached to those overlays are intentional occlusion
+patches that cover the ghost silhouettes. The current art supports four pets
+(ESFJ dog, ENFJ lion, ENFP otter, ESFP piggy) and the subset of programmed
+furniture/appliances listed in the manifest; unmatched items remain a later
+art pass.
+
+Bad Decisions Club keeps its animated scene video, but its right-side menu is
+temporarily static. The iframe uses the new menu art while retaining the live
+action buttons and engine bridge.
+
+Airport now has two painted pages. Page 2 contains Buy Travel Insurance and
+Airport Lounge Flex; the painted arrows switch pages without leaving the scene.
+
+## Playtest progression rules
+
+- Jobs require at least one completed shift each player-week after the hiring
+  or promotion grace week; missing the full week fires the player.
+- Career ladders are sequential. Players apply only to entry roles, complete
+  two shifts, then use Ask for Promotion to advance exactly one pay rung.
+- The current six university courses are sequential and one-time. Completed
+  courses stay greyed out and only the next course is selectable.
+- Buying groceries satisfies the current turn's meal and stores only the
+  remaining weeks for later Eat at Home actions.
+- Players travel to Heelton Heights and use the Resident Experience Desk's
+  Pay Rent button to lease the suite; successful payment moves them in immediately.
+
 ## Where the numbers live
 
 | File | What it is |
@@ -75,3 +112,11 @@ node test/multiplayer.js          # host+join over the real PeerJS broker
 - Newspaper turn-start screen: skipped for MVP by decision (player card shows instead).
 - Characters are not composited into scene art (Casey appears as the mascot everywhere).
 - Turn timer runs on each client; the host also enforces it.
+- Painted menu prices are authored for Short games (T=100); medium/long games
+  still rely on live engine values/tooltips when the baked number differs.
+- Apartment overlays exist only for the supplied item/pet subset; missing
+  ownership visuals remain ghosted until additional aligned art is authored.
+- The delivered sound pack has no bus movement cue. Bus Pass movement still
+  uses the walking fallback until a bus file is supplied.
+- Cram All Night, Debate Professor, and University Work do not yet have unique
+  school cues in the delivered pack. Other supplied university actions are mapped.

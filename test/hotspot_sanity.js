@@ -26,6 +26,7 @@ var PORT = process.env.PORT || "8126";
     UI.cfg = { hints: true, skipCpu: true, players: UI.state.players };
     UI.mode = "local"; UI.mySlots = [0];
     UI.startGameUI(false);
+    UI.turnBegun = true; // bypass the Weekend Update desk; this test targets scene geometry
     document.querySelectorAll(".dialog-veil").forEach(function (d) { d.classList.remove("show"); });
   });
 

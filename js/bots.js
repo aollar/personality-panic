@@ -206,6 +206,28 @@
       var hang = findHere(function (x) { return x.id === "A006" && x.ok; });
       if (hang) return { type: "perform", id: hang.id };
     }
+    // 4d) employment is a weekly obligation; promote one rung after two shifts,
+    // otherwise complete this week's shift before optional progression errands.
+    if (p.job) {
+      var promotion = E.bestPromotion(state, p);
+      if (promotion) {
+        if (p.location !== "soulExchange") {
+          if (E.moveCost(state, p, "soulExchange").tu + Math.round(E.TU_SCALE) <= p.tu)
+            return { type: "move", to: "soulExchange" };
+        } else {
+          var promote = findHere(function (x) { return x.id === "A084" && x.ok; });
+          if (promote) return { type: "perform", id: promote.id };
+        }
+      }
+      if (!p.workedThisTurn) {
+        if (p.location === p.job.building) {
+          var weeklyWork = findHere(function (x) { return x.name === "Work" && x.ok; });
+          if (weeklyWork) return { type: "perform", id: weeklyWork.id };
+        } else if (E.moveCost(state, p, p.job.building).tu + Math.round(2 * E.TU_SCALE) <= p.tu) {
+          return { type: "move", to: p.job.building };
+        }
+      }
+    }
     // 4b) education: Critical Thinking gates all good jobs; degrees are milestones
     var reserve = Math.round(0.12 * T);
     var degreeMilestone = findHere(function (x) {

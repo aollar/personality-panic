@@ -64,6 +64,38 @@ body.embedded-menu .settings-panel {
   -webkit-user-select: none;
 }
 
+/* V3 temporary treatment: the supplied menu is a full 1672x941 export with
+   white to its left. Display only its rightmost 489px inside this 489x941
+   iframe, completely covering the old menu baked into the animated video. */
+body.static-art .menu-stage {
+  background: url("../scenes/v3/bdc_menu.png") right top / auto 100% no-repeat;
+}
+body.static-art .menu-stage::before,
+body.static-art .menu-stage::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 2.45%;
+  background: #030407; z-index: 12; pointer-events: none;
+}
+body.static-art .menu-stage::before { left: 0; }
+body.static-art .menu-stage::after { right: 0; }
+body.static-art .card-art,
+body.static-art .work-art,
+body.static-art .icon-idle { visibility: hidden; animation: none !important; }
+body.static-art .decision-card,
+body.static-art .decision-card:hover,
+body.static-art .decision-card:focus-visible,
+body.static-art .decision-card.selected,
+body.static-art .decision-card.pressed,
+body.static-art .work-button,
+body.static-art .work-button:hover,
+body.static-art .work-button:focus-visible,
+body.static-art .work-button.pressed,
+body.static-art .work-button.spring { transform: none; transition: none; animation: none; }
+body.static-art .result-scanline,
+body.static-art .result-sweep { display: none; }
+/* The supplied static menu already communicates each action visually. Keep
+   hover/click copy from sitting over the WORK artwork. */
+body.static-art .result-box { display: none; }
+
 /* Every positioned art layer uses the same --l/--t/--w vars (set inline). */
 .decision-card,
 .work-button,
@@ -79,6 +111,8 @@ body.embedded-menu .settings-panel {
   background: transparent;
   cursor: pointer;
 }
+.decision-card,
+.work-button { z-index: 20; }
 
 .card-art,
 .work-art,

@@ -23,8 +23,8 @@ var SHOTS = path.join(__dirname, "shots", "audit");
     ]});
     UI.cfg = { hints: true, skipCpu: true, players: UI.state.players };
     UI.mode = "local"; UI.mySlots = [0];
-    UI.startGameUI(false);
-    document.querySelector("#btn-begin-turn") && document.querySelector("#dlg-turncard").classList.remove("show");
+    UI.startGameUI(true);
+    UI.turnBegun = true; // resumed-turn path bypasses the splash/Weekend desk
     // force outlines visible for the audit
     var css = document.createElement("style");
     css.textContent = ".paint-btn{border-color:rgba(0,255,120,.9)!important;box-shadow:inset 0 0 0 2px rgba(0,255,120,.5)!important}" +
@@ -43,7 +43,11 @@ var SHOTS = path.join(__dirname, "shots", "audit");
       // reuse internal openScene via hotspot click
       document.querySelector(".hotspot[data-id='" + id + "']").click();
     }, b);
-    await new Promise(function (r) { setTimeout(r, 600); });
+    await page.waitForFunction(function () {
+      var b = document.querySelector("#scene-backdrop"), v = document.querySelector("#scene-video");
+      return (v && v.style.display !== "none") || (b && b.style.backgroundImage && b.style.backgroundImage !== "none");
+    }, { timeout: 10000 });
+    await new Promise(function (r) { setTimeout(r, 250); });
     await page.screenshot({ path: path.join(SHOTS, "audit-" + b + ".png") });
     await page.evaluate(function () { document.querySelector("#btn-leave-scene").click(); });
     await new Promise(function (r) { setTimeout(r, 250); });
