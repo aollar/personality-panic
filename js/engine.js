@@ -181,7 +181,7 @@
       location: "lowCost", housing: "low", homeless: false,
       tu: DATA.settings.timeUnitsPerTurn, tuPenaltyNext: 0,
       ate: false, turnsSinceRelax: 0, sleptThisTurn: false,
-      foodSupply: 0, premiumSupply: false, petFoodLeft: 0,
+      foodSupply: 0, premiumSupply: false, autoAteStored: false, petFoodLeft: 0,
       items: [], pet: null, petDied: false, tombstones: [],
       job: null, jobStartedTurn: null, jobShifts: 0, lastPromotionTurn: null, workedThisTurn: false,
       degrees: [], degreeProgress: 0, completedCourses: [],
@@ -866,6 +866,7 @@
     if (!Array.isArray(p.completedCourses)) p.completedCourses = [];
     if (!Number.isFinite(p.foodSupply)) p.foodSupply = 0;
     if (typeof p.premiumSupply !== "boolean") p.premiumSupply = false;
+    p.autoAteStored = false;
     p.tu = DATA.settings.timeUnitsPerTurn;
     p.location = homeOf(p);   // every turn starts at home (Austin 2026-07-09)
     p.warnings = [];
@@ -905,6 +906,7 @@
     if (p.foodSupply > 0) {
       p.foodSupply -= 1;
       p.ate = true;
+      p.autoAteStored = true;
       if (p.premiumSupply) gainStat(state, p, "health", 0.02);
       var pantry = p.foodSupply > 0 ? p.foodSupply + " stored week" + (p.foodSupply === 1 ? "" : "s") + " remain" : "pantry now empty";
       log(state, p, "🥕 Ate stored groceries automatically (" + pantry + ").", "good");

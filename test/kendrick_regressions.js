@@ -42,11 +42,13 @@ function rich(p) { p.stats.money = 1000; p.tu = 999; }
   for (let remaining = 2; remaining >= 0; remaining--) {
     E.endTurn(st);
     assert.strictEqual(p.ate, true, `stored meal should feed turn ${st.turn}`);
+    assert.strictEqual(p.autoAteStored, true, `turn ${st.turn} should identify its automatic stored meal`);
     assert.strictEqual(p.foodSupply, remaining, `turn ${st.turn} pantry count`);
     assert.ok(!p.weekend.some(card => card.id === "S01"), `no hunger card on covered turn ${st.turn}`);
   }
   E.endTurn(st);
   assert.strictEqual(p.ate, false, "turn 5 is the first uncovered turn");
+  assert.strictEqual(p.autoAteStored, false, "turn 5 must not look covered");
   assert.strictEqual(p.foodSupply, 0);
   E.endTurn(st);
   assert.ok(p.weekend.some(card => card.id === "S01"), "skipping food on the first uncovered turn restores hunger");

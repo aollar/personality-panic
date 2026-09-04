@@ -49,7 +49,8 @@ var SHOTS = path.join(__dirname, "shots");
     var p = window.PPUI.state.players[0], flags = document.querySelector("#hud-flags");
     return { ate: p.ate, supply: p.foodSupply, flags: flags.textContent, html: flags.innerHTML };
   });
-  if (!food.ate || food.supply !== 3 || /eat!/i.test(food.flags)) throw new Error("Grocery HUD failed: " + JSON.stringify(food));
+  if (!food.ate || food.supply !== 3 || /eat!/i.test(food.flags) || !/FED · 3 LEFT/i.test(food.flags))
+    throw new Error("Grocery HUD failed: " + JSON.stringify(food));
 
   // The next player turn consumes one stored week automatically: no hidden
   // Eat at Home click and no contradictory EAT warning.
@@ -59,8 +60,27 @@ var SHOTS = path.join(__dirname, "shots");
     var p = UI.state.players[0], flags = document.querySelector("#hud-flags");
     return { turn: UI.state.turn, ate: p.ate, supply: p.foodSupply, flags: flags.textContent };
   });
-  if (!nextTurnFood.ate || nextTurnFood.supply !== 2 || /eat!/i.test(nextTurnFood.flags))
+  if (!nextTurnFood.ate || nextTurnFood.supply !== 2 || /eat!/i.test(nextTurnFood.flags) || !/FED · 2 LEFT/i.test(nextTurnFood.flags))
     throw new Error("Automatic stored meal failed: " + JSON.stringify(nextTurnFood));
+
+  // Turn 4 is the final covered meal and also a rent/stress boundary in normal
+  // play. Make the last meal explicit; turn 5 must clearly return the EAT chip.
+  var boundaryFood = await page.evaluate(function () {
+    var E = window.PPEngine, UI = window.PPUI, snapshots = [];
+    E.endTurn(UI.state); UI.renderAll();
+    E.endTurn(UI.state); UI.renderAll();
+    snapshots.push({ turn: UI.state.turn, ate: UI.state.players[0].ate, supply: UI.state.players[0].foodSupply,
+      flags: document.querySelector("#hud-flags").textContent, rentDue: E.isRentTurn(UI.state) });
+    E.endTurn(UI.state); UI.renderAll();
+    snapshots.push({ turn: UI.state.turn, ate: UI.state.players[0].ate, supply: UI.state.players[0].foodSupply,
+      flags: document.querySelector("#hud-flags").textContent, rentDue: E.isRentTurn(UI.state) });
+    return snapshots;
+  });
+  if (boundaryFood[0].turn !== 4 || !boundaryFood[0].ate || boundaryFood[0].supply !== 0 ||
+      !boundaryFood[0].rentDue || !/FED · PANTRY EMPTY/i.test(boundaryFood[0].flags) || /eat!/i.test(boundaryFood[0].flags))
+    throw new Error("Fourth covered turn is unclear: " + JSON.stringify(boundaryFood[0]));
+  if (boundaryFood[1].turn !== 5 || boundaryFood[1].ate || boundaryFood[1].supply !== 0 || !/eat!/i.test(boundaryFood[1].flags))
+    throw new Error("Fifth turn should be uncovered: " + JSON.stringify(boundaryFood[1]));
 
   // Leasing is intentionally located at Heelton, not Low-Cost/HUD.
   await page.evaluate(function () {
@@ -80,5 +100,6 @@ var SHOTS = path.join(__dirname, "shots");
 
   await browser.close();
   if (errors.length) throw new Error("Page errors: " + errors.join(" | "));
-  console.log("AIR ONE UI PASS", JSON.stringify({ ids: ids, food: food, nextTurnFood: nextTurnFood, lease: lease }));
+  console.log("AIR ONE UI PASS", JSON.stringify({ ids: ids, food: food, nextTurnFood: nextTurnFood,
+    boundaryFood: boundaryFood, lease: lease }));
 })().catch(function (e) { console.error("AIR ONE UI FAIL", e.message); process.exit(1); });

@@ -558,7 +558,12 @@
     }
     if (p.holdings && p.holdings.length)
       flags.push('<span class="flag-chip">\ud83d\udcc8 ' + p.holdings.join(" \u00b7 ") + "</span>");
-    if (p.foodSupply > 0) flags.push('<span class="flag-chip">\ud83e\udd55 \u00d7' + p.foodSupply + "</span>");
+    if (p.ate && p.foodSupply > 0)
+      flags.push('<span class="flag-chip">\ud83e\udd55 FED \u00b7 ' + p.foodSupply + " LEFT</span>");
+    else if (p.autoAteStored)
+      flags.push('<span class="flag-chip">\ud83e\udd55 FED \u00b7 PANTRY EMPTY</span>');
+    else if (p.foodSupply > 0)
+      flags.push('<span class="flag-chip">\ud83e\udd55 ' + p.foodSupply + " STORED</span>");
     if (p.job) flags.push('<span class="flag-chip">\ud83d\udcbc ' + p.job.name + " \u00b7 " + Math.min(2, p.jobShifts || 0) + "/2 shifts</span>");
     var fl = $("#hud-flags");
     if (fl._last !== flags.join("")) {   // only touch the DOM when content changed
