@@ -79,6 +79,7 @@ console.log("3) investment holdings: buy once, weekly resolution, EV by standing
   a.location = "debtstreet"; a.stats.money = 60;
   var r = E.perform(s, "A088");
   ok(r.ok && a.holdings.indexOf("crypto") !== -1, "buy crypto = open position");
+  ok(a.stats.money === 60 - 25 && a.principal.crypto === 25, "principal 25%B moved into the holding, no free Money");
   ok(!/tanked/.test(JSON.stringify(r.summary)), "no instant gamble on portfolio buy");
   var r2 = E.perform(s, "A088");
   ok(!r2.ok && /Already holding/.test(r2.why), "second buy blocked");
@@ -91,9 +92,11 @@ console.log("3) investment holdings: buy once, weekly resolution, EV by standing
       // stack B's score so A lands where we want
       if (standing === "last") t.players[1].stats.happiness = 90;
       else { p.stats.happiness = 90; }  // A first
+      p.principal = { crypto: 25 };
       var before = p.stats.money;
       E.endTurn(t); E.endTurn(t);       // back to A; investments resolve
-      total += (p.stats.money - before);
+      // a RUG PULL destroys the holding: its principal is the loss
+      total += (p.stats.money - before) - (p.holdings.indexOf("crypto") === -1 ? 25 : 0);
     }
     return total / n;
   }
@@ -101,16 +104,16 @@ console.log("3) investment holdings: buy once, weekly resolution, EV by standing
   console.log("    crypto EV/week: last=" + evLast.toFixed(2) + " first=" + evFirst.toFixed(2));
   ok(evLast > 3, "last-place crypto EV strongly positive (rubber-band up)");
   ok(evFirst < -3, "first-place crypto EV strongly negative (pressure on the leader)");
-  // panic sell
+  // cash out (A119) returns 100% of principal
   var s2 = fresh(), a2 = s2.players[0];
   a2.location = "debtstreet"; a2.stats.money = 60;
   E.perform(s2, "A087");
   var cash = a2.stats.money;
-  var r3 = E.perform(s2, "X013");
-  ok(r3.ok && a2.holdings.length === 0, "panic sell empties the position");
-  ok(a2.stats.money === cash + Math.round(0.08 * 100 * 0.6), "sell refunds 60% of buy-in");
-  var r4 = E.perform(s2, "X013");
-  ok(!r4.ok, "nothing left to sell");
+  var r3 = E.perform(s2, "A119");
+  ok(r3.ok && a2.holdings.length === 0, "cash out empties the holding");
+  ok(a2.stats.money === cash + 20, "cash out refunds 100% of the 20%B principal");
+  var r4 = E.perform(s2, "A119");
+  ok(!r4.ok, "nothing left to cash out");
 })();
 
 console.log("4) safe assets pay flat regardless of standing");
@@ -121,7 +124,7 @@ console.log("4) safe assets pay flat regardless of standing");
   var before = a.stats.money;
   cycle(s);
   var gain = a.stats.money - before;
-  // 2 x 2.5%T = +5 net of any event-card money movement on A's own cards
+  // savings +1%B, bonds +2%B (plus any event-card money movement)
   var evMoney = a.weekend.filter(function (c) { return c.id[0] === "E"; })
     .reduce(function (t, c) { return t; }, 0);
   ok(a.weekend.filter(function (c) { return c.id === "I07" || c.id === "I08"; }).length === 2,
@@ -155,7 +158,8 @@ console.log("6) rent modifier events apply to the next rent bill only");
   // jump to a rent turn
   while (!E.isRentTurn(s)) { E.endTurn(s); E.endTurn(s); }
   var ann = E.actionsAt(s, a).filter(function (x) { return x.id === "X006"; })[0];
-  ok(ann && ann.cost === Math.round(0.20 * 100 * 1.25), "rent bill shows +25% (" + (ann && ann.cost) + ")");
+  a.stats.money = 1000;
+  ok(ann && ann.cost === Math.round(1.0 * 100 * 1.25), "rent bill shows +25% (" + (ann && ann.cost) + ")");
   var r = E.perform(s, "X006");
   ok(r.ok && a.rentMod === 1, "modifier consumed by payment");
   // rebate path
@@ -163,17 +167,27 @@ console.log("6) rent modifier events apply to the next rent bill only");
   b2.rentMod = 0.5; b2.stats.money = 100;
   while (!E.isRentTurn(s2)) { E.endTurn(s2); E.endTurn(s2); }
   var ann2 = E.actionsAt(s2, b2).filter(function (x) { return x.id === "X006"; })[0];
-  ok(ann2 && ann2.cost === Math.round(0.20 * 100 * 0.5), "rent rebate shows -50% (" + (ann2 && ann2.cost) + ")");
+  ok(ann2 && ann2.cost === Math.round(1.0 * 100 * 0.5), "rent rebate shows -50% (" + (ann2 && ann2.cost) + ")");
 })();
 
-console.log("7) weekend toggle off = classic behavior");
+console.log("7) weekend cards Off (debug) / Essential never change outcomes");
 (function () {
   var s = fresh({ weekendCards: false }), a = s.players[0];
   cycle(s);
-  ok(a.weekend.filter(function (c) { return c.id[0] === "E"; }).length === 0, "no event cards when off");
+  ok(a.weekend.length === 0, "no cards shown when off");
   a.location = "debtstreet"; a.stats.money = 60;
-  E.perform(s, "A088");
-  ok(a.holdings.length === 0, "buys stay instant gambles when off");
+  E.perform(s, "A086");
+  ok(a.holdings.indexOf("bonds") !== -1, "buys still open holdings when off");
+  var before = a.stats.money;
+  a.ate = true; a.turnsSinceRelax = 0;
+  cycle(s);
+  ok(a.stats.money - before >= 2 && a.weekend.length === 0, "bond coupon still paid silently (+" + (a.stats.money - before) + ")");
+  ok(s.log.some(function (l) { return /BOND COUPON/.test(l.text); }), "investment result written to the log");
+  var e = E.newGame({ T: 100, seed: 9, weekendMode: "essential", players: [{ name: "A", code: "ENFP" }, { name: "B", code: "INTJ" }] });
+  e.players[0].holdings = ["savings"]; e.players[0].principal = { savings: 10 };
+  for (var i = 0; i < 6; i++) { E.endTurn(e); E.endTurn(e); }
+  ok(e.players[0].weekend.some(function (c) { return c.id === "I08"; }) &&
+     !e.players[0].weekend.some(function (c) { return c.id[0] === "E"; }), "essential: investment cards, no life events");
 })();
 
 console.log("8) determinism: same seed, same stacks");

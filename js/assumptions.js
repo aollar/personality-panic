@@ -3,22 +3,25 @@
  * ==================================
  * Everything in this file is a number or rule the Manual/spreadsheet does NOT
  * define. These are Claude's balancing calls — every one is tunable here and
- * surfaced in the in-game Debug panel. All "pct" values are % of T.
+ * surfaced in the in-game Debug panel. All money/gain "pct" values are % of B
+ * (the economy base: Short 100, Medium 250, Long 350); stat THRESHOLDS
+ * (pctT, pet start/bands) stay % of the stat cap T.
  *
  * If a value here ever conflicts with the spreadsheet, the spreadsheet wins —
  * move the number there and delete it here.
  */
 var PP_ASSUMPTIONS = {
   // --- Economy ---
-  startingMoneyPct: 0.30,     // mirrors the Homeless Support Cheque (casual clothes + low rent)
+  startingMoneyPct: 2.0,      // $200 Short: mirrors the v5 Homeless Support Cheque (casual clothes + low rent + meals)
   startingItems: ["Casual Clothes"],  // TTTTT: start dressed; low-tier jobs open from turn 1
 
   // --- Bad Decisions Club door policy: it's a DRESS CODE now (Austin 2026-07-05) ---
   clubEntryItems: ["Dressy Clothes", "Dress Shoes"],
 
-  // --- Housing deposits (switching / recovering costs deposit + that cycle's rent) ---
-  lowDepositPct: 0.10,
-  luxDepositPct: 0.25,
+  // --- Housing deposits: moving in costs deposit + that cycle's rent. Rent comes
+  // from the sheet (A008 $100 / A017 $400 in v5); the deposit is this multiple
+  // of it, so X003/X004/X005/X009 = 1.5x rent. The engine syncs those prices. ---
+  depositRentMultiple: 0.5,
 
   // --- Upkeep penalties ---
   // v3 locked these in the sheet (Settings "UPKEEP TIME PENALTIES": hunger -4,
@@ -47,8 +50,25 @@ var PP_ASSUMPTIONS = {
     debateProfessorCriticalPct: 0.30
   },
 
-  // --- Degrees ("degree progress" actions: Take Class / Study Group / Cram) ---
-  degreeProgressNeeded: { Undergrad: 3, Masters: 6, PhD: 10 }, // cumulative study actions
+  // --- Job tier click gates (v5 Job_Progression) ---
+  // Balance Lock v5 leaves this as an OPEN DECISION. Option A (default here, as
+  // specified): absolute clicks in every mode. Option B scales the gates by
+  // mode: set { short: 0.4, medium: 0.7, long: 1 }.
+  jobClickScale: { short: 1, medium: 1, long: 1 },
+
+  // --- Home fixtures (v5 flat trigger bonuses) ---
+  // Which authored home actions count as each trigger. Bonuses only fire when
+  // the action is taken in the player's OWN home.
+  homeTriggers: {
+    sleep: ["A001", "A009"],               // Sleep in Bunk Bed / Sleep in Fancy Bed
+    relax: ["A002", "A010", "A011"],       // Relax in Your Room / Luxury Bath / Relax in Your Suite
+    workFromHome: ["A015"],
+    playPet: ["A006", "X014"],             // Hang With Pet (low cost) / Play With Pet (Heelton)
+    exercise: ["A004", "A012"]             // Exercise in Former Yard / Exercise in Condo Gym
+  },
+  // Flat points per the sheet. The manual flags B-scaling (x2.5 / x3.5) as the
+  // fallback if furniture feels irrelevant in Medium/Long games.
+  fixtureBonusScalesWithB: false,
 
   // --- Pets (decay + food quantity undefined in spec) ---
   petFoodFeedings: 4,         // one Buy Pet Food = 4 uses of "Feed Pet"
@@ -57,17 +77,6 @@ var PP_ASSUMPTIONS = {
   petToyPassivePct: 0.02,     // per turn passive Pet Happiness if toy owned
   petStateBands: { hungry: 0.6, sick: 0.4, critical: 0.2 }, // fractions of T
   petStartPct: 0.7,           // adopted pets start at 70% health/happiness
-
-  // --- Investments ("risk event possible" — odds undefined) ---
-  invest: {
-    low:    { win: 1.00, lossPct: 0.00 },   // bonds always pay the listed gain
-    medium: { win: 0.65, lossPct: 0.06 },   // stocks: else lose extra 6% T
-    high:   { win: 0.50, lossPct: 0.10 }    // crypto: else lose extra 10% T
-  },
-  tinyPrintBonus: 0.10,       // Read Tiny Print: +10pp win chance (persistent)
-
-  // --- Lifestyle Loan (sheet: +0.15T now, -0.2T "later") ---
-  loanDueNextRentCycle: true,
 
   // --- Suspicious Test Booster (temporary modifier undefined) ---
   booster: { turns: 2, gainBonus: 0.10, crashHealthPct: 0.04 },
@@ -106,25 +115,25 @@ var PP_ASSUMPTIONS = {
       fx: [{ kind: "feedPet" }],
       note: "Prevents the pet warning/death spiral." },
     { id: "X003", building: "luxury", name: "Switch to Luxury Suite", category: "Housing",
-      tu: 1, costPct: 0.75, gains: [{ stat: "happiness", pct: 0.05 }], petGains: [], penalties: [],
+      tu: 1, costPct: 6.0, gains: [{ stat: "happiness", pct: 0.05 }], petGains: [], penalties: [],
       req: [{ kind: "notHomeless" }, { kind: "notLux" }],
       fx: [{ kind: "moveIn", tier: "lux" }, { kind: "payRent", tier: "lux" }],
-      note: "Deposit $25 + first rent $50 (Short). Welcome to Heelton Heights." },
+      note: "Deposit + first month's rent. Welcome to Heelton Heights." },
     { id: "X004", building: "lowCost", name: "Switch to Low Cost Room", category: "Housing",
-      tu: 1, costPct: 0.30, gains: [], petGains: [], penalties: [{ stat: "happiness", pct: 0.03 }],
+      tu: 1, costPct: 1.5, gains: [], petGains: [], penalties: [{ stat: "happiness", pct: 0.03 }],
       req: [{ kind: "isLux" }],
       fx: [{ kind: "moveIn", tier: "low" }, { kind: "payRent", tier: "low" }],
-      note: "Deposit $10 + rent $20 (Short). Cheaper, humbler." },
+      note: "Deposit + rent. Cheaper, humbler. Luxury-only items go to storage." },
     { id: "X005", building: "anywhere", name: "Re-house: Low Cost Room", category: "Housing",
-      tu: 1, costPct: 0.30, gains: [], petGains: [], penalties: [],
+      tu: 1, costPct: 1.5, gains: [], petGains: [], penalties: [],
       req: [{ kind: "homeless" }],
       fx: [{ kind: "rehouse" }],
-      note: "Deposit $10 + rent $20 (Short). Back on your feet — usable anywhere." },
+      note: "Deposit + rent. Back on your feet — usable anywhere." },
     { id: "X009", building: "anywhere", name: "Re-house: Luxury Suite", category: "Housing",
-      tu: 1, costPct: 0.75, gains: [{ stat: "happiness", pct: 0.05 }], petGains: [], penalties: [],
+      tu: 1, costPct: 6.0, gains: [{ stat: "happiness", pct: 0.05 }], petGains: [], penalties: [],
       req: [{ kind: "homeless" }],
       fx: [{ kind: "rehouse" }, { kind: "moveIn", tier: "lux" }],
-      note: "Deposit $25 + rent $50 (Short). From park bench to penthouse." },
+      note: "Deposit + rent. From park bench to penthouse." },
     { id: "X010", building: "park", name: "Skate the Fountain Edge", category: "Coolness",
       tu: 1, costPct: 0, gains: [{ stat: "coolness", pct: 0.05 }], petGains: [],
       penalties: [{ stat: "health", pct: 0.015 }],
@@ -132,61 +141,48 @@ var PP_ASSUMPTIONS = {
       fx: [],
       note: "Free coolness. Occasional dignity loss." },
     { id: "X011", building: "regretBurger", name: "Order Off-Menu Like a Regular", category: "Coolness",
-      tu: 1, costPct: 0.03, gains: [{ stat: "coolness", pct: 0.04 }, { stat: "happiness", pct: 0.02 }],
+      // v5: Regret Burger menu repriced ~5x (Classic $15)
+      tu: 1, costPct: 0.15, gains: [{ stat: "coolness", pct: 0.04 }, { stat: "happiness", pct: 0.02 }],
       petGains: [], penalties: [],
       req: [],
       fx: [{ kind: "eat" }],
       note: "Fills hunger. The staff pretends to know you." },
     { id: "X012", building: "lowCost", name: "Thrift-Flip Your Outfit", category: "Coolness",
-      tu: 1, costPct: 0.02, gains: [{ stat: "coolness", pct: 0.04 }], petGains: [], penalties: [],
+      tu: 1, costPct: 0.10, gains: [{ stat: "coolness", pct: 0.04 }], petGains: [], penalties: [],
       req: [{ kind: "notHomeless" }],
       fx: [],
       note: "Scissors + confidence = fashion." },
     { id: "X006", building: "lowCost", name: "Pay Rent", category: "Rent",
-      tu: 0, costPct: 0.20, gains: [], petGains: [], penalties: [],
+      tu: 0, costPct: 1.0, gains: [], petGains: [], penalties: [],
       req: [{ kind: "rentDue" }, { kind: "isLow" }, { kind: "rentUnpaid" }],
       fx: [{ kind: "payRent", tier: "low" }],
       note: "Rent is due every 4 turns." },
     { id: "X007", building: "luxury", name: "Pay Luxury Rent", category: "Rent",
-      tu: 0, costPct: 0.50, gains: [], petGains: [], penalties: [],
+      tu: 0, costPct: 4.0, gains: [], petGains: [], penalties: [],
       req: [{ kind: "rentDue" }, { kind: "isLux" }, { kind: "rentUnpaid" }],
       fx: [{ kind: "payRent", tier: "lux" }],
       note: "Heelton Heights does not do grace periods." },
-    { id: "X013", building: "debtstreet", name: "Panic Sell", category: "Money",
-      tu: 1, costPct: 0, gains: [], petGains: [], penalties: [],
-      req: [{ kind: "hasHolding" }],
-      fx: [{ kind: "panicSell" }],
-      note: "Dump a position for 60% of what you paid. Dignity not included." }
+    // Heelton tenants had no home "play with pet" action, so the Pet Bed / Pet
+    // Toys trigger could never fire there. Mirror of A006 Hang With Pet:
+    { id: "X014", building: "luxury", name: "Play With Pet", category: "Pet",
+      tu: 1, costPct: 0, gains: [{ stat: "connection", pct: 0.025 }], petGains: [], penalties: [],
+      req: [{ kind: "housedLux" }, { kind: "hasPet" }],
+      fx: [],
+      note: "Pet Bed and Pet Toys add their bonuses here." }
   ],
   // Sheet rent rows replaced by synthetic ones above (A008 dual-purposed poorly):
   removedActions: ["A008", "A017"],
 
-  // University course catalog for "Take Class" (Austin 2026-07-09: show + choose
-  // courses). Names riff on the scene art (book spines / whiteboard). Every
-  // course = the sheet's A067 (same TU/cost, +1 degree progress) plus this
-  // INVENTED mini-bonus so the pick matters:
-  courses: [
-    { name: "Philosophy 101", stat: "enlightenment", pct: 0.02, blurb: "Think about thinking. Regret both." },
-    { name: "Quantum Confusion", stat: "critical", pct: 0.02, blurb: "The answer is yes, no, and maybe — simultaneously." },
-    { name: "Memory of Maybe", stat: "critical", pct: 0.02, blurb: "Remember things that almost happened." },
-    { name: "Intro to Panic", stat: "happiness", pct: 0.02, blurb: "Prerequisites: none. You're already enrolled." },
-    { name: "The Overthinking Equation", stat: "enlightenment", pct: 0.02, blurb: "1 + 1 = 11. Show your work." },
-    { name: "Group Project Survival", stat: "connection", pct: 0.02, blurb: "Carry the team. Emotionally." }
-  ],
+  // University courses now come from the v5 Education_Paths sheet (DATA.education).
   // Buy My Camp is once-per-game; the single purchase hits hard (Austin 2026-07-09):
   myCampBoost: { enlightenment: 0.10, happiness: 0.05 },
 
   // --- Weekend Update card system: glue the v3 Cards sheet doesn't specify ---
   weekend: {
     eventStartTurn: 2,        // no "weekend" happened before turn 1 — first event card on turn 2
-    sellRefundPct: 0.6,       // Panic Sell (X013): recover 60% of the asset's buy-in
-    tinyPrintShiftPp: 0.05,   // Read Tiny Print: 5pp moved from your worst outcome to your best
     // "Tech" vs "Appliance" split (Items sheet lumps them in one group):
     techItems: ["Computer", "Mobile Phone", "Camera", "TV", "Blu-ray", "E-reader", "Stereo", "Watch"],
-    applianceItems: ["Fridge", "Stove", "Vacuum", "Cold Plunge", "Hot Tub"],
-    // what each Debtstreet buy action holds, and what that position cost (%T):
-    assets: { A085: "savings", A086: "bonds", A087: "stocks", A088: "crypto" },
-    assetCostPct: { savings: 0, bonds: 0.05, stocks: 0.08, crypto: 0.12 }
+    applianceItems: ["Fridge", "Stove", "Vacuum", "Cold Plunge", "Hot Tub"]
   },
   // Pet display names — canonical: painted on the Adopt pages of the pet shop art
   petNames: {

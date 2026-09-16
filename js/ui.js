@@ -173,19 +173,25 @@
     if (setup.activeSlot >= total) setup.activeSlot = 0;
   }
   function lengthT() { return DATA.settings.gameLengths[setup.length]; }
+  // Full = status + investment + life events; Essential = no life events;
+  // Off = debug (cards hidden, penalties + investments still resolve)
+  function weekendSetting() {
+    if (typeof setup.weekend === "string") return setup.weekend;
+    return setup.weekend === false ? "off" : "full";
+  }
   function renderSetup() {
     var el = $("#setup-options");
     var timerLabel = setup.timer === 0 ? "Unlimited" : setup.timer + "s";
     var rows = [
       ["Humans", setup.humans, "humans", setup.mode === "single" ? null : [1, 4]],
       ["CPU Bots", setup.bots, "bots", [0, 3]],
-      ["Game Length", setup.length.toUpperCase() + " (T=" + lengthT() + ")", "length"],
+      ["Game Length", setup.length.toUpperCase() + " (T=" + lengthT() + " · B=" + DATA.settings.economyBase[setup.length] + ")", "length"],
       ["Turn Timer", timerLabel, "timer"],
       ["Time Units / turn", setup.tuPerTurn + " TU", "tuPerTurn"],
       ["Map", "Personality Panic City", "map"],
       ["Hints", setup.hints ? "On" : "Off", "hints"],
       ["Skip CPU Turns", setup.skipCpu ? "On" : "Off", "skipCpu"],
-      ["Weekend Cards", setup.weekend !== false ? "On" : "Off", "weekend"],
+      ["Weekend Cards", { full: "Full", essential: "Essential", off: "Off (debug)" }[weekendSetting()], "weekend"],
       ["Game ends after", setup.maxRounds === 0 ? "— (only stat max)" : setup.maxRounds + " turns", "maxRounds"]
     ];
     el.innerHTML = rows.map(function (r) {
@@ -275,7 +281,10 @@
     }
     if (k === "hints") setup.hints = !setup.hints;
     if (k === "skipCpu") setup.skipCpu = !setup.skipCpu;
-    if (k === "weekend") setup.weekend = !setup.weekend;
+    if (k === "weekend") {
+      var W = ["full", "essential", "off"];
+      setup.weekend = W[(W.indexOf(weekendSetting()) + d + W.length) % W.length];
+    }
     if (k === "maxRounds") {
       var opts = [0, 20, 25, 30, 35, 40, 50, 60, 80];
       var idx = opts.indexOf(setup.maxRounds); if (idx < 0) idx = 3;
@@ -288,7 +297,7 @@
     var players = setup.picks.map(function (p) { return { name: p.name, code: p.code, isBot: p.isBot }; });
     UI.cfg = { T: lengthT(), timerSeconds: setup.timer, maxRounds: setup.maxRounds,
                hints: setup.hints, skipCpu: setup.skipCpu, players: players,
-               weekendCards: setup.weekend !== false };
+               weekendMode: weekendSetting() };
     UI.state = E.newGame(UI.cfg);
     UI.mode = (setup.mode === "host") ? "host" : "local";
     UI.mySlots = players.map(function (p, i) { return p.isBot ? -1 : i; }).filter(function (i) { return i >= 0; });
@@ -540,12 +549,12 @@
     var flags = [];
     if (rentDueNow)
       flags.push('<button class="flag-chip bad" id="hud-rent">\ud83c\udfe0 PAY RENT $' +
-        Math.round((p.housing === "lux" ? 0.5 : 0.2) * T) + "</button>");
+        Math.round(E.ACTIONS[p.housing === "lux" ? "X007" : "X006"].costPct * E.econ(st) * (p.rentMod || 1)) + "</button>");
     if (!p.ate) flags.push('<span class="flag-chip bad">\ud83c\udf54 eat!</span>');
     if (p.turnsSinceRelax >= 2) flags.push('<span class="flag-chip bad">\ud83d\ude35 stressed</span>');
     if (p.homeless && isMyTurn()) {
-      flags.push('<button class="flag-chip bad" id="hud-rehouse">\ud83c\udfda RE-HOUSE $' + Math.round(0.30 * T) + "</button>");
-      flags.push('<button class="flag-chip" id="hud-rehouse-lux">\ud83c\udfd9 GO LUXURY $' + Math.round(0.75 * T) + "</button>");
+      flags.push('<button class="flag-chip bad" id="hud-rehouse">\ud83c\udfda RE-HOUSE $' + E.pctB(st, E.ACTIONS.X005.costPct) + "</button>");
+      flags.push('<button class="flag-chip" id="hud-rehouse-lux">\ud83c\udfd9 GO LUXURY $' + E.pctB(st, E.ACTIONS.X009.costPct) + "</button>");
     } else if (p.homeless) {
       flags.push('<span class="flag-chip bad">\ud83c\udfda homeless</span>');
     }
@@ -564,7 +573,11 @@
       flags.push('<span class="flag-chip">\ud83e\udd55 FED \u00b7 PANTRY EMPTY</span>');
     else if (p.foodSupply > 0)
       flags.push('<span class="flag-chip">\ud83e\udd55 ' + p.foodSupply + " STORED</span>");
-    if (p.job) flags.push('<span class="flag-chip">\ud83d\udcbc ' + p.job.name + " \u00b7 " + Math.min(2, p.jobShifts || 0) + "/2 shifts</span>");
+    if (p.job) {
+      var jt = p.job.progressTier || p.job.tier;
+      flags.push('<span class="flag-chip">\ud83d\udcbc ' + p.job.name + " \u00b7 " + jt + " clicks " +
+        ((p.workClicks && p.workClicks[jt]) || 0) + (p.workedThisTurn ? " \u00b7 \u2713 worked" : "") + "</span>");
+    }
     var fl = $("#hud-flags");
     if (fl._last !== flags.join("")) {   // only touch the DOM when content changed
       fl._last = flags.join("");
@@ -628,7 +641,10 @@
     UI.rentNoticeVisible = true;
     // fill in this player's actual rent amount
     var amtEl = rb.querySelector(".rb-amount");
-    if (amtEl) { var p = activeP(); amtEl.textContent = "$" + Math.round((p.housing === "lux" ? 0.5 : 0.2) * UI.state.T); }
+    if (amtEl) {
+      var p = activeP(), bill = E.ACTIONS[p.housing === "lux" ? "X007" : "X006"];
+      amtEl.textContent = "$" + Math.round(bill.costPct * E.econ(UI.state) * (p.rentMod || 1));
+    }
     rb.classList.remove("show", "out");
     void rb.offsetWidth;
     rb.classList.add("show");
@@ -741,26 +757,31 @@
   // ---------------- Weekend Update cards (v3) ----------------
   var WKND_ICON = {
     S01: "🍕", S02: "⚡", S03: "🐾", S04: "⚠️", S05: "💀",
-    I01: "🚀", I02: "📉", I03: "🔀", I04: "📈", I05: "〽️", I06: "💵", I07: "🛡️", I08: "🐖",
+    I01: "🚀", I02: "📉", I03: "🔀", I04: "📈", I05: "〽️", I06: "💵", I07: "🛡️", I08: "🐖", I09: "➖", I10: "💥",
     E01: "🎁", E02: "🧾", E03: "💵", E04: "🏛️", E05: "📻", E06: "🅿️", E07: "🚗", E08: "🚲",
     E09: "📱", E10: "🛡️", E11: "🧊", E12: "🎥", E13: "🕐", E14: "💬", E15: "💼", E16: "🚪",
     E17: "📞", E18: "📷", E19: "⭐", E20: "❤️", E21: "🌡️", E22: "🏋️", E23: "👁️", E24: "🌙",
     E25: "🏠", E26: "％", E27: "🐶", E28: "🛋️", E29: "🔊", E30: "🥗"
   };
   var WKND_ART = {};
+  // v4 SIDEWAYS MARKET / MARKET CRASH have no painted art yet: icon-only cards
+  var WKND_ART_PENDING = ["I09", "I10"];
   if (DATA.weekend && DATA.weekend.cards) DATA.weekend.cards.forEach(function (card) {
-    WKND_ART[card.id] = "assets/cards/weekend/" + card.id + ".webp";
+    if (WKND_ART_PENDING.indexOf(card.id) === -1) WKND_ART[card.id] = "assets/cards/weekend/" + card.id + ".webp";
   });
   var DECK_LABEL = { last: "LUCK DECK · you're in last", mid: "STEADY DECK", first: "KARMA DECK · you're in 1st" };
   function weekendCardHtml(c) {
     var tone = c.type === "status" ? (c.id === "S05" ? "grim" : "warn")
-      : c.delta != null ? (c.delta >= 0 ? "good" : "bad")
+      : c.destroyed ? "bad"
+      : c.delta === 0 ? "warn"
+      : c.delta != null ? (c.delta > 0 ? "good" : "bad")
       : c.polarity === "positive" ? "good" : c.polarity === "negative" ? "bad" : "warn";
     var body = c.effectText || "";
     if (c.petName) body = body.replace(/\bPet\b/, c.petName).replace(/^Pet /, c.petName + " ");
     if (c.id === "S05") body = c.petName + " is gone. A tombstone appears at home. Happiness set to 0.";
     if (c.delta != null) body = (c.asset ? c.asset.toUpperCase() + ": " : "") +
-      (c.delta >= 0 ? "+$" : "-$") + Math.abs(c.delta);
+      (c.destroyed ? c.detail : c.delta === 0 ? "no change" : (c.delta > 0 ? "+$" : "-$") + Math.abs(c.delta)) +
+      (c.informed ? " (INFORMED: downgraded)" : "");
     // status cards (S01 hunger / S02 stress) carry the live penalty in c.detail
     if (c.detail && (c.id[0] === "E" || c.id === "S01" || c.id === "S02")) body = c.detail || body;
     // good news erupts: a ring of confetti chips fires when the card pops in
@@ -1245,9 +1266,9 @@
   }
   function fxSummary(a) {
     var bits = [];
-    a.gains.forEach(function (g) { bits.push("+" + Math.round(g.pct * UI.state.T) + " " + E.statName(g.stat)); });
-    (a.petGains || []).forEach(function (g) { bits.push("+" + Math.round(g.pct * UI.state.T) + " " + E.statName(g.stat)); });
-    a.penalties.forEach(function (g) { bits.push("-" + Math.round(g.pct * UI.state.T) + " " + E.statName(g.stat)); });
+    a.gains.forEach(function (g) { if (g.pct) bits.push("+" + E.pctB(UI.state, g.pct) + " " + E.statName(g.stat)); });
+    (a.petGains || []).forEach(function (g) { if (g.pct) bits.push("+" + E.pctB(UI.state, g.pct) + " " + E.statName(g.stat)); });
+    a.penalties.forEach(function (g) { if (g.pct) bits.push("-" + E.pctB(UI.state, g.pct) + " " + E.statName(g.stat)); });
     return bits.join(", ");
   }
 
@@ -1281,12 +1302,25 @@
     for (var i = 0; i < req.length; i++) {
       var r = req[i];
       if (r.kind === "ownsItem" && p.items.indexOf(r.item) === -1) return "Requires " + r.item + " first";
-      if (r.kind === "housedLux" && (p.homeless || p.housing !== "lux")) return "Luxury Apartment tenants only";
+      if (r.kind === "housedLux" && (p.homeless || p.housing !== "lux")) return "Luxury only — live at Heelton Heights";
       if (r.kind === "housedLow" && (p.homeless || p.housing !== "low")) return "Low Cost Housing tenants only";
-      if (r.kind === "notHomeless" && p.homeless) return "Not while homeless";
+      if (r.kind === "notHomeless" && p.homeless) return "Needs a home — not while homeless";
+      if (r.kind === "hasPet" && (!p.pet || p.pet.dead)) return "Requires a pet";
     }
-    if (p.stats.money < Math.round(item.costPct * UI.state.T)) return "Need $" + Math.round(item.costPct * UI.state.T);
+    if (p.stats.money < E.pctB(UI.state, item.costPct)) return "Need $" + E.pctB(UI.state, item.costPct);
     return null;
+  }
+  // What an item does, in plain words (v5 flat trigger bonuses + one-time grants)
+  var TRIGGER_TEXT = { purchase: "once, on purchase", sleep: "each time you sleep at home",
+    relax: "each time you relax at home", workFromHome: "each time you work from home",
+    playPet: "each time you play with your pet at home", exercise: "each time you exercise at home" };
+  function itemFxText(it) {
+    var bits = [];
+    if (it.bonus) bits.push("+" + E.pctB(UI.state, it.bonus.pct) + " " + E.statName(it.bonus.stat) + " once");
+    if (it.trigger) bits.push("+" + it.trigger.pts + " " + E.statName(it.trigger.stat) + " " + TRIGGER_TEXT[it.trigger.on] +
+      (it.slot === "Bed" && it.trigger.on === "sleep" ? " (best bed only)" : ""));
+    if (it.housing === "lux") bits.push("Luxury only");
+    return bits.join(" · ");
   }
   function showTip(btn, h) {
     var ann = annFor(h.a);
@@ -1298,13 +1332,11 @@
     if (ann.tu) costBits.push("⏳ " + ann.tu + " TU");
     if (item) {
       // mall shop item: show THIS item's price, stat effect, and manual blurb
-      var icost = Math.round(item.costPct * st.T);
+      var icost = E.pctB(st, item.costPct);
       costBits.push("💵 $" + icost);
       nameLine = item.name;
-      var fxb = [];
-      if (item.bonus) fxb.push("+" + Math.round(item.bonus.pct * st.T) + " " + E.statName(item.bonus.stat));
-      if (item.penalty) fxb.push("-" + Math.round(item.penalty.pct * st.T) + " " + E.statName(item.penalty.stat));
-      bodyHtml = (fxb.length ? '<div class="t-fx">' + fxb.join(" · ") + "</div>" : "") +
+      var fxt = itemFxText(item);
+      bodyHtml = (fxt ? '<div class="t-fx">' + fxt + "</div>" : "") +
         (item.effect ? '<div class="t-note">💡 ' + item.effect + "</div>" : "");
       var block = itemBlockReason(p, item);
       if (block) whyHtml = '<div class="t-why">' + (block.charAt(0) === "✓" ? "" : "🔒 ") + block + "</div>";
@@ -1314,6 +1346,17 @@
       nameLine = (h.label || per(petCode).name.replace("The ", "")) + " · " + petCode + " pet";
       bodyHtml = '<div class="t-fx">🐾 Boosts <b>' + E.statName(pet.main) + "</b> & <b>" + E.statName(pet.upkeep) + "</b></div>" +
         '<div class="t-note">+10% to a neutral stat · +5% if it stacks a strength · halves a matching weakness · one pet at a time</div>';
+      if (!ann.ok) whyHtml = '<div class="t-why">🔒 ' + ann.why + "</div>";
+    } else if (ann.course) {
+      // university: every painted class/degree button opens the 30-course catalog
+      if (ann.cost) costBits.push("💵 $" + ann.cost);
+      var cprog = (p.edu && p.edu.current && p.edu.current.id === ann.course.id) ? p.edu.current.clicks : 0;
+      nameLine = "Course Catalog";
+      bodyHtml = '<div class="t-fx">Next: <b>' + ann.course.name + "</b> · Path " + ann.course.path + " " +
+        DATA.education[ann.course.path - 1].name + "</div>" +
+        '<div class="t-note">📚 ' + cprog + "/" + ann.course.clicks + " clicks · +" +
+        ann.course.gains.map(function (g) { return E.pctB(st, g.pct) + " " + E.statName(g.stat); }).join(", +") +
+        " on completion · " + (p.edu ? p.edu.done.length : 0) + "/30 courses done</div>";
       if (!ann.ok) whyHtml = '<div class="t-why">🔒 ' + ann.why + "</div>";
     } else {
       if (ann.cost) costBits.push("💵 $" + ann.cost);
@@ -1501,7 +1544,7 @@
         if (shopFx) { openShop(shopFx.group, id); return; }
         if (a.fx.some(function (f) { return f.kind === "openJobDialog"; })) { openJobs(id); return; }
         if (a.fx.some(function (f) { return f.kind === "adoptPet"; })) { openPetChoice(id); return; }
-        if (id === "A067") { openCourses(id); return; }
+        if (a.fx.some(function (f) { return f.kind === "attendCourse"; })) { openCourses(id); return; }
       }
       dispatch("action", { id: id, choice: choice }); return;
     }
@@ -1544,12 +1587,11 @@
     var items = DATA.items.filter(function (i) { return i.group === group; });
     $("#shop-title").textContent = group;
     $("#shop-grid").innerHTML = items.map(function (it, i) {
-      var cost = Math.round(it.costPct * st.T);
+      var cost = E.pctB(st, it.costPct);
       var owned = p.items.indexOf(it.name) !== -1;
-      var why = owned ? "Owned" : null;
-      if (!why && p.stats.money < cost) why = "Not enough money";
-      var fx = it.bonus ? "+" + Math.round(it.bonus.pct * st.T) + " " + E.statName(it.bonus.stat) : "";
-      if (it.penalty) fx += " \u00b7 -" + Math.round(it.penalty.pct * st.T) + " " + E.statName(it.penalty.stat);
+      var why = itemBlockReason(p, it);
+      if (owned) why = "Owned" + (E.itemActive(p, it.name) ? "" : " · in storage until you move back to luxury");
+      var fx = itemFxText(it);
       return '<button class="shop-item ' + (owned ? "owned" : "") + '" data-i="' + i + '" ' + (why ? "disabled" : "") + ">" +
         '<div class="s-name">' + it.name + '</div>' +
         '<div class="s-fx">' + (fx || it.effect || "") + '</div>' +
@@ -1565,16 +1607,15 @@
     });
   }
 
-  // University course catalog: pick a class for A067 (reuses the shop dialog)
+  // Cash Out Investment: pick which holding to sell for its full principal
   function openSellChoice(actionId, assets) {
-    var st = UI.state;
-    var W = (window.PP_ASSUMPTIONS && window.PP_ASSUMPTIONS.weekend) || {};
-    $("#shop-title").textContent = "📉 Panic Sell — pick a position";
+    var st = UI.state, p = activeP();
+    $("#shop-title").textContent = "💰 Cash Out — pick a holding";
     $("#shop-grid").innerHTML = assets.map(function (a) {
-      var refund = Math.round((W.assetCostPct[a] || 0) * st.T * (W.sellRefundPct || 0.6));
+      var refund = E.principalOf(st, p, a);
       return '<button class="shop-item" data-a="' + a + '">' +
         '<div class="s-name">' + a.toUpperCase() + "</div>" +
-        '<div class="s-fx">stop weekly resolutions</div>' +
+        '<div class="s-fx">sell it · stops its weekly cards</div>' +
         '<div class="s-cost">get back $' + refund + "</div></button>";
     }).join("");
     openDialog("shop");
@@ -1586,39 +1627,41 @@
     });
   }
 
+  // High IQ University: 5 paths x 6 courses (Education_Paths). Only the next
+  // course is clickable; completed ones grey out; each click is 1 study TU and
+  // the dialog stays open so multi-click courses can be finished in a row.
   function openCourses(actionId) {
     var st = UI.state, p = activeP();
-    var courses = (window.PP_ASSUMPTIONS && window.PP_ASSUMPTIONS.courses) || [];
-    var completed = Array.isArray(p.completedCourses) ? p.completedCourses : [];
-    var nextCourseIndex = courses.map(function (c) { return c.name; }).findIndex(function (name) {
-      return completed.indexOf(name) === -1;
-    });
+    var catalog = E.courseCatalog(st, p);
     var ann = annFor(actionId);
-    // where the degree track stands: next milestone at 3 / 6 / 10 classes
-    var next = p.degrees.indexOf("Undergrad") === -1 ? ["Undergrad", 3]
-             : p.degrees.indexOf("Masters") === -1 ? ["Master's", 6]
-             : p.degrees.indexOf("PhD") === -1 ? ["PhD", 10] : null;
-    $("#shop-title").textContent = "📚 Course Catalog";
+    var mine = isMyTurn();
+    $("#shop-title").textContent = "📚 High IQ University — Course Catalog";
     $("#shop-grid").innerHTML =
-      '<div class="course-progress" style="grid-column:1/-1;font-weight:900;padding:.2em .3em">' +
-      "Classes taken: " + p.degreeProgress +
-      (next ? " · " + next[0] + " unlocks at " + next[1] : " · every degree earned 🎓") +
-      (ann ? " · each class: " + ann.tu + " TU · $" + ann.cost : "") + "</div>" +
-      courses.map(function (c, i) {
-        var done = completed.indexOf(c.name) !== -1;
-        var available = !done && i === nextCourseIndex;
-        var status = done ? "✓ Completed" : available ? c.blurb : "🔒 Complete the previous course first";
-        return '<button class="shop-item ' + (done ? "owned" : "") + '" data-i="' + i + '" ' + (available ? "" : "disabled") + '>' +
-          '<div class="s-name">' + c.name + "</div>" +
-          '<div class="s-fx">+1 class · +' + Math.round(c.pct * st.T) + " " + E.statName(c.stat) + "</div>" +
-          '<div class="s-cost">' + status + "</div></button>";
+      '<div class="course-progress">' + (p.edu ? p.edu.done.length : 0) + "/30 courses · ⏳ " + p.tu + " TU left · 💵 $" + p.stats.money +
+      (ann && !ann.ok && ann.why ? ' · <span class="course-why">🔒 ' + ann.why + "</span>" : "") + "</div>" +
+      catalog.map(function (path) {
+        return '<div class="course-path' + (path.complete ? " complete" : "") + '">' +
+          '<div class="course-path-head">Path ' + path.path + " · " + path.name +
+          ' <span>' + (path.complete ? "✓ complete — " : "unlocks ") + path.unlocksTier + " jobs</span></div>" +
+          path.courses.map(function (row) {
+            var c = row.course, st2 = row.status;
+            var label = st2 === "done" ? "✓ Completed"
+              : st2 === "next" ? (row.clicks ? row.clicks + "/" + c.clicks + " clicks · paid" : "$" + row.cost + " · " + c.clicks + " click" + (c.clicks > 1 ? "s" : ""))
+              : "🔒 $" + row.cost + " · " + c.clicks + " click" + (c.clicks > 1 ? "s" : "");
+            var enabled = st2 === "next" && mine && ann && ann.ok;
+            return '<button class="shop-item course ' + st2 + '" data-id="' + c.id + '" ' + (enabled ? "" : "disabled") + ">" +
+              '<div class="s-name">' + c.name + "</div>" +
+              '<div class="s-fx">+' + c.gains.map(function (g) { return E.pctB(st, g.pct) + " " + E.statName(g.stat); }).join(" · +") + "</div>" +
+              '<div class="s-cost">' + label + "</div></button>";
+          }).join("") + "</div>";
       }).join("");
     openDialog("shop");
-    $$("#shop-grid .shop-item").forEach(function (b) {
+    $$("#shop-grid .shop-item.course").forEach(function (b) {
       b.onclick = function () {
         click();
-        closeDialog("shop");
-        doAction(actionId, { course: courses[+b.dataset.i].name });
+        doAction(actionId, { course: b.dataset.id });
+        if (UI.mode === "guest") { closeDialog("shop"); return; }
+        if ($("#dlg-shop").classList.contains("show")) openCourses(actionId);   // refresh in place
       };
     });
   }
@@ -1626,8 +1669,14 @@
   function openJobs(actionId) {
     var st = UI.state, p = activeP();
     var rows = E.jobsWithStatus(st, p);
-    $("#job-list").innerHTML = rows.map(function (r, i) {
-      var j = r.job, pay = Math.round(j.basePayT100 * st.T / 100);
+    var clicks = p.workClicks || {};
+    var header = '<div class="job-progress">' + E.DATA.jobProgression.order.map(function (t) {
+      var g = E.tierGate(st, p, t);
+      return '<span class="tier-chip ' + (g.ok ? "open" : "locked") + '" title="' + (g.why || t + " jobs unlocked") + '">' +
+        (g.ok ? "✓ " : "🔒 ") + t + " · " + (clicks[t] || 0) + " clicks</span>";
+    }).join("") + '<div class="job-progress-note">No promotions: switch to any job you qualify for. Tiers unlock with work clicks + the matching university path.</div></div>';
+    $("#job-list").innerHTML = header + rows.map(function (r, i) {
+      var j = r.job, pay = Math.round(j.basePayT100 * E.econ(st) / 100);
       return '<button class="job-row ' + (r.current ? "current" : "") + '" data-i="' + i + '" ' + (r.why ? "disabled" : "") + ">" +
         '<span class="j-name">' + j.name + " · " + DATA.buildings[j.building].name + "</span>" +
         "<span>$" + pay + "/shift</span><span>" + j.tier + "</span>" +

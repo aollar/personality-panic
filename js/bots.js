@@ -25,27 +25,30 @@
     if (!ann.ok) return -1;
     var a = ann.action, v = 0;
     // keep a small rent reserve: generic actions must not drain the wallet dry
-    if (ann.cost > 0 && (p.stats.money - ann.cost) < 0.12 * state.T) return -1;
+    var B = E.econ(state);
+    if (ann.cost > 0 && (p.stats.money - ann.cost) < reserveOf(state)) return -1;
     if (a.name === "Work" && p.job) {
-      var scale = state.T / 100;
+      var scale = B / 100;
       v += p.job.basePayT100 * scale * statWeight(state, p, "money");
       v += p.job.careerGainT100 * scale * statWeight(state, p, "career");
       p.job.effects.forEach(function (e) { v += e.amtT100 * scale * statWeight(state, p, e.stat); });
     } else {
       a.gains.forEach(function (g) {
-        v += g.pct * state.T * E.totalMult(state, p, g.stat) * statWeight(state, p, g.stat);
+        v += g.pct * B * E.totalMult(state, p, g.stat) * statWeight(state, p, g.stat);
       });
-      (a.petGains || []).forEach(function (g) { v += g.pct * state.T * statWeight(state, p, g.stat); });
-      a.penalties.forEach(function (g) { v -= g.pct * state.T * statWeight(state, p, g.stat) * 1.1; });
+      (a.petGains || []).forEach(function (g) { v += g.pct * B * statWeight(state, p, g.stat); });
+      a.penalties.forEach(function (g) { v -= g.pct * B * statWeight(state, p, g.stat) * 1.1; });
     }
-    v -= ann.cost * 0.35 / (1 + p.stats.money / state.T); // spending hurts more when broke
+    v -= ann.cost * 0.35 / (1 + p.stats.money / (5 * B)); // spending hurts more when broke
     // upkeep nudges
-    if (!p.ate && a.fx.some(function (f) { return f.kind === "eat"; })) v += state.T * 0.08;
-    if (p.turnsSinceRelax >= 1 && a.fx.some(function (f) { return f.kind === "relax"; })) v += state.T * 0.05 * p.turnsSinceRelax;
-    if (a.fx.some(function (f) { return f.kind === "degreeProgress" || f.kind === "grantDegree"; })) v += state.T * 0.03;
+    if (!p.ate && a.fx.some(function (f) { return f.kind === "eat"; })) v += B * 0.08;
+    if (p.turnsSinceRelax >= 1 && a.fx.some(function (f) { return f.kind === "relax"; })) v += B * 0.05 * p.turnsSinceRelax;
     var tu = ann.tu + (extraTu || 0);
     return v / Math.max(1, tu);
   }
+
+  // cash kept back for rent + a meal before optional spending (v5 low rent is 1.0 B)
+  function reserveOf(state, p) { return Math.round(1.2 * E.econ(state)); }
 
   function cheapestFood(state, p) {
     // candidate food actions across buildings, including travel cost
@@ -54,7 +57,7 @@
       var a = E.ACTIONS[id];
       if (!a.fx.some(function (f) { return f.kind === "eat"; })) return;
       var mc = a.building === p.location ? { tu: 0 } : E.moveCost(state, p, a.building === "anywhere" ? p.location : a.building);
-      var totalTu = E.tuCost(a) + mc.tu, cost = Math.round(a.costPct * state.T);
+      var totalTu = E.tuCost(a) + mc.tu, cost = E.pctB(state, a.costPct);
       if (totalTu > p.tu || cost > p.stats.money) return;
       // requirements that don't depend on being there yet
       var fake = Object.assign({}, p, { location: a.building });
@@ -62,7 +65,7 @@
       var why = null;
       try { why = E.actionsAt(state, fake).filter(function (x) { return x.id === id; })[0]; } catch (e) { return; }
       if (!why || !why.ok) return;
-      var score = cost + totalTu * 2 + (a.penalties || []).reduce(function (s, x) { return s + (x.stat === "health" ? x.pct * state.T : 0); }, 0);
+      var score = cost / 5 + totalTu * 2 + (a.penalties || []).reduce(function (s, x) { return s + (x.stat === "health" ? E.pctB(state, x.pct) : 0); }, 0);
       if (!best || score < best.score) best = { id: id, building: a.building, score: score };
     });
     return best;
@@ -93,11 +96,13 @@
   // What the bot still needs to buy, in priority order.
   // Returns {item|adopt, cost, affordable} — an unaffordable goal is a reason to WORK.
   function shoppingGoal(state, p) {
-    var T = state.T, cash = p.stats.money;
+    var T = state.T, B = E.econ(state), cash = p.stats.money;
     var wants = [];
     function owns(n) { return p.items.indexOf(n) !== -1; }
     if (!owns("Casual Clothes")) wants.push("Casual Clothes");
-    if (!owns("Fridge")) wants.push("Fridge"); // food engine first: kills the daily grocery run
+    if (!owns("Lumpy Bed") && !p.homeless) wants.push("Lumpy Bed");   // $50 sleep fixture
+    if (!owns("Plants") && !p.homeless) wants.push("Plants");         // $20 relax fixture
+    if (!owns("Fridge") && !p.homeless) wants.push("Fridge");         // unlocks 2/4-week groceries
     if (!p.pet) wants.push("__adopt__");
     if (p.pet && !p.pet.dead && !p.flags.petToy && !owns("Pet Toys")) wants.push("Pet Toys");
     if (!owns("Smart Clothes") && p.stats.career > 0.10 * T) wants.push("Smart Clothes");
@@ -107,10 +112,11 @@
     if (!owns("Bicycle")) wants.push("Bicycle");
     if (!owns("Computer") && p.stats.career > 0.4 * T) wants.push("Computer");
     if (!wants.length) return null;
-    var reserve = Math.round(0.12 * T);
+    var reserve = reserveOf(state, p);
     function costOf(w) {
-      if (w === "__adopt__") return Math.round(0.12 * T) + Math.round(0.04 * T); // adoption + first food
-      return Math.round(E.ITEMS[w].costPct * T);
+      var adopt = E.ACTIONS.A102, food = E.ACTIONS.A103;
+      if (w === "__adopt__") return E.pctB(state, adopt ? adopt.costPct : 0.2) + E.pctB(state, food ? food.costPct : 0.04);
+      return E.pctB(state, E.ITEMS[w].costPct);
     }
     // buy the first goal we can actually afford; otherwise earn toward the top one
     for (var i = 0; i < wants.length; i++) {
@@ -126,7 +132,7 @@
 
   // Decide ONE step. Returns {type:"perform",id,choice} | {type:"move",to} | {type:"end"}
   function botStep(state) {
-    var p = E.active(state), T = state.T;
+    var p = E.active(state), T = state.T, B = E.econ(state);
     if (p.tu <= 0) return { type: "end" };
     var here = E.actionsAt(state, p);
     function findHere(pred) { return here.filter(function (x) { return x.ok && pred(x); })[0]; }
@@ -164,12 +170,12 @@
       }
     }
     // 2b) keep the fridge stocked: groceries are health-positive food
-    if (!p.homeless && p.foodSupply < 1 && p.stats.money >= Math.round(0.08 * T) + Math.round(0.2 * T)) {
+    // (1-week groceries store nothing — v5 bulk storage needs a Fridge)
+    if (!p.homeless && p.foodSupply < 1 && p.items.indexOf("Fridge") !== -1 &&
+        p.stats.money >= E.pctB(state, 1.3) + reserveOf(state, p)) {
       if (p.location === "airOne") {
-        var bulk = findHere(function (x) { return x.id === "A028"; }); // 4 weeks (needs fridge)
-        if (bulk && p.stats.money >= Math.round(0.28 * T) + Math.round(0.2 * T)) return { type: "perform", id: bulk.id };
-        var wk = findHere(function (x) { return x.id === "A026"; });
-        if (wk) return { type: "perform", id: wk.id };
+        var bulk = findHere(function (x) { return x.id === "A028" || x.id === "A121"; }); // 4 or 2 weeks
+        if (bulk) return { type: "perform", id: bulk.id };
       } else if (E.moveCost(state, p, "airOne").tu + Math.round(E.TU_SCALE) <= p.tu) {
         return { type: "move", to: "airOne" };
       }
@@ -186,7 +192,7 @@
         var feed = findHere(function (x) { return (x.id === "A007" || x.id === "A105" || x.id === "X008") && x.ok; });
         if (feed) return { type: "perform", id: feed.id };
       }
-      if (p.petFoodLeft < 2 && p.stats.money > 0.12 * T) {
+      if (p.petFoodLeft < 2 && p.stats.money > reserveOf(state, p)) {
         var buyFood = findHere(function (x) { return x.id === "A103" && x.ok; });
         if (buyFood) return { type: "perform", id: buyFood.id };
       }
@@ -206,19 +212,9 @@
       var hang = findHere(function (x) { return x.id === "A006" && x.ok; });
       if (hang) return { type: "perform", id: hang.id };
     }
-    // 4d) employment is a weekly obligation; promote one rung after two shifts,
-    // otherwise complete this week's shift before optional progression errands.
+    // 4d) employment is a weekly obligation: complete this week's shift before
+    // optional progression errands. (v5: no promotions — see step 5.)
     if (p.job) {
-      var promotion = E.bestPromotion(state, p);
-      if (promotion) {
-        if (p.location !== "soulExchange") {
-          if (E.moveCost(state, p, "soulExchange").tu + Math.round(E.TU_SCALE) <= p.tu)
-            return { type: "move", to: "soulExchange" };
-        } else {
-          var promote = findHere(function (x) { return x.id === "A084" && x.ok; });
-          if (promote) return { type: "perform", id: promote.id };
-        }
-      }
       if (!p.workedThisTurn) {
         if (p.location === p.job.building) {
           var weeklyWork = findHere(function (x) { return x.name === "Work" && x.ok; });
@@ -228,23 +224,26 @@
         }
       }
     }
-    // 4b) education: Critical Thinking gates all good jobs; degrees are milestones
-    var reserve = Math.round(0.12 * T);
-    var degreeMilestone = findHere(function (x) {
-      return (x.id === "A070" || x.id === "A071") && x.ok;
-    });
-    if (degreeMilestone) return { type: "perform", id: degreeMilestone.id };
-    if (p.stats.critical < 0.30 * T && p.stats.money >= Math.round(0.08 * T) + reserve) {
-      if (p.location === "university") {
-        var cls = findHere(function (x) { return x.id === "A067" && x.ok; });
-        if (cls) return { type: "perform", id: cls.id };
-      } else if (E.moveCost(state, p, "university").tu + Math.round(2 * E.TU_SCALE) <= p.tu) {
-        return { type: "move", to: "university" };
+    // 4b) education: the next job tier needs the next path. Study when the
+    // player's current tier clicks are nearly there (or the course is paid for),
+    // and only with cash to spare after rent + food.
+    var course = E.nextCourse(p);
+    if (course) {
+      var due = E.courseCostDue(state, p, course);
+      var gate = E.tierGate(state, p, DATA.education[course.path - 1].unlocksTier);
+      var clicksClose = gate.routes.some(function (r) { return r.have >= r.need * 0.5; }) || !gate.routes.length;
+      if ((due === 0 || clicksClose) && p.stats.money >= due + reserveOf(state, p)) {
+        if (p.location === "university") {
+          var cls = findHere(function (x) { return x.id === "A120" && x.ok; });
+          if (cls) return { type: "perform", id: cls.id, choice: { course: course.id } };
+        } else if (E.moveCost(state, p, "university").tu + course.clicks <= p.tu) {
+          return { type: "move", to: "university" };
+        }
       }
     }
-    // 5) get a (better) job: none yet, or a 30%+ raise is on the table
+    // 5) get a (better) job: none yet, or a higher tier is now unlocked
     var betterJob = bestJobChoice(state, p);
-    var wantJob = !p.job || (betterJob && betterJob.basePayT100 >= p.job.basePayT100 * 1.3);
+    var wantJob = !p.job || (betterJob && betterJob.basePayT100 > p.job.basePayT100);
     if (wantJob && betterJob) {
       if (p.location !== "soulExchange") {
         if (E.moveCost(state, p, "soulExchange").tu + Math.round(E.TU_SCALE) <= p.tu) return { type: "move", to: "soulExchange" };
@@ -255,7 +254,11 @@
     }
     // 5b) work when cash is low OR the next purchase goal needs funding
     var goal = shoppingGoal(state, p);
-    var needCash = p.stats.money < 0.40 * T || (goal && !goal.affordable);
+    var nextFee = course ? E.courseCostDue(state, p, course) : 0;
+    var needCash = p.stats.money < 4 * B || (goal && !goal.affordable) || p.stats.money < nextFee + reserveOf(state, p) ||
+      (p.job && Object.keys(DATA.jobProgression.tiers).some(function (t) {   // keep earning tier clicks
+        var g = E.tierGate(state, p, t); return g.pathOk && !g.clicksOk;
+      }));
     if (p.job && needCash) {
       if (p.location === p.job.building) {
         var work = findHere(function (x) { return x.name === "Work"; });

@@ -1,6 +1,6 @@
 """
 Personality Panic — data pipeline.
-Reads Personality_Panic_Balance_Lock_v3.xlsx (single source of truth for numbers)
+Reads Personality_Panic_Balance_Lock_v5.xlsx (single source of truth for numbers)
 and emits assets/data/gamedata.js (window.PP_DATA) with normalized, structured
 requirements/effects so the engine never parses free text at runtime.
 
@@ -10,7 +10,7 @@ Re-run after any spreadsheet change:  python scripts/build_data.py
 import json, os, re
 import openpyxl
 
-XLSX = r"C:\Users\aloss\OneDrive\Desktop\Personality Panic\Personality_Panic_Balance_Lock_v3.xlsx"
+XLSX = r"C:\Users\aloss\OneDrive\Desktop\Personality Panic\Personality_Panic_Balance_Lock_v5.xlsx"
 OUT = os.path.join(os.path.dirname(__file__), "..", "assets", "data", "gamedata.js")
 
 STAT = {
@@ -78,7 +78,7 @@ def norm_req(action_id, building, text):
     elif tl == "homeless": add("homeless")
     if tl == "rent cycle": add("rentDue")
     if "rent cycle + luxury" in tl: add("rentDue"); add("housedLux")
-    if "requires fridge" in tl or tl == "fridge": add("fridge")
+    if "requires fridge" in tl or "fridge required" in tl or tl == "fridge": add("fridge")
     if "fridge + stove" in tl: add("fridge"); add("stove")
     if "dressy clothes" in tl: add("ownsItem", item="Dressy Clothes")
     if "job assigned at corporate soul exchange" in tl: add("jobInBuilding")
@@ -89,18 +89,16 @@ def norm_req(action_id, building, text):
     if "coolness threshold" in tl: add("statGte", stat="coolness", pctT=0.40)
     if "money threshold" in tl: add("statGte", stat="money", pctT=0.50)
     if "enlightenment threshold" in tl: add("statGte", stat="enlightenment", pctT=0.50)
-    if "critical thinking threshold" in tl and action_id != "A084":
+    if "critical thinking threshold" in tl:
         add("statGte", stat="critical", pctT=0.30)
-    if action_id == "A084":  # Ask for Promotion: must meet next-tier job reqs (engine-side)
-        add("promotionEligible")
-    if action_id == "A070": add("degreeProgress", n=3)
-    if action_id == "A071": add("degree", degree="Undergrad"); add("degreeProgress", n=6)
-    if action_id == "A072": add("degree", degree="Masters"); add("degreeProgress", n=10)
     if action_id in ("A062", "A063"): add("myCamp")   # advanced temple actions gated by My Camp
     if action_id == "A058":  # Buy My Camp: one copy per lifetime of doubt (Austin 2026-07-09)
         add("notFlag", flag="myCamp", msg="You already own My Camp")
-    if action_id in ("A026", "A027"):  # ALL groceries need a fridge at home, not just 4-week
-        add("fridge")                  # (Austin 2026-07-09; sheet only gated A028)
+    # v5: 1-week groceries need NO fridge; only the 2- and 4-week bulk options do
+    # (supersedes the 2026-07-09 "all groceries need a fridge" override).
+    if action_id == "A109": add("notFlag", flag="pitaContacted", msg="You already reported the shop (once per game)")
+    if action_id == "A090": add("noLoan")
+    if action_id == "A119": add("hasHolding")
     if action_id == "A076": pass  # Get/Change Job: dialog filters individual jobs
     return reqs
 
@@ -117,33 +115,32 @@ def norm_fx(action_id, building, unlock, category, name):
     if "adds 1 week food supply" in u: add("foodSupply", weeks=1)
     if "adds premium food supply" in u: add("foodSupply", weeks=1, premium=True)
     if "adds 4 weeks food supply" in u: add("foodSupply", weeks=4)
+    if "stores 2 weeks of food" in u: add("foodSupply", weeks=2)
     if "better food efficiency at home" in u: add("foodSupply", weeks=2, premium=True)
     if "unlocks pet system" in u: add("adoptPet")
     if "prevents pet hunger warning" in u: add("petFood", feedings=4)  # feedings = ASSUMPTION
     if "passive pet happiness" in u: add("petToy")
-    if "degree progress" in u: add("degreeProgress")
-    if "unlocks mid-tier jobs" in u: add("grantDegree", degree="Undergrad")
-    if "unlocks high-tier jobs" in u: add("grantDegree", degree="Masters")
-    if "unlocks elite jobs" in u: add("grantDegree", degree="PhD")
+    if action_id == "A120": add("attendCourse")   # v5 Education_Paths (engine reads DATA.education)
     if "selects current job tier" in u: add("openJobDialog")
-    if "upgrade job tier" in u: add("promote")
     if "lose job tier until rehired" in u: add("quitJob")
     if "keeps player housed" in u: add("payRent", tier="low")
     if "keeps luxury apartment" in u: add("payRent", tier="lux")
     if "enough for casual clothes" in u: add("supportCheque")
     if "survive turn" in u: add("sleepRough")
     if "unlocks advanced temple actions" in u: add("unlock", flag="myCamp")
-    if "low risk" in u: add("invest", risk="low")
-    if "medium risk" in u: add("invest", risk="medium")
-    if "high risk" in u: add("invest", risk="high")
-    if "reduces bad finance event chance" in u: add("unlock", flag="tinyPrint")
-    if "future debt penalty" in u: add("loan")
+    # v4 investment lifecycle (Investments sheet): buys open a held position
+    ASSET = {"A085": "savings", "A086": "bonds", "A087": "stocks", "A088": "crypto"}
+    if action_id in ASSET: add("buyAsset", asset=ASSET[action_id])
+    if action_id == "A119": add("cashOut")
+    if action_id == "A089": add("informed")
+    if action_id == "A090": add("loan", payments=4)
+    if action_id == "A108": add("unlock", flag="bribedInspector")
+    if action_id == "A109": add("unlock", flag="pitaContacted")
     if "reduces bad travel event chance" in u: add("unlock", flag="travelInsurance")
     if "see items_mall" in u:
         cat = {"A112": "Transportation", "A113": "Electronics/Appliances",
                "A114": "Furniture", "A115": "Clothing"}[action_id]
         add("openShop", group=cat)
-    if "avoids bad pet shop consequences" in u or "possible pet shop penalty" in u: pass  # flavor for MVP
     if "uses owned furniture bonus" in u: pass
     return fx
 
@@ -181,7 +178,28 @@ CARD_FX = {
 }
 STAT_RE = re.compile(
     r"(Money|Health|Career|Connection|Happiness|Coolness|Critical Thinking|Enlightenment"
-    r"|Pet Happiness|Pet Health)\s*(\+/-|[+-])\s*\w+\s*\((\d+(?:\.\d+)?)%T\)")
+    r"|Pet Happiness|Pet Health)\s*(\+/-|[+-])\s*\w+\s*\((\d+(?:\.\d+)?)%[TB]\)")
+# v4+ investment cards print effects as "Money +15%B" / "Money +5%B or -5%B"
+STAT_RE_B = re.compile(
+    r"(Money|Health|Career|Connection|Happiness|Coolness|Critical Thinking|Enlightenment"
+    r"|Pet Happiness|Pet Health)\s*([+-])(\d+(?:\.\d+)?)%B")
+# The v5 workbook lost E30's row contents (ID only). Restore it from v3 so the
+# 30-card event deck stays intact.
+CARD_FALLBACK = {
+    "E30": ["E30", "NEIGHBORHOOD POTLUCK", "Event", "Positive", "Minor", "Not homeless",
+            "Connection +Tiny (2.5%T), Happiness +Tiny (2.5%T)", "You brought napkins and it was enough."],
+}
+
+def odds_pct(v):
+    """'45%' / '5% (destroys holding)' / 0.45 -> 0.45"""
+    if v is None: return 0.0
+    if isinstance(v, (int, float)): return float(v) if v <= 1 else float(v) / 100.0
+    m = re.match(r"\s*(\d+(?:\.\d+)?)\s*%", str(v))
+    return float(m.group(1)) / 100.0 if m else 0.0
+
+def odds_flat(v):
+    m = re.search(r"flat\s*(\d+(?:\.\d+)?)\s*%", str(v or ""))
+    return float(m.group(1)) / 100.0 if m else 0.0
 
 def parse_weekend(wb):
     ws = wb["Cards"]
@@ -198,11 +216,12 @@ def parse_weekend(wb):
                     "majPos": num(r[1]), "minPos": num(r[2]),
                     "minNeg": num(r[3]), "majNeg": num(r[4])}
                 continue
-        # investment odds block: Asset | Standing | BG SG SL BL
+        # investment odds block: Asset | Standing | BG SG SL BL(+ "flat N%")
+        # -> [bigGain, smallGain, smallLoss, bigLoss, flat]
         if c0 in ("Crypto", "Stocks") and r[1] is not None:
             key = str(r[1]).strip().lower()
             invest_odds.setdefault(c0.lower(), {})[STAND_KEY.get(key, key)] = [
-                num(r[2]), num(r[3]), num(r[4]), num(r[5])]
+                odds_pct(r[2]), odds_pct(r[3]), odds_pct(r[4]), odds_pct(r[5]), odds_flat(r[5])]
             continue
         if c0 in ("Bonds", "Savings"):
             invest_odds[c0.lower()] = "safe"
@@ -213,7 +232,12 @@ def parse_weekend(wb):
         if in_list and re.match(r"^[SIE]\d\d$", c0):
             _id, name, typ, pol, mag, req, eff, flav = [
                 ("" if v is None else str(v).strip()) for v in r[:8]]
+            if not name and c0 in CARD_FALLBACK:
+                _id, name, typ, pol, mag, req, eff, flav = CARD_FALLBACK[c0]
             stats = []
+            for m in STAT_RE_B.finditer(eff):
+                pct = float(m.group(3)) / 100.0
+                stats.append({"stat": STAT[m.group(1)], "pct": pct if m.group(2) == "+" else -pct})
             for m in STAT_RE.finditer(eff):
                 pct = float(m.group(3)) / 100.0
                 sign = m.group(2)
@@ -231,30 +255,37 @@ def parse_weekend(wb):
                       ("Pos" if card["polarity"] == "positive" else "Neg")
                 card["cls"] = cls
             cards.append(card)
-    # Which card face shows for each investment outcome (from the sheet's
-    # "Card IDs used" column: crypto I01/I03/I02, stocks I04/I06/I05; stocks
-    # have no big-loss card so I05's -Standard is the worst stocks can do).
+    # Which card face shows for each investment outcome (Investments + Cards
+    # sheets, v4): crypto I01 / I03 (+/-) / I02 RUG PULL (destroys the holding,
+    # no Money delta); stocks I04 / I06 / I09 flat / I05 / I10 MARKET CRASH.
+    # Values are %B.
     by_id = {c["id"]: c for c in cards}
     def mag(cid, sign=1):
         pcts = [s["pct"] for s in by_id[cid]["stats"] if s["stat"] == "money"]
-        return abs(pcts[0]) * sign
+        return abs(pcts[0]) * sign if pcts else 0.0
     invest_fx = {
         "crypto":  {"bigGain": ["I01", mag("I01")], "smallGain": ["I03", mag("I03")],
-                    "smallLoss": ["I03", -mag("I03")], "bigLoss": ["I02", -mag("I02")]},
+                    "smallLoss": ["I03", -mag("I03")], "bigLoss": ["I02", 0.0, "destroy"]},
         "stocks":  {"bigGain": ["I04", mag("I04")], "smallGain": ["I06", mag("I06")],
-                    "smallLoss": ["I05", -mag("I05")], "bigLoss": ["I05", -mag("I05")]},
+                    "flat": ["I09", 0.0],
+                    "smallLoss": ["I05", -mag("I05")], "bigLoss": ["I10", -mag("I10")]},
         "bonds":   {"pay": ["I07", mag("I07")]},
         "savings": {"pay": ["I08", mag("I08")]},
     }
+    for k in ("I01", "I03", "I04", "I05", "I06", "I07", "I08", "I10"):
+        assert mag(k) > 0, "investment card %s has no Money effect" % k
     # Upkeep penalties (Settings "UPKEEP TIME PENALTIES" block). v2-4: values are
     # FRACTIONS of the turn's Time Units (0.25 = lose 25% of next turn's TU) and
     # stress also costs Health + Happiness. Legacy absolute values (>1) are read
     # as a fraction of a 40-TU turn so an old sheet still loads sanely.
+    # The v5 workbook was built from an older v3 copy and still prints the
+    # legacy absolute values (Hunger -4 / Stress -2 TU). Those are IGNORED so
+    # the harsher v2-4 percentages chosen 2026-07-20 stay in force.
     pen = {"hungerPct": 0.25, "stressPct": 0.15, "stressHappinessPct": 0.05, "stressHealthPct": 0.05}
     for r in wb["Settings"].iter_rows(values_only=True):
         label = str(r[0]) if r[0] else ""
         v = abs(num(r[1]))
-        if v > 1: v = v / 40.0            # legacy absolute TU -> fraction
+        if v > 1: continue                # legacy absolute TU value: keep the v2-4 fraction
         if label.startswith("Hunger"): pen["hungerPct"] = v
         elif label.startswith("Stress Happiness"): pen["stressHappinessPct"] = v
         elif label.startswith("Stress Health"): pen["stressHealthPct"] = v
@@ -296,7 +327,8 @@ def main():
         "money":      {"strength": 0.10, "weakness": -0.08, "cap": 1.25},
     }
     settings = {
-        "gameLengths": {"short": 100, "medium": 500, "long": 1000},
+        "gameLengths": {"short": 100, "medium": 500, "long": 1000},   # T = stat cap / endgame threshold ONLY
+        "economyBase": {"short": 100, "medium": 250, "long": 350},    # B = base every %B resolves against (v4)
         "timeUnitsPerTurn": 40,
         "baseTimeUnits": 40,  # costs used AS AUTHORED (1-3 TU): 40 TU/turn = many actions per day (Austin 2026-07-06)
         "rentIntervalTurns": 4,
@@ -307,11 +339,18 @@ def main():
         "mainStats": MAIN_STATS, "upkeepStats": UPKEEP_STATS,
     }
 
+    for r in wb["Settings"].iter_rows(values_only=True):
+        label = str(r[0] or "")
+        for mode in ("Short", "Medium", "Long"):
+            if label.startswith(mode + " Game T"): settings["gameLengths"][mode.lower()] = int(num(r[1]))
+            if label.startswith(mode + " Game B"): settings["economyBase"][mode.lower()] = int(num(r[1]))
+
     # ---- Actions_Master ----
     ws = wb["Actions_Master"]
     actions = []
     for row in ws.iter_rows(min_row=2, values_only=True):
         if not row[0] or not str(row[0]).startswith("A"): continue
+        if "REMOVED" in str(row[28] or ""): continue   # v5: Take Class / degrees / Ask for Promotion
         (aid, bld, name, cat, req, tu, costPct, *_rest) = row[:7] + (None,)
         r = row
         gains = []
@@ -334,9 +373,18 @@ def main():
             reqs += [{"kind": "ownsItem", "item": "Computer"}, {"kind": "ownsItem", "item": "Desk"}, {"kind": "hasJob"}]
         if aid_s == "A077":  # CSE Work still requires your job to BE at CSE
             reqs = [{"kind": "jobInBuilding"}]
-        if aid_s == "A024":  # support cheque: fx pays it flat; drop row gain to avoid double pay
+        if aid_s == "A024":  # support cheque: fx pays the sheet amount; drop row gain to avoid double pay
+            cheque_pct = gains[0]["pct"] if gains else 2.0
+            gains = []
+        if aid_s == "A090":  # Lifestyle Loan: the -5%B penalty is the per-turn repayment, not an instant hit
+            loan_pct = pens[0]["pct"] if pens else 0.05
+            pens = []
+        if aid_s == "A120":  # Attend Course: gains/costs come from Education_Paths per course
             gains = []
         fx = norm_fx(aid_s, str(bld).strip(), str(r[26] or ""), str(cat or "").strip(), str(name).strip())
+        for f in fx:
+            if f["kind"] == "supportCheque": f["pct"] = cheque_pct
+            if f["kind"] == "loan": f["pct"] = loan_pct
         if aid_s in ("A007", "A105"):  # feeding must mark the pet fed (A007 also consumes pet food)
             fx.append({"kind": "feedPet"})
         actions.append({
@@ -352,23 +400,48 @@ def main():
     ws = wb["Items_Mall"]
     items = []
     OUTFIT_ORDER = {"Casual Clothes": 1, "Dressy Clothes": 1, "Smart Clothes": 2, "Business Clothes": 3}
+    hdr = [str(h or "").strip() for h in next(ws.iter_rows(min_row=1, max_row=1, values_only=True))]
+    col = {h: i for i, h in enumerate(hdr)}
+    TRIGGERS = [("one-time on purchase", "purchase"), ("sleep", "sleep"), ("relax", "relax"),
+                ("work-from-home", "workFromHome"), ("play-with-pet", "playPet"), ("exercise", "exercise")]
     for row in ws.iter_rows(min_row=2, values_only=True):
-        if not row[0] or not str(row[0]).startswith("I"): continue
-        req = str(row[4] or "").strip().lower()
+        if not row[0] or not re.match(r"^I\d{3}$", str(row[0])): continue
+        g = lambda name: row[col[name]] if name in col and col[name] < len(row) else None
+        req = str(g("Requirement") or "").strip().lower()
+        housing = str(g("Housing Requirement") or "Any").strip().lower()
         reqs = []
-        if "luxury apartment" in req and "recommended" not in req: reqs.append({"kind": "housedLux"})
-        if req == "housing": reqs.append({"kind": "notHomeless"})
+        # v4 housing gates: 'Low Cost OK' needs a home; 'Luxury only' needs Heelton Heights
+        if housing.startswith("luxury"): reqs.append({"kind": "housedLux"})
+        elif housing.startswith("low cost"): reqs.append({"kind": "notHomeless"})
         if "own pet" in req: reqs.append({"kind": "hasPet"})
+        if req in ("tv owned", "tv"): reqs.append({"kind": "ownsItem", "item": "TV"})
         if "casual clothes" == req: reqs.append({"kind": "ownsItem", "item": "Casual Clothes"})
         if "smart clothes" == req: reqs.append({"kind": "ownsItem", "item": "Smart Clothes"})
+        # v5 flat trigger bonus ("Health +3") fired by a home action; the sheet
+        # shifted a couple of rows one column right, so only accept real triggers
+        trig_text = str(g("Bonus Trigger (v5)") or "").strip().lower()
+        flat_text = str(g("Flat Bonus (Short) (v5)") or "").strip()
+        trigger = None
+        m = re.match(r"^(.+?)\s*\+(\d+)$", flat_text)
+        if m and m.group(1) in STAT:
+            for key, kind in TRIGGERS:
+                if key in trig_text:
+                    trigger = {"on": kind, "stat": STAT[m.group(1)], "pts": int(m.group(2))}
+                    break
+        bonus_stat = g("Stat Bonus")
         items.append({
-            "id": str(row[0]), "group": str(row[1]).strip(), "name": str(row[2]).strip(),
-            "slot": str(row[3]).strip(), "req": reqs, "costPct": num(row[5]),
-            "bonus": ({"stat": STAT[str(row[9]).strip()], "pct": num(row[10])} if row[9] else None),
-            "penalty": ({"stat": STAT[str(row[11]).strip()], "pct": num(row[12])} if row[11] else None),
-            "effect": str(row[13] or "").strip(),
-            "outfitRank": OUTFIT_ORDER.get(str(row[2]).strip(), 0),
+            "id": str(row[0]), "group": str(g("Shop / Group")).strip(), "name": str(g("Item")).strip(),
+            "slot": str(g("Slot")).strip(), "req": reqs, "costPct": num(g("Cost %B")),
+            "housing": "lux" if housing.startswith("luxury") else ("home" if housing.startswith("low cost") else "any"),
+            # triggered home fixtures carry no % bonus (v5); everything else keeps its one-time grant
+            "bonus": ({"stat": STAT[str(bonus_stat).strip()], "pct": num(g("Bonus %"))}
+                      if bonus_stat and str(bonus_stat).strip() in STAT and num(g("Bonus %")) > 0 and not trigger else None),
+            "penalty": None,   # v5: every mall stat penalty removed
+            "trigger": trigger,
+            "effect": str(g("Unlock / Effect") or "").strip(),
+            "outfitRank": OUTFIT_ORDER.get(str(g("Item")).strip(), 0),
         })
+    assert sum(1 for it in items if it["trigger"]) == 16, "expected 16 v5 trigger bonuses"
 
     # ---- Jobs_Named ----
     ws = wb["Jobs_Named"]
@@ -378,6 +451,7 @@ def main():
         if not row[0] or str(row[0]).startswith("CANONICAL"): continue
         bld = str(row[0]).strip()
         if bld not in BUILDING_ID: continue
+        if row[1] is None or str(row[1]).strip() == "Tier": continue
         effects = []
         for m in fxre.finditer(str(row[5] or "")):
             sname = m.group(2).strip()
@@ -386,16 +460,55 @@ def main():
         jreq = {"clothes": None, "computer": "Computer" in reqtext, "degree": None, "stats": []}
         for c in ("Business Clothes", "Smart Clothes", "Dressy Clothes", "Casual Clothes"):
             if c in reqtext: jreq["clothes"] = c; break
-        for d, key in (("Undergrad", "Undergrad"), ("Master's", "Masters"), ("PhD", "PhD")):
-            if d in reqtext: jreq["degree"] = key
+        # v5: degrees are replaced by education PATHS (Education_Paths sheet);
+        # the path + work-click gate is enforced per tier (Job_Progression).
+        pm = re.search(r"Path\s*(\d)", str(row[10] or ""))
+        jreq["path"] = int(pm.group(1)) if pm else 0
         for m in re.finditer(r"([A-Za-z ]+?)\s+(\d+)\+", reqtext):
             sname = m.group(1).strip()
             if sname in STAT: jreq["stats"].append({"stat": STAT[sname], "pctT": int(m.group(2)) / 100.0})
+        tier = str(row[1]).strip()
         jobs.append({
-            "building": BUILDING_ID[bld], "tier": str(row[1]).strip(), "name": str(row[2]).strip(),
+            "building": BUILDING_ID[bld], "tier": tier, "name": str(row[2]).strip(),
+            "progressTier": "Max" if tier == "Max+" else tier,   # Wolf of Debtstreet pays/gates as Max
             "basePayT100": num(row[3]), "careerGainT100": num(row[4]),
             "effects": effects, "req": jreq, "reqText": reqtext.strip(),
         })
+
+    # ---- Education_Paths (v5): 5 paths x 6 courses ----
+    ws = wb["Education_Paths"]
+    paths = {}
+    for row in ws.iter_rows(min_row=3, values_only=True):
+        if str(row[0] or "").startswith("PATH TOTALS"): break
+        if not isinstance(row[0], (int, float)) or not isinstance(row[2], (int, float)): continue
+        n = int(row[0])
+        pth = paths.setdefault(n, {"path": n, "name": str(row[1]).strip(), "unlocksTier": str(row[7]).strip(), "courses": []})
+        pth["courses"].append({
+            "id": "P%dC%d" % (n, int(row[2])), "path": n, "index": int(row[2]),
+            "name": str(row[3]).strip(), "costPct": num(row[5]), "clicks": int(num(row[6])),
+            "gains": [{"stat": "critical", "pct": num(row[8])}, {"stat": "career", "pct": num(row[9])}],
+        })
+    education = [paths[k] for k in sorted(paths)]
+    assert len(education) == 5 and all(len(p["courses"]) == 6 for p in education), "expected 5 paths x 6 courses"
+
+    # ---- Job_Progression (v5): work clicks per tier + education path ----
+    ws = wb["Job_Progression"]
+    tiers, order = {}, []
+    TIER_NAMES = ("Low", "Low+", "Mid", "Mid+", "High", "Max")
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        t = str(row[0] or "").strip()
+        if t not in TIER_NAMES or t in tiers or not isinstance(row[4], (int, float)): continue
+        routes = []
+        for cell in (row[1], row[2]):
+            m = re.search(r"(\d+)\s*clicks at\s*(Low\+|Low|Mid\+|Mid|High)", str(cell or ""))
+            if m: routes.append({"tier": m.group(2), "clicks": int(m.group(1))})
+        pm = re.search(r"Path\s*(\d)", str(row[3] or ""))
+        tiers[t] = {"tier": t, "routes": routes, "path": int(pm.group(1)) if pm else 0,
+                    "payPct": num(row[5])}
+        order.append(t)
+    assert order == list(TIER_NAMES), "Job_Progression tiers not parsed: %r" % order
+    assert tiers["Mid"]["routes"] == [{"tier": "Low+", "clicks": 15}, {"tier": "Low", "clicks": 20}], tiers["Mid"]
+    job_progression = {"order": order, "tiers": tiers}
 
     # ---- Pets ----
     ws = wb["Pets"]
@@ -585,10 +698,11 @@ def main():
         "items": items, "jobs": jobs, "pets": pets, "music": music, "sfx": sfx,
         "buildings": buildings, "roadNodes": roadNodes, "roadEdges": roadEdges,
         "weekend": parse_weekend(wb),
+        "education": education, "jobProgression": job_progression,
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
-        f.write("// GENERATED by scripts/build_data.py from Personality_Panic_Balance_Lock_v3.xlsx\n")
+        f.write("// GENERATED by scripts/build_data.py from Personality_Panic_Balance_Lock_v5.xlsx\n")
         f.write("// Do not hand-edit numbers here; edit the spreadsheet and re-run the script.\n")
         f.write("var PP_DATA = ")
         f.write(json.dumps(data, indent=1))

@@ -1,7 +1,7 @@
 # Personality Panic! — Playable MVP
 
 First playable build of the full loop from the **MVP Master Manual v2** +
-**Balance Lock v2-2** spreadsheet. Real art, real music, walking Casey on the
+**Balance Lock** spreadsheet (now v5). Real art, real music, walking Casey on the
 overmap, all 14 buildings, 118 actions, 49 named jobs, 41 items, 16 pets,
 16 personality cards, CPU bots, save/resume, and internet multiplayer.
 
@@ -57,18 +57,33 @@ action buttons and engine bridge.
 Airport now has two painted pages. Page 2 contains Buy Travel Insurance and
 Airport Lounge Flex; the painted arrows switch pages without leaving the scene.
 
-## Playtest progression rules
+## Balance Lock v5 rules (Manual v5)
 
-- Jobs require at least one completed shift each player-week after the hiring
-  or promotion grace week; missing the full week fires the player.
-- Career ladders are sequential. Players apply only to entry roles, complete
-  two shifts, then use Ask for Promotion to advance exactly one pay rung.
-- The current six university courses are sequential and one-time. Completed
-  courses stay greyed out and only the next course is selectable.
-- Buying groceries satisfies the current turn's meal and stores only the
-  remaining weeks for later Eat at Home actions.
-- Players travel to Heelton Heights and use the Resident Experience Desk's
-  Pay Rent button to lease the suite; successful payment moves them in immediately.
+- **Two scalars.** T is only the stat cap / endgame threshold (100 / 500 / 1000).
+  B is the economy base every sheet percentage resolves against (100 / 250 / 350):
+  gains, prices, rent, pay, card effects.
+- **High IQ University:** 5 paths x 6 courses (Technical Certification, College
+  Diploma, College Degree, Master's, PhD). Courses cost $50-$250, take 1-5 study
+  clicks (1 TU each), unlock strictly in order, complete once, and grey out.
+  The fee is paid on the first click; partial progress carries between turns.
+  Every painted class/degree button opens the catalog.
+- **Jobs: no promotions.** Switch freely at the Corporate Soul Exchange job board
+  (the painted Ask for Promotion button opens it). A tier unlocks with BOTH its
+  education path and its work clicks: Low+ 10 Low; Mid 15 Low+ or 20 Low; Mid+ 20
+  Mid; High 25 Mid+ or 30 Mid; Max 40 High. Pay per click is set by tier:
+  $40 / $65 / $110 / $170 / $260 / $400. `js/assumptions.js` `jobClickScale`
+  switches to the sheet's Option B (mode-scaled gates).
+- **Mall:** absolute prices ($50 casual clothes ... $2000 car), no stat penalties,
+  Luxury-only items (stored without bonuses outside Heelton), and 16 home-fixture
+  bonuses that fire when their action happens at home (only the best bed counts).
+  The fridge is required for 2- and 4-week groceries.
+- **Investments:** buying moves the principal into one holding per asset type;
+  Cash Out returns 100%; only a crypto RUG PULL destroys a holding; Read Tiny
+  Print grants INFORMED. Lifestyle Loan repays 5%B on each of the next 4 turns.
+- **Weekend Cards:** Full / Essential (no life events) / Off (debug — nothing
+  shown, but penalties and investments still resolve to the log).
+- Jobs still require one completed shift each player-week after the hiring week.
+- Final score counts Money at most T, so the maximum score stays 6T.
 
 ## Where the numbers live
 

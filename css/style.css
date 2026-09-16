@@ -947,3 +947,26 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
 .pet-card:hover .pet-hover { display: block; }
 
 #music-mute.muted { filter: grayscale(1) brightness(.75); box-shadow: inset 0 0 0 99em rgba(180,40,40,.28); }
+
+/* v5 High IQ University catalog: 5 paths x 6 courses, strict order */
+#dlg-shop .dialog:has(.course-path) { width: 74em; }
+.course-progress { grid-column: 1 / -1; font-weight: 900; padding: .1em .3em; }
+.course-progress .course-why { color: var(--red); }
+.course-path { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(6, 1fr); gap: .35em; }
+.course-path-head { grid-column: 1 / -1; font-weight: 900; margin-top: .25em; }
+.course-path-head span { font-weight: 700; opacity: .75; font-size: .85em; }
+.course-path.complete .course-path-head { color: #145c14; }
+.shop-item.course { padding: .35em .45em; }
+.shop-item.course .s-name { font-size: .92em; line-height: 1.1; }
+.shop-item.course .s-fx { font-size: .74em; }
+.shop-item.course .s-cost { font-size: .8em; }
+.shop-item.course.done { background: #d9d6cc; filter: grayscale(1); opacity: .55; }
+.shop-item.course.next { outline: .22em solid var(--gold); background: #fff3c4; }
+.shop-item.course.next:not(:disabled):hover { filter: brightness(1.05); cursor: pointer; }
+
+/* v5 job board: tier progress (work clicks + education, no promotions) */
+.job-progress { display: flex; flex-wrap: wrap; gap: .35em; margin-bottom: .3em; }
+.tier-chip { font-weight: 900; font-size: .8em; padding: .2em .55em; border-radius: 1em; border: .14em solid var(--stroke); background: #fffbe8; }
+.tier-chip.open { background: #d8f5dc; color: #145c14; }
+.tier-chip.locked { opacity: .75; }
+.job-progress-note { flex-basis: 100%; font-size: .78em; font-weight: 700; opacity: .8; }

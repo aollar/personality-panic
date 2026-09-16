@@ -359,7 +359,7 @@
     var st = UI.state, p = st.players[st.activeIdx];
     $("#shop-title").textContent = group;
     $("#shop-grid").innerHTML = items.map(function (it, i) {
-      var cost = Math.round(it.costPct * st.T);
+      var cost = PPEngine.pctB(st, it.costPct);
       var owned = p.items.indexOf(it.name) !== -1;
       return '<button class="shop-item ' + (owned ? "owned" : "") + '" data-i="' + i + '" ' + (owned || p.stats.money < cost ? "disabled" : "") + ">" +
         '<div class="s-name">' + it.name + '</div><div class="s-cost">$' + cost + "</div></button>";
@@ -372,19 +372,20 @@
       };
     });
   };
-  // guest remote course picker (host bounced needsChoice back)
+  // guest remote course picker (host bounced needsChoice back): only the next
+  // course is ever selectable, so offer exactly that one
   UI.doActionCourseRemote = function (actionId) {
-    var courses = (window.PP_ASSUMPTIONS && window.PP_ASSUMPTIONS.courses) || [];
+    var st = UI.state, p = st.players[st.activeIdx], next = PPEngine.nextCourse(p);
     $("#shop-title").textContent = "📚 Course Catalog";
-    $("#shop-grid").innerHTML = courses.map(function (c, i) {
-      return '<button class="shop-item" data-i="' + i + '">' +
-        '<div class="s-name">' + c.name + "</div><div class='s-cost'>" + c.blurb + "</div></button>";
-    }).join("");
+    $("#shop-grid").innerHTML = next
+      ? '<button class="shop-item" data-id="' + next.id + '"><div class="s-name">' + next.name +
+        "</div><div class='s-cost'>Path " + next.path + " · " + next.clicks + " click(s) · $" + PPEngine.courseCostDue(st, p, next) + "</div></button>"
+      : '<div class="course-progress">All 30 courses completed 🎓</div>';
     document.querySelector("#dlg-shop").classList.add("show");
     $$("#shop-grid .shop-item").forEach(function (b) {
       b.onclick = function () {
         document.querySelector("#dlg-shop").classList.remove("show");
-        NET.sendIntent("action", { id: actionId, choice: { course: courses[+b.dataset.i].name } });
+        NET.sendIntent("action", { id: actionId, choice: { course: b.dataset.id } });
       };
     });
   };

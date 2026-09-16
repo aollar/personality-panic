@@ -17,7 +17,8 @@ var SHOTS = path.join(__dirname, "shots");
     var E = window.PPEngine, UI = window.PPUI;
     UI.state = E.newGame({ T: 100, timerSeconds: 0, maxRounds: 30, seed: 817,
       players: [{ name: "Kendrick QA", code: "ENFP", isBot: false }] });
-    var p = UI.state.players[0]; p.stats.money = 1000; p.tu = 999; p.location = "mall";
+    // Heelton tenant: Dining Table is Luxury-only since Balance Lock v4
+    var p = UI.state.players[0]; p.stats.money = 5000; p.tu = 999; p.location = "mall"; p.housing = "lux";
     UI.cfg = { hints: true, skipCpu: true, players: UI.state.players };
     UI.mode = "local"; UI.mySlots = [0]; UI.startGameUI(true); UI.turnBegun = true;
     document.querySelector(".hotspot[data-id='mall']").click();
@@ -65,44 +66,70 @@ var SHOTS = path.join(__dirname, "shots");
   if (airportIds.join(",") !== "A099,A100,A101") throw new Error("Airport page 2 ids: " + airportIds.join(","));
   await page.screenshot({ path: path.join(SHOTS, "kendrick-airport-page-2.png") });
 
-  // Course catalog: exactly one next course; completed course stays greyed out.
-  await page.evaluate(function () {
+  // v5 course catalog: every painted class/degree button opens it; exactly one
+  // next course; completed courses grey out; multi-click progress shows in place.
+  var uniButtons = await page.evaluate(function () {
     var UI = window.PPUI, p = UI.state.players[0]; document.querySelector("#btn-leave-scene").click();
-    p.location = "university"; p.tu = 999; p.stats.money = 1000; p.completedCourses = []; UI.turnBegun = true;
+    p.location = "university"; p.tu = 999; p.stats.money = 5000; p.edu = { done: [], current: null }; UI.turnBegun = true;
     document.querySelector(".hotspot[data-id='university']").click();
-    document.querySelector("#paint-layer .paint-btn[data-a='A067']").click();
+    return Array.prototype.map.call(document.querySelectorAll("#paint-layer .paint-btn"), function (b) { return b.dataset.a; });
   });
+  if (uniButtons.filter(function (id) { return id === "A120"; }).length !== 4 || uniButtons.some(function (id) { return /A06[7]|A07[012]/.test(id); }))
+    throw new Error("University painted buttons: " + uniButtons.join(","));
+  await page.evaluate(function () { document.querySelectorAll("#paint-layer .paint-btn[data-a='A120']")[3].click(); });
   await page.waitForSelector("#dlg-shop.show", { timeout: 5000 });
-  var enabledCourses = await page.$$eval("#shop-grid .shop-item:not([disabled])", function (buttons) { return buttons.length; });
-  if (enabledCourses !== 1) throw new Error("Expected one available first course, got " + enabledCourses);
-  await page.click("#shop-grid .shop-item:not([disabled])");
+  var catalog = await page.$$eval("#shop-grid .shop-item.course", function (buttons) {
+    return { total: buttons.length, enabled: buttons.filter(function (b) { return !b.disabled; }).map(function (b) { return b.dataset.id; }) };
+  });
+  if (catalog.total !== 30 || catalog.enabled.join(",") !== "P1C1") throw new Error("Catalog state: " + JSON.stringify(catalog));
+  await page.click("#shop-grid .shop-item.course:not([disabled])");
   await new Promise(function (resolve) { setTimeout(resolve, 250); });
-  await page.evaluate(function () { document.querySelector("#paint-layer .paint-btn[data-a='A067']").click(); });
-  await page.waitForSelector("#dlg-shop.show", { timeout: 5000 });
-  var courseState = await page.$$eval("#shop-grid .shop-item", function (buttons) {
-    return buttons.map(function (b) { return { disabled: b.disabled, owned: b.classList.contains("owned") }; });
+  var courseState = await page.evaluate(function () {
+    var q = function (id) { return document.querySelector("#shop-grid .shop-item[data-id='" + id + "']"); };
+    return { open: document.querySelector("#dlg-shop").classList.contains("show"),
+      c1: { disabled: q("P1C1").disabled, done: q("P1C1").classList.contains("done") },
+      c2: { disabled: q("P1C2").disabled, next: q("P1C2").classList.contains("next") },
+      money: window.PPUI.state.players[0].stats.money };
   });
-  if (!courseState[0].disabled || !courseState[0].owned || courseState[1].disabled)
-    throw new Error("Sequential course state failed: " + JSON.stringify(courseState.slice(0, 3)));
+  if (!courseState.open || !courseState.c1.disabled || !courseState.c1.done || courseState.c2.disabled || !courseState.c2.next || courseState.money !== 4950)
+    throw new Error("Sequential course state failed: " + JSON.stringify(courseState));
+  // finish path 1, then one click into a 2-click Path 2 course shows partial progress
+  await page.evaluate(function () {
+    var p = window.PPUI.state.players[0];
+    ["P1C2", "P1C3", "P1C4", "P1C5", "P1C6"].forEach(function (id) { p.edu.done.push(id); });
+    document.querySelector("#dlg-shop").classList.remove("show");
+    document.querySelectorAll("#paint-layer .paint-btn[data-a='A120']")[0].click();
+  });
+  await page.waitForSelector("#dlg-shop.show", { timeout: 5000 });
+  await page.click("#shop-grid .shop-item[data-id='P2C1']");
+  await new Promise(function (resolve) { setTimeout(resolve, 250); });
+  var partial = await page.evaluate(function () {
+    var b = document.querySelector("#shop-grid .shop-item[data-id='P2C1']");
+    return { disabled: b.disabled, label: b.querySelector(".s-cost").textContent,
+      pathDone: document.querySelector(".course-path").classList.contains("complete") };
+  });
+  if (partial.disabled || !/1\/2 clicks/.test(partial.label) || !partial.pathDone) throw new Error("Partial course UI: " + JSON.stringify(partial));
+  await page.screenshot({ path: path.join(SHOTS, "v5-course-catalog.png") });
   await page.evaluate(function () { document.querySelector("#dlg-shop").classList.remove("show"); });
 
-  // Degree milestones remain visibly locked after earning them, in order.
-  var degreeState = await page.evaluate(function () {
-    var p = window.PPUI.state.players[0]; p.degreeProgress = 10; p.tu = 999; p.stats.money = 1000;
-    ["A070", "A071", "A072"].forEach(function (id) {
-      document.querySelector("#paint-layer .paint-btn[data-a='" + id + "']").click();
-    });
-    return {
-      degrees: p.degrees.slice(),
-      buttons: ["A070", "A071", "A072"].map(function (id) {
-        var b = document.querySelector("#paint-layer .paint-btn[data-a='" + id + "']");
-        return { id: id, locked: b.classList.contains("locked"), chip: b.querySelector(".lock-chip").textContent };
-      })
-    };
+  // v5 job board: painted ASK FOR PROMOTION opens the job board with tier progress chips.
+  await page.evaluate(function () {
+    var UI = window.PPUI, p = UI.state.players[0]; document.querySelector("#btn-leave-scene").click();
+    p.location = "soulExchange"; p.tu = 999; UI.turnBegun = true;
+    p.workClicks = { Low: 12, "Low+": 0, Mid: 0, "Mid+": 0, High: 0, Max: 0 };
+    document.querySelector(".hotspot[data-id='soulExchange']").click();
+    var promo = document.querySelectorAll("#paint-layer .paint-btn[data-a='A076']");
+    promo[promo.length - 1].click();
   });
-  if (degreeState.degrees.join(",") !== "Undergrad,Masters,PhD" ||
-      degreeState.buttons.some(function (b) { return !b.locked || b.chip !== "🔒"; }))
-    throw new Error("One-time degree UI failed: " + JSON.stringify(degreeState));
+  await page.waitForSelector("#dlg-jobs.show", { timeout: 5000 });
+  var board = await page.evaluate(function () {
+    return { chips: Array.prototype.map.call(document.querySelectorAll("#job-list .tier-chip"), function (c) { return c.textContent; }),
+      openable: document.querySelectorAll("#job-list .job-row:not([disabled])").length };
+  });
+  if (board.chips.length !== 6 || !/✓ Low\+ · 0 clicks/.test(board.chips[1]) || board.openable < 10)
+    throw new Error("Job board: " + JSON.stringify(board));
+  await page.screenshot({ path: path.join(SHOTS, "v5-job-board.png") });
+  await page.evaluate(function () { document.querySelector("#dlg-jobs").classList.remove("show"); });
 
   // Static Club menu must be the top parent layer over the animated video.
   await page.evaluate(function () {
@@ -133,5 +160,5 @@ var SHOTS = path.join(__dirname, "shots");
 
   await browser.close();
   if (errors.length) throw new Error("Page errors: " + errors.join(" | "));
-  console.log("KENDRICK UI PASS", JSON.stringify({ owned: owned, airportIds: airportIds, degrees: degreeState, stack: stack }));
+  console.log("KENDRICK UI PASS", JSON.stringify({ owned: owned, airportIds: airportIds, catalog: catalog, partial: partial, board: board, stack: stack }));
 })().catch(function (e) { console.error("KENDRICK UI FAIL", e.message); process.exit(1); });

@@ -13,7 +13,7 @@ function rich(p) { p.stats.money = 1000; p.tu = 999; }
 
 // Delivered action cues exist for the reported missing park/housing/school sounds.
 ["A003", "A018", "A019", "A020", "A021", "A022", "A023", "A025",
- "A067", "A068", "A069", "A070", "A071", "A072"].forEach(id => {
+ "A120", "A068", "A069"].forEach(id => {
   assert.ok(SFX.actions[id], `${id} should have a cue`);
   assert.ok(fs.existsSync(path.join(__dirname, "..", "assets", "audio", "sfx", SFX.actions[id])), `${id} cue file missing`);
 });
@@ -35,7 +35,7 @@ function rich(p) { p.stats.money = 1000; p.tu = 999; }
 // automatically; hunger returns only after all four covered turns have passed.
 {
   const st = E.newGame({ T: 100, timerSeconds: 0, maxRounds: 30, seed: 118,
-    weekendCards: false, players: [{ name: "Food Tester", code: "ENFP", isBot: false }] });
+    weekendMode: "essential", players: [{ name: "Food Tester", code: "ENFP", isBot: false }] });
   const p = st.players[0]; rich(p); p.items.push("Fridge"); p.location = "airOne";
   assert.ok(E.perform(st, "A028").ok);
   assert.deepStrictEqual([p.ate, p.foodSupply], [true, 3], "purchase turn is meal 1 of 4");
@@ -72,65 +72,75 @@ function rich(p) { p.stats.money = 1000; p.tu = 999; }
   assert.strictEqual(p.housing, "lux"); assert.strictEqual(p.location, "luxury");
 }
 
-// Courses are one-time and sequential.
-{
-  const st = game(), p = st.players[0], courses = E.ASSUME.courses; rich(p); p.location = "university";
-  assert.strictEqual(E.perform(st, "A067").needsChoice, "course");
-  assert.strictEqual(E.perform(st, "A067", { course: courses[1].name }).ok, false);
-  courses.forEach((course, i) => {
-    rich(p);
-    const r = E.perform(st, "A067", { course: course.name });
-    assert.ok(r.ok, `course ${i + 1} should unlock in sequence`);
-    assert.strictEqual(p.completedCourses[i], course.name);
-  });
-  rich(p);
-  const done = E.actionsAt(st, p).find(a => a.id === "A067");
-  assert.strictEqual(done.ok, false); assert.match(done.why, /All courses completed/);
-}
-
-// Degrees are sequential, permanent, and each milestone pays out only once.
+// v5 courses: 30 courses in 5 paths, strictly sequential, one-time, fee on
+// the first click only, multi-click courses keep partial progress.
 {
   const st = game(), p = st.players[0]; rich(p); p.location = "university";
-  p.degreeProgress = 10;
-  let masters = E.actionsAt(st, p).find(a => a.id === "A071");
-  assert.strictEqual(masters.ok, false); assert.match(masters.why, /Undergrad first/);
-
-  p.degreeProgress = 3; rich(p);
-  assert.ok(E.perform(st, "A070").ok); assert.deepStrictEqual(p.degrees, ["Undergrad"]);
-  const undergradStats = { money: p.stats.money, critical: p.stats.critical, career: p.stats.career, tu: p.tu };
-  let repeat = E.perform(st, "A070");
-  assert.strictEqual(repeat.ok, false); assert.match(repeat.why, /already completed/i);
-  assert.deepStrictEqual({ money: p.stats.money, critical: p.stats.critical, career: p.stats.career, tu: p.tu }, undergradStats);
-
-  p.degreeProgress = 6; rich(p);
-  assert.ok(E.perform(st, "A071").ok); assert.deepStrictEqual(p.degrees, ["Undergrad", "Masters"]);
-  repeat = E.perform(st, "A071");
-  assert.strictEqual(repeat.ok, false); assert.match(repeat.why, /already completed/i);
-
-  p.degreeProgress = 10; rich(p);
-  assert.ok(E.perform(st, "A072").ok); assert.deepStrictEqual(p.degrees, ["Undergrad", "Masters", "PhD"]);
-  repeat = E.perform(st, "A072");
-  assert.strictEqual(repeat.ok, false); assert.match(repeat.why, /already completed/i);
+  st.maxRounds = 0;   // this walk spans ~60 turns of partial progress
+  assert.strictEqual(E.perform(st, "A120").needsChoice, "course");
+  assert.strictEqual(E.perform(st, "A120", { course: "P1C2" }).ok, false, "course 2 locked until course 1");
+  assert.strictEqual(E.perform(st, "A120", { course: "P2C1" }).ok, false, "path 2 locked until path 1");
+  E.COURSES.forEach((course) => {
+    for (let k = 0; k < course.clicks; k++) {
+      rich(p);
+      const before = p.stats.money;
+      const r = E.perform(st, "A120", { course: course.id });
+      assert.ok(r.ok, `course ${course.id} click ${k + 1} should be available in sequence`);
+      const expectedFee = k === 0 ? Math.round(course.costPct * 100) : 0;
+      assert.strictEqual(before - p.stats.money, expectedFee, `${course.id} fee charged on first click only`);
+      if (k < course.clicks - 1) {
+        assert.ok(!p.edu.done.includes(course.id), `${course.id} not complete after ${k + 1} clicks`);
+        E.endTurn(st); p.location = "university";   // partial progress persists between turns
+        assert.strictEqual(p.edu.current.clicks, k + 1, `${course.id} progress kept across turns`);
+      }
+    }
+    assert.ok(p.edu.done.includes(course.id), `${course.id} completed after ${course.clicks} clicks`);
+    rich(p);
+    const again = E.perform(st, "A120", { course: course.id });
+    assert.strictEqual(again.ok, false, `${course.id} cannot be repeated`);
+  });
+  assert.deepStrictEqual(p.degrees, ["Technical Certification", "College Diploma", "College Degree", "Master's Degree", "PhD"]);
+  rich(p);
+  const done = E.actionsAt(st, p).find(a => a.id === "A120");
+  assert.strictEqual(done.ok, false); assert.match(done.why, /All 30 courses completed/);
+  assert.deepStrictEqual(E.COURSES.map(c => Math.round(c.costPct * 100)).filter((v, i, a) => a.indexOf(v) === i), [50, 100, 150, 200, 250]);
+  assert.deepStrictEqual(E.COURSES.map(c => c.clicks).filter((v, i, a) => a.indexOf(v) === i), [1, 2, 3, 4, 5]);
 }
 
-// Jobs: direct applications are entry-level only; two shifts unlock one pay step.
+// v5 jobs: no promotion action, no loyalty requirement; tiers open on work
+// clicks + the matching education path.
 {
   const st = game(), p = st.players[0]; rich(p); p.location = "soulExchange";
+  assert.ok(!E.ACTIONS.A084, "Ask for Promotion removed");
   let r = E.perform(st, "A076", { job: "Teller", building: "debtstreet" });
-  assert.ok(r.ok); assert.strictEqual(p.job.name, "Teller"); assert.strictEqual(p.jobShifts, 0);
-  p.items.push("Smart Clothes"); p.stats.critical = 100;
-  p.location = "debtstreet"; rich(p); assert.ok(E.perform(st, "A092").ok); assert.strictEqual(p.jobShifts, 1);
-  p.location = "debtstreet"; rich(p); assert.ok(E.perform(st, "A092").ok); assert.strictEqual(p.jobShifts, 2);
-  assert.strictEqual(E.bestPromotion(st, p).name, "Junior Loan Shark", "promotion must choose next pay step");
-  p.location = "soulExchange"; rich(p); r = E.perform(st, "A084");
-  assert.ok(r.ok); assert.strictEqual(p.job.name, "Junior Loan Shark"); assert.strictEqual(p.jobShifts, 0);
-
-  p.items.push("Business Clothes"); p.jobShifts = 2; p.location = "soulExchange"; rich(p);
-  r = E.perform(st, "A084"); assert.strictEqual(r.ok, false); assert.match(r.why, /one promotion per week/i);
-
-  p.stats.money = 1000; p.stats.critical = 100; p.location = "soulExchange"; p.tu = 999;
-  r = E.perform(st, "A076", { job: "Wolf of Debtstreet", building: "debtstreet" });
-  assert.strictEqual(r.ok, false); assert.match(r.why, /Promotion track only/);
+  assert.ok(r.ok); assert.strictEqual(p.job.name, "Teller");
+  p.items.push("Smart Clothes", "Business Clothes", "Computer"); p.stats.critical = 100; p.stats.career = 100;
+  for (let i = 0; i < 20; i++) { p.location = "debtstreet"; rich(p); assert.ok(E.perform(st, "A092").ok); }
+  assert.strictEqual(p.workClicks.Low, 20);
+  p.location = "soulExchange"; rich(p);
+  r = E.perform(st, "A076", { job: "Junior Loan Shark", building: "debtstreet" });
+  assert.strictEqual(r.ok, false, "Mid needs Path 2 even with 20 Low clicks"); assert.match(r.why, /Path 2/);
+  E.COURSES.filter(c => c.path <= 2).forEach(c => { p.edu.done.push(c.id); });
+  r = E.perform(st, "A076", { job: "Junior Loan Shark", building: "debtstreet" });
+  assert.ok(r.ok, "Mid unlocked by 20 Low clicks + Path 2 (alternate route)"); assert.strictEqual(p.job.name, "Junior Loan Shark");
+  // switch straight back to an entry job and back again: no minimum time in a job
+  r = E.perform(st, "A076", { job: "Teller", building: "debtstreet" }); assert.ok(r.ok);
+  r = E.perform(st, "A076", { job: "Junior Loan Shark", building: "debtstreet" }); assert.ok(r.ok);
+  // Low+ gate: 10 Low clicks + Path 1 (have both)
+  assert.ok(E.tierGate(st, p, "Low+").ok);
+  // High needs 25 Mid+ OR 30 Mid clicks + Path 4
+  E.COURSES.filter(c => c.path <= 4).forEach(c => { if (!p.edu.done.includes(c.id)) p.edu.done.push(c.id); });
+  r = E.perform(st, "A076", { job: "Mortgage Broker", building: "debtstreet" });
+  assert.strictEqual(r.ok, false); assert.match(r.why, /30 Mid work clicks \(0\/30\)/);
+  p.workClicks.Mid = 30;
+  r = E.perform(st, "A076", { job: "Mortgage Broker", building: "debtstreet" });
+  assert.ok(r.ok, "High unlocked via 30 Mid clicks + Path 4");
+  // Max needs 40 High clicks + Path 5
+  r = E.perform(st, "A076", { job: "Chief Financial Officer", building: "debtstreet" });
+  assert.strictEqual(r.ok, false); assert.match(r.why, /Path 5/);
+  // pay is set by tier: $40 Low ... $400 Max at B=100
+  const pay = {}; E.DATA.jobs.forEach(j => { pay[j.progressTier] = j.basePayT100; });
+  assert.deepStrictEqual(pay, { Low: 40, "Low+": 65, Mid: 110, "Mid+": 170, High: 260, Max: 400 });
 }
 
 // Missing every shift after the grace week fires the player.

@@ -23,13 +23,14 @@ var ACTION_OVERRIDES = {
   joinunionmeeting: "A080",         // "...to Fight Evil Corporation"
   openconceptbathroom: "A003",      // painted Low-Cost bathroom = Take Communal Shower
   joingroupchant: "A060",           // delivered name omits "Re-Education"
+  takeclass: "A120",                // v5: Take Class became Attend Course (Education_Paths)
   vamoose: null
 };
 // one cue covering a GROUP of actions (building-level shared cues)
 var GROUP_CUES = [
-  { frag: "aironesupermarketpurchase", ids: ["A026", "A027", "A028", "A029", "A031", "A032"] },
-  { frag: "debtstreetcapitalfinancialaction", ids: ["A085", "A086", "A087", "A088", "A090", "A091"] },
-  { frag: "highiquniversityfinishdegree", ids: ["A070", "A071", "A072"] },
+  { frag: "aironesupermarketpurchase", ids: ["A026", "A027", "A028", "A121", "A029", "A031", "A032"] },
+  { frag: "debtstreetcapitalfinancialaction", ids: ["A085", "A086", "A087", "A088", "A090", "A091", "A119"] },
+  { frag: "highiquniversityfinishdegree", ids: [] },   // degrees removed in v5 (cue kept for later)
   { frag: "luxuryapartmentsluxurybathandpetspa", ids: ["A010", "A016"] },
   { frag: "ethicalpetshoppurchase", ids: ["A102", "A103", "A104"] },
   { frag: "mallpurchase", ids: ["A112", "A113", "A114", "A115"] },
