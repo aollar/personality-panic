@@ -501,7 +501,7 @@ var PP_DATA = {
    "name": "Take Luxury Bath",
    "category": "Relax",
    "tu": 1,
-   "costPct": 0.02,
+   "costPct": 0.2,
    "gains": [
     {
      "stat": "health",
@@ -582,7 +582,7 @@ var PP_DATA = {
    "name": "Order Fancy Food",
    "category": "Food",
    "tu": 1,
-   "costPct": 0.08,
+   "costPct": 0.8,
    "gains": [
     {
      "stat": "happiness",
@@ -609,7 +609,7 @@ var PP_DATA = {
    "name": "Host Friends",
    "category": "Social",
    "tu": 2,
-   "costPct": 0.06,
+   "costPct": 0.6,
    "gains": [
     {
      "stat": "connection",
@@ -683,7 +683,7 @@ var PP_DATA = {
    "name": "Pet Spa Treatment",
    "category": "Pet",
    "tu": 1,
-   "costPct": 0.08,
+   "costPct": 0.8,
    "gains": [],
    "petGains": [
     {

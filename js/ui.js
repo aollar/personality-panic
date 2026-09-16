@@ -550,6 +550,13 @@
     if (rentDueNow)
       flags.push('<button class="flag-chip bad" id="hud-rent">\ud83c\udfe0 PAY RENT $' +
         Math.round(E.ACTIONS[p.housing === "lux" ? "X007" : "X006"].costPct * E.econ(st) * (p.rentMod || 1)) + "</button>");
+    // heads-up the week before rent: v5 rent is a real chunk of income
+    var rentEvery = DATA.settings.rentIntervalTurns;
+    if (!p.homeless && (st.turn + 1) % rentEvery === 0) {
+      var nextRent = Math.round(E.ACTIONS[p.housing === "lux" ? "X007" : "X006"].costPct * E.econ(st) * (p.rentMod || 1));
+      flags.push('<span class="flag-chip' + (p.stats.money < nextRent ? " bad" : "") + '" title="Rent is due at the start of next week">' +
+        "\ud83c\udfe0 rent $" + nextRent + " next week</span>");
+    }
     if (!p.ate) flags.push('<span class="flag-chip bad">\ud83c\udf54 eat!</span>');
     if (p.turnsSinceRelax >= 2) flags.push('<span class="flag-chip bad">\ud83d\ude35 stressed</span>');
     if (p.homeless && isMyTurn()) {
@@ -573,6 +580,12 @@
       flags.push('<span class="flag-chip">\ud83e\udd55 FED \u00b7 PANTRY EMPTY</span>');
     else if (p.foodSupply > 0)
       flags.push('<span class="flag-chip">\ud83e\udd55 ' + p.foodSupply + " STORED</span>");
+    // unfinished multi-click course: remind the player to come back
+    if (p.edu && p.edu.current) {
+      var cur = E.COURSES.filter(function (c) { return c.id === p.edu.current.id; })[0];
+      if (cur) flags.push('<span class="flag-chip" title="Finish it at High IQ University">\ud83d\udcda ' + cur.name + " \u00b7 " +
+        p.edu.current.clicks + "/" + cur.clicks + "</span>");
+    }
     if (p.job) {
       var jt = p.job.progressTier || p.job.tier;
       flags.push('<span class="flag-chip">\ud83d\udcbc ' + p.job.name + " \u00b7 " + jt + " clicks " +
@@ -1668,7 +1681,11 @@
 
   function openJobs(actionId) {
     var st = UI.state, p = activeP();
-    var rows = E.jobsWithStatus(st, p);
+    // current job first, then jobs you can take now, then locked ones (stable within each group)
+    var rows = E.jobsWithStatus(st, p).map(function (r, i) { return { r: r, i: i }; }).sort(function (a, b) {
+      var rank = function (x) { return x.r.current ? 0 : x.r.why ? 2 : 1; };
+      return rank(a) - rank(b) || a.i - b.i;
+    }).map(function (x) { return x.r; });
     var clicks = p.workClicks || {};
     var header = '<div class="job-progress">' + E.DATA.jobProgression.order.map(function (t) {
       var g = E.tierGate(st, p, t);
