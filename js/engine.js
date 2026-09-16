@@ -397,6 +397,11 @@
     if (!p.edu || !Array.isArray(p.edu.done)) p.edu = { done: [], current: null };
     if (!p.workClicks) p.workClicks = newWorkClicks();
     if (!p.principal) p.principal = {};
+    // saves store a COPY of the job row: rebind it so resumed games get current pay/tier data
+    if (p.job) {
+      var fresh = DATA.jobs.filter(function (j) { return j.name === p.job.name && j.building === p.job.building; })[0];
+      if (fresh) p.job = fresh;
+    }
     p.degrees = DATA.education.filter(function (path) { return pathComplete(p, path.path); })
       .map(function (path) { return path.name; });
   }
