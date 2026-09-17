@@ -180,13 +180,22 @@ test("lifestyle loan: +15%B now, -5%B at the start of each of the next 4 turns, 
   assert.strictEqual(p.debts.length, 0);
 });
 
-test("Bribe Inspector costs money + Critical Thinking; Contact P.I.T.A. once per game", () => {
+test("Bribe Inspector costs $50 + Critical Thinking; Contact P.I.T.A. once per game", () => {
   const st = game(), p = st.players[0]; rich(p, 500); p.location = "petShop";
   const c = p.stats.critical;
   assert.ok(E.perform(st, "A108").ok);
-  assert.strictEqual(p.stats.money, 490); assert.ok(p.stats.critical > c);
+  assert.strictEqual(p.stats.money, 450); assert.ok(p.stats.critical > c);   // $50: matches the painted Bribes card
   assert.ok(E.perform(st, "A109").ok);
   assert.strictEqual(E.perform(st, "A109").ok, false);
+});
+
+test("club jobs require the club dress code (no unworkable hires)", () => {
+  const st = game(), p = st.players[0]; rich(p); p.location = "soulExchange";
+  let r = E.perform(st, "A076", { job: "Coat Check Staff", building: "club" });
+  assert.strictEqual(r.ok, false); assert.match(r.why, /Dress code/);
+  p.items.push("Dressy Clothes", "Dress Shoes"); p.stats.coolness = 100;
+  r = E.perform(st, "A076", { job: "Coat Check Staff", building: "club" });
+  assert.ok(r.ok, r.why);
 });
 
 test("final score counts Money at most T (max score 6T)", () => {

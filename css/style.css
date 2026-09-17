@@ -956,6 +956,7 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
 .course-path-head { grid-column: 1 / -1; font-weight: 900; margin-top: .25em; }
 .course-path-head span { font-weight: 700; opacity: .75; font-size: .85em; }
 .course-path.complete .course-path-head { color: #145c14; }
+.course-path.focus { outline: .2em dashed var(--gold); outline-offset: .2em; border-radius: .4em; }
 .shop-item.course { padding: .35em .45em; }
 .shop-item.course .s-name { font-size: .92em; line-height: 1.1; }
 .shop-item.course .s-fx { font-size: .74em; }

@@ -1252,6 +1252,7 @@
     var activeH = actionId === h.a ? h : Object.assign({}, h, { a: actionId });
     btn.dataset.a = actionId;
     if (h.choice) btn._choice = h.choice;
+    if (h.focusPath) btn._focusPath = h.focusPath;
     btn.style.left = h.box[0] + "%";
     btn.style.top = h.box[1] + "%";
     btn.style.width = h.box[2] + "%";
@@ -1263,6 +1264,7 @@
       if (!isMyTurn()) { toast("Not your turn"); return; }
       click();
       hideTip();
+      UI.coursePathFocus = btn._focusPath || null;
       doAction(actionId, btn._choice);
     };
     return btn;
@@ -1408,11 +1410,19 @@
       var item = itemName && E.ITEMS && E.ITEMS[itemName];
       var owned = item && p.items.indexOf(item.name) !== -1;   // one-time buy already owned
       if (!locked && item && itemBlockReason(p, item)) locked = true;
+      // university path cards: completed paths show a green COMPLETE chip,
+      // paths beyond the next course show locked (the catalog still opens)
+      var fp = btn._focusPath, pathDone = fp && E.pathComplete(p, fp);
+      if (fp && !pathDone) {
+        var nextC = E.nextCourse(p);
+        locked = !ann || !ann.ok || (nextC ? nextC.path < fp : false);
+      }
+      if (pathDone) { locked = true; owned = true; }
       btn.classList.toggle("locked", locked);
       btn.classList.toggle("owned", !!owned);
       var lc = btn.querySelector(".lock-chip");
       lc.style.display = locked ? "" : "none";
-      lc.textContent = owned ? "✓ OWNED" : "🔒";
+      lc.textContent = pathDone ? "✓ COMPLETE" : owned ? "✓ OWNED" : "🔒";
       var tc = btn.querySelector(".tu-chip");
       if (ann) tc.textContent = ann.tu + " TU" + (ann.cost ? " · $" + ann.cost : "");
     });
@@ -1669,6 +1679,12 @@
           }).join("") + "</div>";
       }).join("");
     openDialog("shop");
+    // opened from a painted path card: bring that path into view
+    if (UI.coursePathFocus) {
+      var focusEl = $$("#shop-grid .course-path")[UI.coursePathFocus - 1];
+      UI.coursePathFocus = null;
+      if (focusEl) { focusEl.classList.add("focus"); focusEl.scrollIntoView({ block: "center" }); }
+    }
     $$("#shop-grid .shop-item.course").forEach(function (b) {
       b.onclick = function () {
         click();

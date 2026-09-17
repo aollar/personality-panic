@@ -481,6 +481,9 @@
     if (p.job && p.job.name === job.name && p.job.building === job.building) return "Current job";
     var gate = tierGate(state, p, job.progressTier || job.tier);
     if (!gate.ok) return gate.why;
+    // a job you can't physically reach gets you fired: the club's bouncer
+    // enforces its dress code on staff too
+    if (job.building === "club") { var dress = clubGate(state, p); if (dress) return dress; }
     return jobReqMet(state, p, job);
   }
   function jobsWithStatus(state, p) {

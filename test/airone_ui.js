@@ -30,13 +30,15 @@ var SHOTS = path.join(__dirname, "shots");
     return nodes.map(function (b) { return { id: b.dataset.a, box: [b.style.left, b.style.top, b.style.width, b.style.height] }; });
   });
   var ids = buttons.map(function (b) { return b.id; });
-  var expectedIds = ["A026", "A027", "A028", "A029", "A031", "A032", "A030", "A033"];
+  var expectedIds = ["A026", "A027", "A028", "A029", "A031", "A032", "A121", "A030", "A033"];
   if (ids.join(",") !== expectedIds.join(",")) throw new Error("Air One ids: " + ids.join(","));
   var expectedBoxes = {
-    A026: ["70.6%", "11.5%", "12.9%", "18.9%"], A027: ["83.9%", "11.5%", "14.9%", "18.9%"],
-    A028: ["70.6%", "32.2%", "12.9%", "18.8%"], A029: ["83.9%", "32.2%", "14.9%", "18.8%"],
-    A031: ["70.6%", "53.8%", "12.9%", "15.3%"], A032: ["83.9%", "53.8%", "14.9%", "15.3%"],
-    A030: ["70.6%", "71.7%", "28.2%", "8.3%"], A033: ["77.2%", "84%", "21.6%", "11.8%"]
+    // 2026-09-16 repaint: 4 rows, bottom row split into 2-week groceries + Judge Window Shoppers
+    A026: ["70.4%", "10.6%", "13.6%", "19.2%"], A027: ["84.7%", "10.6%", "14%", "19.2%"],
+    A028: ["70.4%", "30.8%", "13.6%", "18.5%"], A029: ["84.7%", "30.8%", "14%", "18.5%"],
+    A031: ["70.4%", "50.3%", "13.6%", "16.8%"], A032: ["84.7%", "50.3%", "14%", "16.8%"],
+    A121: ["70.4%", "68.2%", "13.6%", "13.7%"], A030: ["84.7%", "68.2%", "14%", "13.7%"],
+    A033: ["77.2%", "84%", "21.6%", "11.8%"]
   };
   buttons.forEach(function (b) {
     if (b.box.join(",") !== expectedBoxes[b.id].join(",")) throw new Error("Air One box " + b.id + ": " + b.box.join(","));

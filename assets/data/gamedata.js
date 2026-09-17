@@ -1391,7 +1391,7 @@ var PP_DATA = {
    "name": "Cardio Session",
    "category": "Health",
    "tu": 1,
-   "costPct": 0.01,
+   "costPct": 0.05,
    "gains": [
     {
      "stat": "health",
@@ -1410,7 +1410,7 @@ var PP_DATA = {
    "name": "Chest Day",
    "category": "Health",
    "tu": 1,
-   "costPct": 0.02,
+   "costPct": 0.1,
    "gains": [
     {
      "stat": "health",
@@ -1438,7 +1438,7 @@ var PP_DATA = {
    "name": "Treninator Bootcamp",
    "category": "Health",
    "tu": 2,
-   "costPct": 0.05,
+   "costPct": 0.25,
    "gains": [
     {
      "stat": "health",
@@ -1462,7 +1462,7 @@ var PP_DATA = {
    "name": "Buy Suspicious Test Booster",
    "category": "Shopping",
    "tu": 1,
-   "costPct": 0.08,
+   "costPct": 0.4,
    "gains": [
     {
      "stat": "health",
@@ -1537,7 +1537,7 @@ var PP_DATA = {
    "name": "Personal Best Challenge",
    "category": "Health",
    "tu": 2,
-   "costPct": 0.03,
+   "costPct": 0.15,
    "gains": [
     {
      "stat": "health",
@@ -2940,7 +2940,7 @@ var PP_DATA = {
    "name": "Buy Pet Food",
    "category": "Pet",
    "tu": 1,
-   "costPct": 0.04,
+   "costPct": 0.2,
    "gains": [],
    "petGains": [],
    "penalties": [],
@@ -2963,7 +2963,7 @@ var PP_DATA = {
    "name": "Buy Pet Toy",
    "category": "Pet",
    "tu": 1,
-   "costPct": 0.05,
+   "costPct": 0.25,
    "gains": [],
    "petGains": [
     {
@@ -2990,7 +2990,7 @@ var PP_DATA = {
    "name": "Feed Animals",
    "category": "Pet",
    "tu": 1,
-   "costPct": 0.01,
+   "costPct": 0.05,
    "gains": [],
    "petGains": [
     {
@@ -3013,7 +3013,7 @@ var PP_DATA = {
    "name": "Bathe Animals",
    "category": "Pet",
    "tu": 1,
-   "costPct": 0.02,
+   "costPct": 0.1,
    "gains": [],
    "petGains": [
     {
@@ -3060,7 +3060,7 @@ var PP_DATA = {
    "name": "Bribe Inspector",
    "category": "Risk",
    "tu": 1,
-   "costPct": 0.1,
+   "costPct": 0.5,
    "gains": [
     {
      "stat": "critical",

@@ -74,7 +74,7 @@ var SHOTS = path.join(__dirname, "shots");
     document.querySelector(".hotspot[data-id='university']").click();
     return Array.prototype.map.call(document.querySelectorAll("#paint-layer .paint-btn"), function (b) { return b.dataset.a; });
   });
-  if (uniButtons.filter(function (id) { return id === "A120"; }).length !== 4 || uniButtons.some(function (id) { return /A06[7]|A07[012]/.test(id); }))
+  if (uniButtons.filter(function (id) { return id === "A120"; }).length !== 5 || uniButtons.some(function (id) { return /A06[7]|A07[012]/.test(id); }))
     throw new Error("University painted buttons: " + uniButtons.join(","));
   await page.evaluate(function () { document.querySelectorAll("#paint-layer .paint-btn[data-a='A120']")[3].click(); });
   await page.waitForSelector("#dlg-shop.show", { timeout: 5000 });

@@ -35,10 +35,10 @@ pages.luxury.tabs[0].pages.forEach(page => {
   assert.deepStrictEqual(Array.from(page.hotspots, h => h.a), ["A009", "A010", "A011", "A012", "A013", "A014", "A015", "A016"]);
 });
 assert.strictEqual(pages.university.tabs[0].pages.length, 2);
-assert.deepStrictEqual(Array.from(pages.university.tabs[0].pages[1].hotspots, h => h.a), ["A073", "A074"]);
+assert.deepStrictEqual(Array.from(pages.university.tabs[0].pages[1].hotspots, h => h.a), ["A073", "A074", "A069"]);
 assert.strictEqual(pages.airport.tabs[0].pages.length, 2);
 assert.deepStrictEqual(Array.from(pages.airport.tabs[0].pages[1].hotspots, h => h.a), ["A099", "A100"]);
-assert.deepStrictEqual(Array.from(hotspots.airOne, h => h.a), ["A026", "A027", "A028", "A029", "A031", "A032", "A030", "A033"]);
+assert.deepStrictEqual(Array.from(hotspots.airOne, h => h.a), ["A026", "A027", "A028", "A029", "A031", "A032", "A121", "A030", "A033"]);
 assert.deepStrictEqual(JSON.parse(JSON.stringify(pages.luxury.tabs[1].pages[0].hotspots[0].aByHousing)),
   { lux: "X007", low: "X003", homeless: "X009" });
 assert.deepStrictEqual(JSON.parse(JSON.stringify(pages.lowCost.tabs[1].pages[0].hotspots[0].aByHousing)),

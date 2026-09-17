@@ -256,9 +256,11 @@
     var goal = shoppingGoal(state, p);
     var nextFee = course ? E.courseCostDue(state, p, course) : 0;
     var needCash = p.stats.money < 4 * B || (goal && !goal.affordable) || p.stats.money < nextFee + reserveOf(state, p) ||
-      (p.job && Object.keys(DATA.jobProgression.tiers).some(function (t) {   // keep earning tier clicks
-        var g = E.tierGate(state, p, t); return g.pathOk && !g.clicksOk;
-      }));
+      // keep earning tier clicks — but never grind a stat-draining job into the ground
+      (p.job && p.stats.health > 0.3 * T && p.stats.happiness > 0.3 * T &&
+        Object.keys(DATA.jobProgression.tiers).some(function (t) {
+          var g = E.tierGate(state, p, t); return g.pathOk && !g.clicksOk;
+        }));
     if (p.job && needCash) {
       if (p.location === p.job.building) {
         var work = findHere(function (x) { return x.name === "Work"; });

@@ -13,7 +13,7 @@ var ranges = {
 var intentionalMore = {
   park: ["A024", "A025"], club: ["A056"], mall: ["A111", "A116", "A117"],
   // v4/v5 additions with no painted button yet: Cash Out, 2-week groceries
-  debtstreet: ["A119"], airOne: ["A121"]
+  debtstreet: ["A091"]   // 2026-09-16 repaint: Cash Out painted, Penny Stocks moved to More
 };
 // v5 removed Take Class / Finish Undergrad / Master's / PhD / Ask for Promotion
 var removed = ["A067", "A070", "A071", "A072", "A084"];
@@ -66,4 +66,4 @@ if (failures.length) {
   failures.forEach(function (msg) { console.error("FAIL", msg); });
   process.exit(1);
 }
-console.log("MANUAL MENU COVERAGE PASS: only Park A024/A025, Club A056, Mall A111/A116/A117, Debtstreet A119 and Air One A121 remain in More");
+console.log("MANUAL MENU COVERAGE PASS: only Park A024/A025, Club A056, Mall A111/A116/A117, and Debtstreet A091 remain in More");
