@@ -180,11 +180,11 @@ test("lifestyle loan: +15%B now, -5%B at the start of each of the next 4 turns, 
   assert.strictEqual(p.debts.length, 0);
 });
 
-test("Bribe Inspector costs $50 + Critical Thinking; Contact P.I.T.A. once per game", () => {
+test("Bribe Inspector costs $10 + Critical Thinking; Contact P.I.T.A. once per game", () => {
   const st = game(), p = st.players[0]; rich(p, 500); p.location = "petShop";
   const c = p.stats.critical;
   assert.ok(E.perform(st, "A108").ok);
-  assert.strictEqual(p.stats.money, 450); assert.ok(p.stats.critical > c);   // $50: matches the painted Bribes card
+  assert.strictEqual(p.stats.money, 490); assert.ok(p.stats.critical > c);   // $10 per Manual v5 (painted card still says $50)
   assert.ok(E.perform(st, "A109").ok);
   assert.strictEqual(E.perform(st, "A109").ok, false);
 });

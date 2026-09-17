@@ -215,7 +215,7 @@ function check(name, cond, detail) {
   for (var k in pet) { var pc = await chip(k); check("Pet Shop " + k + " costs $" + pet[k], pc && pc.tu.indexOf("$" + pet[k]) !== -1, pc && pc.tu); }
   await tabPage(2, 0);   // BRIBES tab
   var bribe = await chip("A108");
-  check("Bribe Inspector $50", bribe && /\$50/.test(bribe.tu), bribe && bribe.tu);
+  check("Bribe Inspector $10 (manual price; art still shows $50)", bribe && /\$10/.test(bribe.tu), bribe && bribe.tu);
 
   console.log("\n=== RENT WARNING CHIP + HOMELESS ===");
   await newGame();

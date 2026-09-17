@@ -3060,7 +3060,7 @@ var PP_DATA = {
    "name": "Bribe Inspector",
    "category": "Risk",
    "tu": 1,
-   "costPct": 0.5,
+   "costPct": 0.1,
    "gains": [
     {
      "stat": "critical",
