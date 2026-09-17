@@ -47,7 +47,7 @@ var URL = process.env.PP_URL || "http://localhost:8123/index.html";
 
   await open("mall");
   var mall = await buttons(), mallWork = find(mall, "A118");
-  if (mall.length !== 7 || !mallWork || !boxEq(mallWork.box, ["75.4%","84.5%","23.4%","15%"])) throw new Error("Mall page 1: " + JSON.stringify(mall));
+  if (mall.length !== 10 || !mallWork || !boxEq(mallWork.box, ["76.4%","82.9%","21%","14.5%"])) throw new Error("Mall page 1: " + JSON.stringify(mall));
 
   await open("university");
   var university = await buttons(), uniWork = find(university, "A075");

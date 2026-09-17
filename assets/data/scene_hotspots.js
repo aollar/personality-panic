@@ -98,7 +98,8 @@ var PP_HOTSPOTS = {
     { a: "A081", box: [73.6, 45.7, 12.9, 14.7] },
     { a: "A082", box: [86.8, 45.7, 12.5, 14.7] },
     { a: "A083", box: [73.6, 61.1, 12.9, 18.0] },
-    { a: "A076", box: [86.8, 61.1, 12.5, 18.0] },
+    // 2026-09-16 repaint: CAREER PROGRESS (free) opens the job board's tier tracker
+    { a: "A076", info: "careerProgress", box: [86.8, 61.1, 12.5, 18.0] },
     { a: "A077", work: true, box: [73.6, 83.3, 25.7, 13.1] }
   ],
   debtstreet: [

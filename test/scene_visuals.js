@@ -55,7 +55,7 @@ function walk(dir) {
 }
 const v3Files = walk(path.join(root, "assets", "scenes", "v3"))
   .filter(file => file.endsWith(".png") && !path.basename(file).includes("_source"));
-assert.strictEqual(v3Files.length, 34, "only deployable scene and transparent overlay assets should be published");
+assert.strictEqual(v3Files.length, 37, "only deployable scene and transparent overlay assets should be published");
 v3Files.forEach(file => {
   const header = fs.readFileSync(file).subarray(0, 24);
   assert.strictEqual(header.toString("ascii", 1, 4), "PNG", `${file} is not a PNG`);

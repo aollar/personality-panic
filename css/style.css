@@ -965,6 +965,14 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
 .shop-item.course.next { outline: .22em solid var(--gold); background: #fff3c4; }
 .shop-item.course.next:not(:disabled):hover { filter: brightness(1.05); cursor: pointer; }
 
+/* live mall prices over stale painted tags */
+.live-price { position: absolute; z-index: 4; pointer-events: none; display: flex; align-items: center;
+  justify-content: center; font-weight: 900; line-height: 1; white-space: nowrap; letter-spacing: -.02em; }
+.live-price.text { justify-content: flex-end; color: #1f6b2c; }
+.live-price.tag { background: #f7e6b4; color: #184d17; border: .14em solid #b98d3c; border-radius: .35em;
+  box-shadow: 0 0 .2em .15em #f4dca3; }
+.live-price.dark { background: #1f4a10; color: #f5c542; border: .14em solid #d8a93a; border-radius: .35em; }
+
 /* v5 job board: tier progress (work clicks + education, no promotions) */
 .job-progress { display: flex; flex-wrap: wrap; gap: .35em; margin-bottom: .3em; }
 .tier-chip { font-weight: 900; font-size: .8em; padding: .2em .55em; border-radius: 1em; border: .14em solid var(--stroke); background: #fffbe8; }

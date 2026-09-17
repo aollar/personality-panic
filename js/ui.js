@@ -1215,6 +1215,7 @@
     // action hotspots for this page (each may carry a pre-made choice)
     page.hotspots.forEach(function (h) { layer.appendChild(makePaintBtn(h)); });
     if (page.work || cfg.work) layer.appendChild(makePaintBtn(page.work || cfg.work));
+    livePriceTags(layer, page);
     // tab buttons baked across the top — switch tabs (view-only, always allowed)
     (page.tabBar || cfg.tabBar || []).forEach(function (t, i) {
       var idx = cfg.tabs.map(function (x) { return x.id; }).indexOf(t.tab);
@@ -1234,6 +1235,27 @@
       layer.appendChild(prev); layer.appendChild(next);
     }
   }
+  // Painted prices go stale when the sheet changes (and never match Medium/Long
+  // games): draw the live price over the art wherever it differs.
+  function livePriceTags(layer, page) {
+    var tags = (page.priceTags || []).slice();
+    page.hotspots.forEach(function (h) {
+      if (h.price && h.choice && h.choice.item) tags.push(Object.assign({ item: h.choice.item }, h.price));
+    });
+    tags.forEach(function (t) {
+      var it = E.ITEMS[t.item];
+      if (!it) return;
+      var live = E.pctB(UI.state, it.costPct);
+      if (t.painted != null && t.painted === live) return;
+      var el = document.createElement("div");
+      el.className = "live-price " + (t.style || "tag");
+      el.textContent = "$" + live.toLocaleString("en-US");
+      el.style.left = t.box[0] + "%"; el.style.top = t.box[1] + "%";
+      el.style.width = t.box[2] + "%"; el.style.height = t.box[3] + "%";
+      el.style.fontSize = "calc(var(--stage-w) * " + (t.box[3] * 0.0034).toFixed(4) + ")";
+      layer.appendChild(el);
+    });
+  }
   function navButton(box, cls, onClick) {
     var b = document.createElement("button");
     b.className = "nav-btn " + cls;
@@ -1251,6 +1273,7 @@
     var actionId = h.aByHousing ? (h.aByHousing[housingKey] || h.a) : h.a;
     var activeH = actionId === h.a ? h : Object.assign({}, h, { a: actionId });
     btn.dataset.a = actionId;
+    if (h.info) btn.dataset.info = h.info;
     if (h.choice) btn._choice = h.choice;
     if (h.focusPath) btn._focusPath = h.focusPath;
     btn.style.left = h.box[0] + "%";
@@ -1265,6 +1288,7 @@
       click();
       hideTip();
       UI.coursePathFocus = btn._focusPath || null;
+      if (h.info === "careerProgress") { openJobs("A076"); return; }   // viewing progress is free
       doAction(actionId, btn._choice);
     };
     return btn;
@@ -1342,6 +1366,15 @@
     var tip = $("#paint-tip");
     if (!ann) { hideTip(); return; }
     var a = ann.action, st = UI.state, p = activeP(), costBits = [], nameLine, bodyHtml, whyHtml = "";
+    if (h.info === "careerProgress") {
+      var open = E.DATA.jobProgression.order.filter(function (t) { return E.tierGate(st, p, t).ok; });
+      tip.innerHTML = '<div class="t-name">Career Progress</div><div class="t-cost">Free</div>' +
+        '<div class="t-fx">Unlocked tiers: ' + open.join(", ") + "</div>" +
+        '<div class="t-note">💡 See your work clicks and what each job tier still needs.</div>';
+      tip.style.display = ""; tip.style.right = (100 - h.box[0] + 1) + "%"; tip.style.left = "auto";
+      tip.style.top = Math.min(h.box[1], 78) + "%";
+      return;
+    }
     var petCode = h.choice && h.choice.pet, pet = petCode && DATA.pets[petCode];
     var itemName = h.choice && h.choice.item, item = itemName && E.ITEMS && E.ITEMS[itemName];
     if (ann.tu) costBits.push("⏳ " + ann.tu + " TU");
@@ -1425,6 +1458,10 @@
       lc.textContent = pathDone ? "✓ COMPLETE" : owned ? "✓ OWNED" : "🔒";
       var tc = btn.querySelector(".tu-chip");
       if (ann) tc.textContent = ann.tu + " TU" + (ann.cost ? " · $" + ann.cost : "");
+      if (btn.dataset.info) {   // information card: always usable, costs nothing to open
+        tc.textContent = "FREE"; btn.classList.remove("locked");
+        btn.querySelector(".lock-chip").style.display = "none";
+      }
     });
     // fallback panel (buildings without painted menus — should be none)
     if ($("#fallback-panel").style.display !== "none") renderFallbackPanel();

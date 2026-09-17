@@ -27,25 +27,106 @@
     if (DATA.buildings[id]) DATA.buildings[id].scene = scenes[id];
   });
 
-  // Updated first STYLE page. Existing pages 2-3 remain until replacement art exists.
-  PAGES.mall.tabs[0].pages[0] = {
-    img: V3 + "mall_style_page_1.png",
-    tabBar: [
-      { tab: "style", box: [72.4, 9.2, 8.9, 5.7] },
-      { tab: "gear",  box: [81.9, 9.2, 8.1, 5.7] },
-      { tab: "home",  box: [90.7, 9.2, 8.0, 5.7] }
-    ],
-    arrows: { prev: [79.5, 56.2, 2.5, 5.0], next: [90.4, 56.2, 2.5, 5.0] },
-    work: { a: "A118", box: [75.4, 84.5, 23.4, 15.0] },
-    hotspots: [
-      { a: "A115", choice: { item: "Casual Clothes" },   box: [72.3, 16.0, 8.3, 20.0] },
-      { a: "A115", choice: { item: "Smart Clothes" },    box: [80.8, 16.0, 8.4, 20.0] },
-      { a: "A115", choice: { item: "Business Clothes" }, box: [89.4, 16.0, 9.4, 20.0] },
-      { a: "A115", choice: { item: "Dressy Clothes" },   box: [72.3, 36.6, 8.3, 20.2] },
-      { a: "A115", choice: { item: "Dress Shoes" },      box: [80.8, 36.6, 8.4, 20.2] },
-      { a: "A115", choice: { item: "Sunglasses" },       box: [89.4, 36.6, 9.4, 20.2] }
-    ]
+  // Mall (2026-09-16 repaint): STYLE and GEAR use the new 3x3 layout. HOME keeps
+  // its older 2-column art until the extra furniture items are decided; its
+  // painted prices predate v5, so live price tags cover them (hotspot.price).
+  // price.painted = the number painted in the art; the live tag only appears
+  // when the real price differs (always true for Medium/Long games).
+  function grid3(cols, rows, items) {
+    return items.map(function (it, i) {
+      var c = cols[i % 3], r = rows[Math.floor(i / 3)];
+      var h = { a: it[0], choice: { item: it[1] }, box: [c[0], r[0], c[1] - c[0], r[1] - r[0]] };
+      if (it[2]) h.price = it[2];
+      return h;
+    });
+  }
+  var NEW_TABS = function (y, h) {
+    return [
+      { tab: "style", box: [72.9, y, 8.5, h] },
+      { tab: "gear",  box: [81.8, y, 8.0, h] },
+      { tab: "home",  box: [90.3, y, 8.0, h] }
+    ];
   };
+  var STYLE_COLS = [[72.8, 81.0], [81.4, 90.0], [90.5, 98.9]];
+  PAGES.mall.tabs[0].pages = [
+    {
+      img: V3 + "mall_style_page_1.png",
+      tabBar: NEW_TABS(10.4, 4.6),
+      arrows: { prev: [78.6, 75.8, 3.0, 5.4], next: [89.8, 75.8, 3.0, 5.4] },
+      work: { a: "A118", box: [76.4, 82.9, 21.0, 14.5] },
+      hotspots: grid3(STYLE_COLS, [[17.0, 35.8], [37.0, 55.6], [56.7, 75.4]], [
+        ["A115", "Casual Clothes"], ["A115", "Smart Clothes"], ["A115", "Business Clothes"],
+        ["A115", "Dressy Clothes"], ["A115", "Dress Shoes"], ["A115", "Sunglasses"],
+        ["A115", "Earrings"], ["A115", "Bracelet"], ["A115", "Rings"]
+      ])
+    },
+    {
+      // old prices and two penalty marks were erased from this art; live text replaces the prices
+      img: V3 + "mall_style_page_2.png",
+      tabBar: NEW_TABS(10.0, 4.6),
+      arrows: { prev: [78.6, 75.8, 3.0, 5.4], next: [89.8, 75.8, 3.0, 5.4] },
+      work: { a: "A118", box: [76.4, 82.9, 21.0, 14.5] },
+      hotspots: grid3(STYLE_COLS, [[16.4, 36.0], [37.3, 57.0]], [
+        ["A113", "Watch", { box: [76.2, 17.0, 4.5, 3.6], style: "text" }],
+        ["A115", "Cap", { box: [85.3, 17.0, 4.5, 3.6], style: "text" }],
+        ["A115", "Durag", { box: [94.2, 17.0, 4.5, 3.6], style: "text" }],
+        ["A115", "High Heels", { box: [76.2, 37.9, 4.5, 3.6], style: "text" }],
+        ["A115", "Crocodile Sandals", { box: [85.3, 37.9, 4.5, 3.6], style: "text" }]
+      ])
+    }
+  ];
+  PAGES.mall.tabs[1].pages = [
+    {
+      img: V3 + "mall_gear_page_1.png",
+      tabBar: NEW_TABS(9.9, 4.6),
+      arrows: { prev: [78.4, 76.4, 3.0, 5.4], next: [89.5, 76.4, 3.0, 5.4] },
+      work: { a: "A118", box: [78.7, 82.2, 18.6, 15.6] },
+      hotspots: grid3([[72.8, 81.0], [81.4, 89.8], [90.1, 98.4]], [[14.7, 35.1], [36.1, 55.0], [56.1, 76.5]], [
+        ["A112", "Bus Pass"], ["A112", "Bicycle"], ["A112", "Car"],
+        ["A113", "Mobile Phone"], ["A113", "Computer"], ["A113", "Camera"],
+        ["A113", "TV"], ["A113", "Blu-ray"], ["A113", "E-reader"]
+      ])
+    },
+    {
+      img: V3 + "mall_gear_page_2.png",
+      tabBar: NEW_TABS(10.0, 4.6),
+      arrows: { prev: [78.6, 75.8, 3.0, 5.4], next: [89.8, 75.8, 3.0, 5.4] },
+      work: { a: "A118", box: [76.4, 82.4, 21.0, 14.5] },
+      hotspots: grid3(STYLE_COLS, [[16.4, 35.9]], [["A113", "Stereo"]])
+    }
+  ];
+  // HOME: old 2-column art, re-measured, with live price tags over the painted ones
+  function home2(rows, tagRows, items, arrows, featured) {
+    var cols = [[70.8, 83.5], [84.4, 97.3]], tagX = [79.6, 93.4];
+    return {
+      arrows: arrows,
+      priceTags: featured ? [featured] : [],
+      hotspots: items.map(function (it, i) {
+        var c = cols[i % 2], r = rows[Math.floor(i / 2)], t = tagRows[Math.floor(i / 2)];
+        return { a: it[0], choice: { item: it[1] }, box: [c[0], r[0], c[1] - c[0], r[1] - r[0]],
+                 price: { box: [tagX[i % 2], t[0], 3.9, t[1] - t[0]], style: "tag", painted: it[2] } };
+      })
+    };
+  }
+  var homeImgs = PAGES.mall.tabs[2].pages.map(function (pg) { return pg.img; });
+  PAGES.mall.tabs[2].pages = [
+    home2([[15.9, 32.4], [33.4, 49.6], [50.4, 66.4]], [[16.0, 20.2], [32.9, 37.0], [49.9, 54.0]], [
+      ["A114", "Lumpy Bed", 5], ["A114", "Nice Bed", 12], ["A114", "Premium Bed", 25],
+      ["A114", "Couch", 12], ["A114", "Bookshelf", 10], ["A114", "Plants", 6]
+    ], { prev: [75.6, 66.0, 4.1, 4.7], next: [86.9, 66.0, 4.2, 4.7] },
+    { item: "Lumpy Bed", box: [93.2, 72.4, 4.0, 4.6], style: "dark", painted: 5 }),
+    home2([[15.9, 33.0], [34.4, 50.9], [52.3, 68.6]], [[15.9, 20.3], [34.1, 38.6], [52.1, 56.4]], [
+      ["A114", "Desk", 12], ["A114", "Ergonomic Chair", 14], ["A114", "Pet Bed", 8],
+      ["A114", "Pet Toys", 5], ["A114", "Dining Table", 15], ["A114", "Mirror", 8]
+    ], { prev: [75.6, 69.5, 4.0, 4.1], next: [87.1, 69.5, 4.1, 4.1] },
+    { item: "Desk", box: [92.1, 75.5, 4.6, 4.6], style: "dark", painted: 12 }),
+    home2([[15.9, 33.0], [34.4, 50.4], [51.6, 67.8]], [[15.9, 20.3], [34.1, 38.2], [51.3, 55.4]], [
+      ["A113", "Fridge", 20], ["A113", "Stove", 18], ["A113", "Vacuum", 10],
+      ["A113", "Cold Plunge", 30], ["A113", "Hot Tub", 40]
+    ], { prev: [74.6, 67.8, 4.6, 4.8], next: [88.2, 67.8, 4.6, 4.8] },
+    { item: "Fridge", box: [92.8, 74.8, 4.4, 5.0], style: "dark", painted: 20 })
+  ];
+  PAGES.mall.tabs[2].pages.forEach(function (pg, i) { pg.img = homeImgs[i]; });
 
   // Low-Cost Housing: ghosted starter unit plus the redesigned rent office.
   PAGES.lowCost.tabs[0].pages[0].img = V3 + "low-cost/unit_empty.png";
