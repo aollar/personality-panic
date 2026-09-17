@@ -153,42 +153,35 @@
   // Heelton Heights has two navigable rooms. The bedroom view was supplied
   // without its arrow, so its only live arrow receives a visible CSS treatment.
   PAGES.luxury.tabBar = [
-    { tab: "suite", box: [76.0, 11.5, 11.0, 4.7] },
-    { tab: "rent", box: [87.0, 11.5, 11.0, 4.7] }
+    { tab: "suite", box: [75.9, 11.8, 11.2, 3.8] },
+    { tab: "rent", box: [87.2, 11.8, 10.7, 3.8] }
   ];
+  // Heelton suite (2026-09-17 repaint): the same painted menu panel sits on both
+  // rooms. Page 1 (bedroom) holds the eight suite actions, page 2 (lounge) holds
+  // Play With Pet, and the panel's own gold arrows flip between them.
   var luxuryBedroomActions = [
-    { a: "A009", box: [75.3, 17.3, 12.1, 19.6] },
-    { a: "A010", box: [87.6, 17.3, 11.6, 19.6] },
-    { a: "A011", box: [75.3, 37.8, 12.1, 19.7] },
-    { a: "A012", box: [87.6, 37.8, 11.6, 19.7] },
-    { a: "A013", box: [75.3, 58.5, 12.1, 19.5] },
-    { a: "A014", box: [87.6, 58.5, 11.6, 19.5] },
-    { a: "A015", box: [75.3, 79.0, 12.1, 19.0] },
-    { a: "A016", box: [87.6, 79.0, 11.6, 19.0] }
+    { a: "A009", box: [76.2, 16.5, 10.3, 19.4] },
+    { a: "A010", box: [87.2, 16.5, 10.7, 19.4] },
+    { a: "A011", box: [76.2, 36.9, 10.3, 18.8] },
+    { a: "A012", box: [87.2, 36.9, 10.7, 18.8] },
+    { a: "A013", box: [76.2, 56.8, 10.3, 18.0] },
+    { a: "A014", box: [87.2, 56.8, 10.7, 18.0] },
+    { a: "A015", box: [76.2, 75.7, 10.3, 15.3] },
+    { a: "A016", box: [87.2, 75.7, 10.7, 15.3] }
   ];
-  var luxuryLoungeActions = [
-    { a: "A009", box: [75.8, 17.3, 12.0, 19.6] },
-    { a: "A010", box: [87.8, 17.3, 11.6, 19.6] },
-    { a: "A011", box: [75.8, 37.8, 12.0, 19.7] },
-    { a: "A012", box: [87.8, 37.8, 11.6, 19.7] },
-    { a: "A013", box: [75.8, 58.5, 12.0, 19.5] },
-    { a: "A014", box: [87.8, 58.5, 11.6, 19.5] },
-    { a: "A015", box: [75.8, 79.0, 12.0, 19.0] },
-    { a: "A016", box: [87.8, 79.0, 11.6, 19.0] }
-  ];
+  var SUITE_ARROWS = { prev: [79.5, 92.2, 2.6, 4.8], next: [91.5, 92.2, 2.6, 4.8] };
   PAGES.luxury.tabs[0].pages = [
     {
       img: V3 + "heelton/bedroom_empty.png",
       homeLayer: "luxuryBedroom",
-      arrows: { prev: [0, 0, 0, 0], next: [1.15, 19.4, 5.25, 9.2] },
-      visibleNextArrow: true,
+      arrows: { prev: [0, 0, 0, 0], next: SUITE_ARROWS.next },
       hotspots: luxuryBedroomActions.map(function (h) { return { a: h.a, box: h.box.slice() }; })
     },
     {
       img: V3 + "heelton/lounge_empty.png",
       homeLayer: "luxuryLounge",
-      arrows: { prev: [1.15, 19.4, 5.25, 9.2], next: [0, 0, 0, 0] },
-      hotspots: luxuryLoungeActions.map(function (h) { return { a: h.a, box: h.box.slice() }; })
+      arrows: { prev: SUITE_ARROWS.prev, next: [0, 0, 0, 0] },
+      hotspots: [{ a: "X014", box: [76.2, 16.5, 10.3, 19.4] }]
     }
   ];
   PAGES.luxury.tabs[1].pages[0].img = V3 + "heelton/rent_office.png";

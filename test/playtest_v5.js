@@ -148,12 +148,19 @@ function check(name, cond, detail) {
     after.s.critical - before.s.critical >= 1 && /Desk/.test(log) && /Ergonomic Chair/.test(log), log);
   await set("function (p) { p.tu = 40; }");
   before = await stats();
-  var heeltonPainted = await page.evaluate(function () { return !!document.querySelector("#paint-layer .paint-btn[data-a='X014']"); });
-  await clickMore("Play With Pet");                // Heelton: only in the More drawer (not painted)
+  // Play With Pet is painted on suite page 2 (2026-09-17 repaint)
+  await page.evaluate(function () { document.querySelector("#paint-layer .nav-btn.next").click(); });
+  await new Promise(function (r) { setTimeout(r, 800); });
+  var p2ids = await page.$$eval("#paint-layer .paint-btn", function (bs) { return bs.map(function (b) { return b.dataset.a; }); });
+  check("suite page 2 holds Play With Pet", p2ids.join(",") === "X014", p2ids.join(","));
+  await clickAction("X014");
   after = await stats(); log = (await lastLog(1))[0];
   check("Heelton Play With Pet fires pet fixtures", /Pet Bed/.test(log) && /Pet Toys/.test(log), log);
-  check("NOTE: Heelton Play With Pet has no painted button (More drawer only)", !heeltonPainted, "art item");
-  await openScene("luxury");
+  await page.evaluate(function () { document.querySelector("#paint-layer .nav-btn.prev").click(); });
+  await new Promise(function (r) { setTimeout(r, 800); });
+  var backIds = await page.$$eval("#paint-layer .paint-btn", function (bs) { return bs.map(function (b) { return b.dataset.a; }); });
+  check("the menu arrows flip between the two suite rooms", backIds.indexOf("A009") !== -1, backIds.join(","));
+  await set("function (p) { p.tu = 40; }");
   await clickAction("A009");                       // Sleep in Fancy Bed
   log = (await lastLog(1))[0];
   check("luxury sleep uses Premium Bed (+3) only", /Premium Bed/.test(log) && !/Nice Bed/.test(log), log);

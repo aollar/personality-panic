@@ -43,7 +43,7 @@ var URL = process.env.PP_URL || "http://localhost:8123/index.html";
   await open("luxury");
   var luxury = await buttons();
   if (luxury.length !== 8 || new Set(luxury.map(function (r) { return r.id; })).size !== 8 ||
-      !boxEq(find(luxury, "A015").box, ["75.3%","79%","12.1%","19%"])) throw new Error("Heelton grid: " + JSON.stringify(luxury));
+      !boxEq(find(luxury, "A015").box, ["76.2%","75.7%","10.3%","15.3%"])) throw new Error("Heelton grid: " + JSON.stringify(luxury));
 
   await open("mall");
   var mall = await buttons(), mallWork = find(mall, "A118");

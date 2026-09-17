@@ -30,10 +30,13 @@ assert.deepStrictEqual(Array.from(pages.lowCost.tabs[0].pages[0].hotspots, h => 
 assert.strictEqual(pages.luxury.tabs[0].pages.length, 2, "Heelton must expose both rooms");
 assert.strictEqual(pages.luxury.tabs[0].pages[0].homeLayer, "luxuryBedroom");
 assert.strictEqual(pages.luxury.tabs[0].pages[1].homeLayer, "luxuryLounge");
-assert.strictEqual(pages.luxury.tabs[0].pages[0].visibleNextArrow, true);
-pages.luxury.tabs[0].pages.forEach(page => {
-  assert.deepStrictEqual(Array.from(page.hotspots, h => h.a), ["A009", "A010", "A011", "A012", "A013", "A014", "A015", "A016"]);
-});
+// 2026-09-17 repaint: page 1 (bedroom) holds the suite actions, page 2 (lounge)
+// holds Play With Pet, and the menu's own painted arrows flip between them
+assert.deepStrictEqual(Array.from(pages.luxury.tabs[0].pages[0].hotspots, h => h.a),
+  ["A009", "A010", "A011", "A012", "A013", "A014", "A015", "A016"]);
+assert.deepStrictEqual(Array.from(pages.luxury.tabs[0].pages[1].hotspots, h => h.a), ["X014"]);
+assert.ok(pages.luxury.tabs[0].pages[0].arrows.next[2] > 0 && pages.luxury.tabs[0].pages[1].arrows.prev[2] > 0,
+  "both rooms need a working page arrow");
 assert.strictEqual(pages.university.tabs[0].pages.length, 2);
 assert.deepStrictEqual(Array.from(pages.university.tabs[0].pages[1].hotspots, h => h.a), ["A073", "A074", "A069"]);
 assert.strictEqual(pages.airport.tabs[0].pages.length, 2);
