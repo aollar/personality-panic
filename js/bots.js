@@ -8,6 +8,22 @@
   var E = (typeof window !== "undefined") ? window.PPEngine : require("./engine.js");
   var DATA = E.DATA, ASSUME = E.ASSUME;
 
+  // ---- v6 CPU difficulty ----------------------------------------------------
+  // Easy plays loosely and forgets the basics, Medium plays the old script,
+  // Hard plans ahead and travels for the best wage. The only number difficulty
+  // touches is the bot-only gain multiplier, which the engine applies.
+  function level(state, p) {
+    return DATA.cpuDifficulty[p.difficulty || state.cpuDifficulty || "medium"] || DATA.cpuDifficulty.medium;
+  }
+  function slips(state, p, kind) {
+    var chance = level(state, p)[kind] || 0;
+    if (!chance) return false;
+    // deterministic per player+turn so replays and multiplayer stay in sync
+    var seed = (state.seed + p.id * 7919 + state.turn * 104729 + (kind === "forgetEat" ? 13 : 29)) >>> 0;
+    var x = Math.sin(seed) * 10000;
+    return (x - Math.floor(x)) < chance;
+  }
+
   // value of one point toward each stat for this bot (mains dominate score)
   function statWeight(state, p, stat) {
     if (stat === "petHappiness" || stat === "petHealth") return (p.pet && !p.pet.dead) ? 0.5 : 0;
@@ -162,7 +178,7 @@
         return { type: "move", to: "park" };
     }
     // 2) eat — prefer groceries at home over the Regret Burger health treadmill
-    if (!p.ate) {
+    if (!p.ate && !slips(state, p, "forgetEat")) {
       var food = cheapestFood(state, p);
       if (food) {
         if (food.building !== p.location && food.building !== "anywhere") return { type: "move", to: food.building };
@@ -181,7 +197,7 @@
       }
     }
     // 3) relax before the stress penalty lands
-    if (p.turnsSinceRelax >= 2) {
+    if (p.turnsSinceRelax >= 2 && !slips(state, p, "forgetRelax")) {
       var relax = findHere(function (x) { return x.action.fx.some(function (f) { return f.kind === "relax"; }); });
       if (relax) return { type: "perform", id: relax.id };
       if (p.location !== "park" && E.moveCost(state, p, "park").tu < p.tu) return { type: "move", to: "park" };
@@ -215,6 +231,7 @@
     // 4d) employment is a weekly obligation: complete this week's shift before
     // optional progression errands. (v5: no promotions — see step 5.)
     if (p.job) {
+      // v6: Hard bots chase the building Money Multiplier when changing jobs
       if (!p.workedThisTurn) {
         if (p.location === p.job.building) {
           var weeklyWork = findHere(function (x) { return x.name === "Work" && x.ok; });
@@ -227,7 +244,7 @@
     // 4b) education: the next job tier needs the next path. Study when the
     // player's current tier clicks are nearly there (or the course is paid for),
     // and only with cash to spare after rent + food.
-    var course = E.nextCourse(p);
+    var course = level(state, p).educates ? E.nextCourse(p) : null;
     if (course) {
       var due = E.courseCostDue(state, p, course);
       var gate = E.tierGate(state, p, DATA.education[course.path - 1].unlocksTier);
@@ -291,12 +308,27 @@
       }
     }
     // 7) best-value action: here, or one move away
-    var best = null;
+    var lvl = level(state, p);
+    var scored = [];
     here.forEach(function (ann) {
       if (ann.action.fx.some(function (f) { return f.kind === "openShop" || f.kind === "openJobDialog" || f.kind === "adoptPet"; })) return;
       var v = actionValue(state, p, ann, 0);
-      if (v > 0 && (!best || v > best.v)) best = { v: v, step: { type: "perform", id: ann.id } };
+      if (v > 0) scored.push({ v: v, step: { type: "perform", id: ann.id } });
     });
+    // Easy: pick at random from what it can afford where it is standing.
+    // Medium: pick at random from its top 3. Hard: always the best.
+    if (lvl.topChoices === 0 && scored.length) {
+      var pick = scored[Math.floor(Math.abs(Math.sin(state.seed + state.turn * 31 + p.id)) * scored.length) % scored.length];
+      return pick.step;
+    }
+    var best = null;
+    if (lvl.topChoices > 1 && scored.length) {
+      scored.sort(function (a, b) { return b.v - a.v; });
+      var pool = scored.slice(0, lvl.topChoices);
+      best = pool[Math.floor(Math.abs(Math.sin(state.seed * 3 + state.turn * 17 + p.id)) * pool.length) % pool.length];
+    } else {
+      scored.forEach(function (c) { if (!best || c.v > best.v) best = c; });
+    }
     Object.keys(DATA.buildings).forEach(function (b) {
       if (b === p.location) return;
       if (b === "club" && E.clubGate(state, p)) return;   // bouncer would turn the bot away

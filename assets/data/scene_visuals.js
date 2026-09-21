@@ -186,6 +186,9 @@
   ];
   PAGES.luxury.tabs[1].pages[0].img = V3 + "heelton/rent_office.png";
   PAGES.luxury.tabs[1].pages[0].hotspots = [
+    // the painted PAY HEELTON RENT card was dead in the playtest build — it is
+    // now wired to the same action as the green button below it
+    { a: "X007", aByHousing: { lux: "X007", low: "X003", homeless: "X009" }, box: [75.6, 17.5, 11.2, 21.0] },
     { a: "X007", aByHousing: { lux: "X007", low: "X003", homeless: "X009" }, box: [75.0, 86.7, 22.5, 9.0] }
   ];
 

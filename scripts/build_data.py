@@ -1,6 +1,6 @@
 """
 Personality Panic — data pipeline.
-Reads Personality_Panic_Balance_Lock_v5.xlsx (single source of truth for numbers)
+Reads Personality_Panic_Balance_Lock_v6.xlsx (single source of truth for numbers)
 and emits assets/data/gamedata.js (window.PP_DATA) with normalized, structured
 requirements/effects so the engine never parses free text at runtime.
 
@@ -10,7 +10,7 @@ Re-run after any spreadsheet change:  python scripts/build_data.py
 import json, os, re
 import openpyxl
 
-XLSX = r"C:\Users\aloss\OneDrive\Desktop\Personality Panic\Personality_Panic_Balance_Lock_v5.xlsx"
+XLSX = r"C:\Users\aloss\OneDrive\Desktop\Personality Panic\Personality_Panic_Balance_Lock_v6.xlsx"
 OUT = os.path.join(os.path.dirname(__file__), "..", "assets", "data", "gamedata.js")
 
 STAT = {
@@ -335,6 +335,10 @@ def main():
         "turnTimerOptions": [30, 60, 90, 120, 0],  # 0 = Unlimited
         "maxPlayers": 4, "minParticipants": 2,
         "incomeMultiplierCap": 1.25,
+        # v6: turn limit is a setup value, never a constant
+        "turnsPerGame": {"options": [10, 15, 20, 30, 50], "short": 20, "medium": 40, "long": 60},
+        # v6 Career patch: the Nth career-granting action in a turn pays this share
+        "careerDiminishing": [1.0, 0.5, 0.25, 0.1],
         "modifiers": mods,
         "mainStats": MAIN_STATS, "upkeepStats": UPKEEP_STATS,
     }
@@ -354,12 +358,14 @@ def main():
         (aid, bld, name, cat, req, tu, costPct, *_rest) = row[:7] + (None,)
         r = row
         gains = []
-        if r[10]: gains.append({"stat": STAT[str(r[10]).strip()], "pct": num(r[11])})
-        if r[15]: gains.append({"stat": STAT[str(r[15]).strip()], "pct": num(r[16])})
+        # v6: Work rows read "From job tier" — the job tier is the only source of
+        # Work pay and Career now, so those cells grant nothing here.
+        if r[10] and str(r[10]).strip() in STAT: gains.append({"stat": STAT[str(r[10]).strip()], "pct": num(r[11])})
+        if r[15] and str(r[15]).strip() in STAT: gains.append({"stat": STAT[str(r[15]).strip()], "pct": num(r[16])})
         petGain = {"stat": STAT[str(r[20]).strip()], "pct": num(r[21])} if r[20] else None
         pens = []
         petGains = [petGain] if petGain else []
-        if r[22]: pens.append({"stat": STAT[str(r[22]).strip()], "pct": num(r[23])})
+        if r[22] and str(r[22]).strip() in STAT: pens.append({"stat": STAT[str(r[22]).strip()], "pct": num(r[23])})
         if r[24] and str(r[24]).strip() in STAT:
             s2 = STAT[str(r[24]).strip()]
             if s2.startswith("petH"):  # sheet quirk (A106): 2nd pet GAIN parked in penalty column
@@ -385,6 +391,23 @@ def main():
         for f in fx:
             if f["kind"] == "supportCheque": f["pct"] = cheque_pct
             if f["kind"] == "loan": f["pct"] = loan_pct
+        # --- v6 columns: Counts As / Requires Item / Per-Turn Limit / Flat Bonus ---
+        counts = str(r[29] or "").lower() if len(r) > 29 else ""
+        if "eat" in counts and not any(f["kind"] == "eat" for f in fx): fx.append({"kind": "eat"})
+        if "relax" in counts and not any(f["kind"] == "relax" for f in fx): fx.append({"kind": "relax"})
+        if "work" in counts and not any(f["kind"] == "workClick" for f in fx): fx.append({"kind": "workClick"})
+        needs = str(r[30] or "").strip() if len(r) > 30 else ""
+        nl = needs.lower()
+        if nl:
+            if "bed" in nl and "any" in nl: reqs.append({"kind": "ownsAnyOf", "items": ["Lumpy Bed", "Nice Bed", "Premium Bed"], "label": "a bed"})
+            elif "couch" in nl: reqs.append({"kind": "ownsItem", "item": "Couch"})
+            elif "hot tub" in nl: reqs.append({"kind": "ownsItem", "item": "Hot Tub"})
+            elif "dinnerware" in nl: reqs.append({"kind": "ownsItem", "item": "Fancy Dinnerware"})
+        limit = re.search(r"(\d+)\s*per turn", str(r[31] or "").lower()) if len(r) > 31 else None
+        flat = []
+        for m in re.finditer(r"([A-Za-z ]+?)\s*([+-])(\d+)", str(r[32] or "")) if len(r) > 32 else []:
+            nm = m.group(1).strip()
+            if nm in STAT: flat.append({"stat": STAT[nm], "pts": int(m.group(3)) * (1 if m.group(2) == "+" else -1)})
         if aid_s in ("A007", "A105"):  # feeding must mark the pet fed (A007 also consumes pet food)
             fx.append({"kind": "feedPet"})
         actions.append({
@@ -393,6 +416,8 @@ def main():
             "gains": gains, "petGains": petGains, "penalties": pens,
             "req": reqs,
             "fx": fx,
+            "flat": flat,                                    # v6 flat point adjustments
+            "perTurn": int(limit.group(1)) if limit else 0,  # v6 per-turn use limit
             "note": str(r[26] or "").strip(),
         })
 
@@ -403,7 +428,8 @@ def main():
     hdr = [str(h or "").strip() for h in next(ws.iter_rows(min_row=1, max_row=1, values_only=True))]
     col = {h: i for i, h in enumerate(hdr)}
     TRIGGERS = [("one-time on purchase", "purchase"), ("sleep", "sleep"), ("relax", "relax"),
-                ("work-from-home", "workFromHome"), ("play-with-pet", "playPet"), ("exercise", "exercise")]
+                ("work-from-home", "workFromHome"), ("play-with-pet", "playPet"), ("exercise", "exercise"),
+                ("host friends", "hostFriends")]   # v6: Fancy Dinnerware
     for row in ws.iter_rows(min_row=2, values_only=True):
         if not row[0] or not re.match(r"^I\d{3}$", str(row[0])): continue
         g = lambda name: row[col[name]] if name in col and col[name] < len(row) else None
@@ -441,27 +467,24 @@ def main():
             "effect": str(g("Unlock / Effect") or "").strip(),
             "outfitRank": OUTFIT_ORDER.get(str(g("Item")).strip(), 0),
         })
-    assert sum(1 for it in items if it["trigger"]) == 16, "expected 16 v5 trigger bonuses"
+    assert sum(1 for it in items if it["trigger"]) == 17, "expected 17 trigger bonuses (16 v5 + Fancy Dinnerware)"
 
-    # ---- Jobs_Named ----
+    # ---- Jobs_Named (v6 layout: Tier Rank | Tier | Building | Job | Base Pay | Mult | ...) ----
     ws = wb["Jobs_Named"]
     jobs = []
     fxre = re.compile(r"([+-]\d+)\s+([A-Za-z ]+?)(?:,|$| bonus)")
-    for row in ws.iter_rows(min_row=3, values_only=True):
-        if not row[0] or str(row[0]).startswith("CANONICAL"): continue
-        bld = str(row[0]).strip()
+    for row in ws.iter_rows(min_row=4, values_only=True):
+        if not isinstance(row[0], (int, float)) or not row[2]: continue
+        bld = str(row[2]).strip()
         if bld not in BUILDING_ID: continue
-        if row[1] is None or str(row[1]).strip() == "Tier": continue
         effects = []
-        for m in fxre.finditer(str(row[5] or "")):
+        for m in fxre.finditer(str(row[8] or "")):
             sname = m.group(2).strip()
             if sname in STAT: effects.append({"stat": STAT[sname], "amtT100": int(m.group(1))})
-        reqtext = str(row[6] or "")
+        reqtext = str(row[9] or "")
         jreq = {"clothes": None, "computer": "Computer" in reqtext, "degree": None, "stats": []}
         for c in ("Business Clothes", "Smart Clothes", "Dressy Clothes", "Casual Clothes"):
             if c in reqtext: jreq["clothes"] = c; break
-        # v5: degrees are replaced by education PATHS (Education_Paths sheet);
-        # the path + work-click gate is enforced per tier (Job_Progression).
         pm = re.search(r"Path\s*(\d)", str(row[10] or ""))
         jreq["path"] = int(pm.group(1)) if pm else 0
         for m in re.finditer(r"([A-Za-z ]+?)\s+(\d+)\+", reqtext):
@@ -469,11 +492,51 @@ def main():
             if sname in STAT: jreq["stats"].append({"stat": STAT[sname], "pctT": int(m.group(2)) / 100.0})
         tier = str(row[1]).strip()
         jobs.append({
-            "building": BUILDING_ID[bld], "tier": tier, "name": str(row[2]).strip(),
-            "progressTier": "Max" if tier == "Max+" else tier,   # Wolf of Debtstreet pays/gates as Max
-            "basePayT100": num(row[3]), "careerGainT100": num(row[4]),
+            "building": BUILDING_ID[bld], "tier": tier, "name": str(row[3]).strip(),
+            "progressTier": "Max" if tier == "Max+" else tier,
+            "tierRank": int(row[0]),
+            "basePayT100": num(row[4]),          # before the building Money Multiplier
+            "careerGainT100": num(row[7]),       # v6: career per click comes from the job row
             "effects": effects, "req": jreq, "reqText": reqtext.strip(),
         })
+    assert len(jobs) >= 65, "v6 job list should hold ~67 rows, got %d" % len(jobs)
+    tier_counts = {}
+    for j in jobs: tier_counts[j["tier"]] = tier_counts.get(j["tier"], 0) + 1
+    assert tier_counts.get("Low+", 0) >= 10 and tier_counts.get("Mid+", 0) >= 10, tier_counts
+    jobs.sort(key=lambda j: (j["tierRank"], j["building"]))
+
+    # ---- Building_Map (v6): wages rise with distance from the hub ----
+    ws = wb["Building_Map"]
+    building_pay, wfh_pay = {}, 0.85
+    for row in ws.iter_rows(min_row=3, values_only=True):
+        name = str(row[0] or "").strip()
+        if name in BUILDING_ID and isinstance(row[4], (int, float)):
+            building_pay[BUILDING_ID[name]] = float(row[4])
+    assert len(building_pay) >= 12, "Building_Map not parsed: %r" % building_pay
+    assert building_pay["soulExchange"] == 1 and building_pay["airport"] == 1.35, building_pay
+
+    # ---- CPU_Difficulty (v6) ----
+    ws = wb["CPU_Difficulty"]
+    rows = {str(r[0] or "").strip().lower(): r for r in ws.iter_rows(min_row=2, values_only=True)}
+    def pct(v):
+        m = re.search(r"(\d+)%", str(v or ""))
+        return int(m.group(1)) / 100.0 if m else 0.0
+    def mult(v):
+        m = re.search(r"([0-9.]+)x", str(v or ""))
+        return float(m.group(1)) if m else 1.0
+    cpu = {}
+    for i, key in enumerate(("easy", "medium", "hard"), start=1):
+        cpu[key] = {
+            "gainMult": mult(rows["bot-only gain multiplier"][i]),
+            "forgetEat": pct(rows["forgets to eat"][i]),
+            "forgetRelax": pct(rows["forgets to relax"][i]),
+            "topChoices": {"easy": 0, "medium": 3, "hard": 1}[key],   # 0 = random from affordable
+            "educates": key != "easy",
+            "invests": key != "easy",
+            "travelsForPay": key == "hard",
+            "prepaysRent": key == "hard",
+        }
+    assert [cpu[k]["gainMult"] for k in ("easy", "medium", "hard")] == [0.85, 1.0, 1.1], cpu
 
     # ---- Education_Paths (v5): 5 paths x 6 courses ----
     ws = wb["Education_Paths"]
@@ -504,10 +567,11 @@ def main():
             if m: routes.append({"tier": m.group(2), "clicks": int(m.group(1))})
         pm = re.search(r"Path\s*(\d)", str(row[3] or ""))
         tiers[t] = {"tier": t, "routes": routes, "path": int(pm.group(1)) if pm else 0,
-                    "payPct": num(row[5])}
+                    "payPct": num(row[5]), "careerGain": num(row[6])}
         order.append(t)
     assert order == list(TIER_NAMES), "Job_Progression tiers not parsed: %r" % order
     assert tiers["Mid"]["routes"] == [{"tier": "Low+", "clicks": 15}, {"tier": "Low", "clicks": 20}], tiers["Mid"]
+    assert [tiers[t]["careerGain"] for t in TIER_NAMES] == [2, 2, 3, 3, 4, 5], "v6 career per tier"
     job_progression = {"order": order, "tiers": tiers}
 
     # ---- Pets ----
@@ -699,10 +763,11 @@ def main():
         "buildings": buildings, "roadNodes": roadNodes, "roadEdges": roadEdges,
         "weekend": parse_weekend(wb),
         "education": education, "jobProgression": job_progression,
+        "buildingPay": building_pay, "workFromHomePay": wfh_pay, "cpuDifficulty": cpu,
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
-        f.write("// GENERATED by scripts/build_data.py from Personality_Panic_Balance_Lock_v5.xlsx\n")
+        f.write("// GENERATED by scripts/build_data.py from Personality_Panic_Balance_Lock_v6.xlsx\n")
         f.write("// Do not hand-edit numbers here; edit the spreadsheet and re-run the script.\n")
         f.write("var PP_DATA = ")
         f.write(json.dumps(data, indent=1))

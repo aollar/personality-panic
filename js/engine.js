@@ -221,6 +221,7 @@
       degrees: [],                           // display: names of completed education paths
       principal: {},                         // v4 Investments: $ held in each asset
       flags: {}, debts: [], booster: null,
+      actionCounts: {}, careerGrants: 0, difficulty: null,   // v6: per-turn limits, career curve, CPU level
       rentPaid: false, warnings: [],
       // Weekend Update system (v3)
       holdings: [], rentMod: 1, forceWalk: false,
@@ -248,7 +249,13 @@
       // Weekend Cards: full | essential (no life events) | off (debug: nothing
       // shown, but status penalties and investments still resolve to the log)
       weekendMode: weekendModeOf(config),
-      players: config.players.map(function (pl, i) { return newPlayer(i, pl.name, pl.code, pl.isBot); }),
+      cpuDifficulty: config.cpuDifficulty || "medium",   // v6: Easy / Medium / Hard
+      botMultOff: !!config.botMultOff,                   // debug: switch the bot-only multiplier off
+      players: config.players.map(function (pl, i) {
+        var q = newPlayer(i, pl.name, pl.code, pl.isBot);
+        if (pl.isBot) q.difficulty = pl.difficulty || config.cpuDifficulty || "medium";
+        return q;
+      }),
       log: [], _rngCalls: 0
     };
     state.players.forEach(function (p) {
@@ -267,6 +274,20 @@
   }
 
   function active(state) { return state.players[state.activeIdx]; }
+  // v6 Pay Rent display states
+  function rentStatus(state, p) {
+    if (p.homeless) return { state: "homeless", text: "You're homeless — re-house first" };
+    var bill = ACTIONS[p.housing === "lux" ? "X007" : "X006"];
+    var cost = Math.round(bill.costPct * econ(state) * (p.rentMod || 1));
+    if (p.rentPaid) return { state: "paid", cost: cost, text: "PAID · next due turn " + nextRentTurn(state) };
+    if (money(p) < cost) return { state: "short", cost: cost, text: "Need $" + (cost - money(p)) + " more" };
+    if (isRentTurn(state)) return { state: "due", cost: cost, text: "RENT DUE — $" + cost };
+    return { state: "early", cost: cost, text: "Due turn " + nextRentTurn(state) + " · pay early for $" + cost };
+  }
+  function nextRentTurn(state) {
+    var every = DATA.settings.rentIntervalTurns;
+    return (Math.floor(state.turn / every) + 1) * every;
+  }
   function isRentTurn(state) { return state.turn % DATA.settings.rentIntervalTurns === 0; }
 
   // ---------- Modifier math (Manual §6.4) ----------
@@ -296,10 +317,27 @@
     if (stat === "money") cap = DATA.settings.incomeMultiplierCap;
     return Math.min(m, cap);
   }
+  // v6 Career patch: within one turn the 1st Career-granting action pays full,
+  // the 2nd half, the 3rd a quarter, the 4th and later a tenth (min 1 point).
+  function careerShare(state, p) {
+    var curve = DATA.settings.careerDiminishing || [1];
+    var i = p.careerGrants || 0;
+    return curve[Math.min(i, curve.length - 1)];
+  }
+  // v6 CPU difficulty: a clearly-labelled BOT-ONLY multiplier on action gains.
+  function botGainMult(state, p) {
+    if (!p.isBot || state.botMultOff) return 1;
+    var d = DATA.cpuDifficulty[p.difficulty || state.cpuDifficulty || "medium"];
+    return d ? d.gainMult : 1;
+  }
   function gainStat(state, p, stat, pct, flat) {
     var base = (flat != null) ? flat : pct * econ(state);
     var isPet = stat === "petHappiness" || stat === "petHealth";
-    var pts = Math.round(isPet ? base : base * totalMult(state, p, stat));
+    var pts = Math.round(isPet ? base : base * totalMult(state, p, stat) * botGainMult(state, p));
+    if (stat === "career" && pts > 0) {
+      pts = Math.max(1, Math.floor(pts * careerShare(state, p)));
+      p.careerGrants = (p.careerGrants || 0) + 1;
+    }
     if (base > 0 && pts < 1) pts = 1;
     return addStat(state, p, stat, pts);
   }
@@ -335,9 +373,14 @@
         case "notLux": if (p.housing === "lux" && !p.homeless) return "Already living in luxury"; break;
         case "rentDue": if (!isRentTurn(state)) return "Rent isn't due"; break;
         case "rentUnpaid": if (p.rentPaid) return "Rent already paid"; break;
+        case "rentPayable":
+          // v6: Pay Rent is ALWAYS listed. It is only unusable once this cycle is settled.
+          if (p.rentPaid) return "Paid — next due turn " + nextRentTurn(state); break;
         case "foodSupply": if (!Number.isFinite(p.foodSupply) || p.foodSupply < 1) return "No groceries at home"; break;
         case "notAte": if (p.ate) return "Already ate this turn"; break;
         case "ownsItem": if (p.items.indexOf(r.item) === -1) return "Need " + r.item; break;
+        case "ownsAnyOf":
+          if (!ownsAnyOf(p, r.items)) return "Need " + (r.label || r.items.join(" or ")) + " from the Mall"; break;
         case "hasPet": if (!p.pet || p.pet.dead) return "Need a pet"; break;
         case "noPet": if (p.pet && !p.pet.dead) return "You already have a pet"; break;
         case "petFoodAvailable": if (p.petFoodLeft < 1) return "Need pet food (Ethical Pet Shop)"; break;
@@ -491,11 +534,19 @@
       return { job: j, why: jobApplicationWhy(state, p, j), current: p.job && p.job.name === j.name && p.job.building === j.building };
     });
   }
-  function applyWork(state, p) {
+  // v6: wages rise with distance from the Corporate Soul Exchange; working from
+  // home pays 0.85 because it costs no travel. Money only — never Career.
+  function payMultiplier(state, p, actionId) {
+    if (actionId === "A015") return DATA.settings.workFromHomePay || 0.85;
+    var where = (DATA.buildingPay || {})[p.location];
+    return where != null ? where : 1;
+  }
+  function applyWork(state, p, actionId) {
     var j = p.job, scale = econ(state) / 100;
-    var pay = gainStat(state, p, "money", null, j.basePayT100 * scale);
+    var mult = payMultiplier(state, p, actionId);
+    var pay = gainStat(state, p, "money", null, j.basePayT100 * scale * mult);
     var car = gainStat(state, p, "career", null, j.careerGainT100 * scale);
-    var bits = ["+$" + pay, "+" + car + " Career"];
+    var bits = ["+$" + pay + (mult !== 1 ? " (x" + mult + ")" : ""), "+" + car + " Career"];
     j.effects.forEach(function (e) {
       var d = addStat(state, p, e.stat, Math.round(e.amtT100 * scale));
       if (d) bits.push((d > 0 ? "+" : "") + d + " " + statName(e.stat));
@@ -522,8 +573,7 @@
     ["X006", "X007"].forEach(function (id) {
       var a = ACTIONS[id];
       if (a.building === p.location) return; // already listed
-      if (isRentTurn(state) && !p.rentPaid && !p.homeless &&
-          ((id === "X006" && p.housing === "low") || (id === "X007" && p.housing === "lux")))
+      if (!p.homeless && ((id === "X006" && p.housing === "low") || (id === "X007" && p.housing === "lux")))
         list.push(annotate(state, p, a));
     });
     return list;
@@ -545,6 +595,11 @@
     // Debtstreet portfolio buys: one holding per asset type (Investments sheet)
     var buy = a.fx.filter(function (f) { return f.kind === "buyAsset"; })[0];
     if (!why && buy && p.holdings.indexOf(buy.asset) !== -1) why = "Already holding " + buy.asset + " (max 1)";
+    // v6 per-turn limits (home exercise 2, resume/team building 1)
+    if (!why && a.perTurn) {
+      var used = (p.actionCounts || {})[a.id] || 0;
+      if (used >= a.perTurn) why = "Only " + a.perTurn + " per turn (used " + used + ")";
+    }
     if (!why && p.tu < tu) why = "Not enough Time Units";
     if (!why && money(p) < cost) why = "Not enough money ($" + cost + ")";
     return { action: a, id: a.id, name: a.name, tu: tu, cost: cost, ok: !why, why: why, course: course };
@@ -590,6 +645,8 @@
     var buysAsset = buyFx ? buyFx.asset : null;
 
     // pay the bill
+    if (!p.actionCounts) p.actionCounts = {};
+    p.actionCounts[a.id] = (p.actionCounts[a.id] || 0) + 1;
     p.tu -= ann.tu;
     if (ann.cost) { addStat(state, p, "money", -ann.cost); }
 
@@ -612,6 +669,12 @@
     if (!isGenericWork) a.penalties.forEach(function (g) {
       var d = addStat(state, p, g.stat, -pctB(state, g.pct));
       if (d) summary.push(d + " " + statName(g.stat));
+    });
+
+    // v6 flat point adjustments (Chest Day +1 Happiness / -1 Enlightenment, etc.)
+    (a.flat || []).forEach(function (f) {
+      var d = addStat(state, p, f.stat, f.pts);
+      if (d) summary.push((d > 0 ? "+" : "") + d + " " + statName(f.stat));
     });
 
     var result = { ok: true, sfx: [], summary: summary };
@@ -702,7 +765,13 @@
             });
           }
           break;
-        case "payRent": p.rentPaid = true; p.rentMod = 1; result.sfx.push("money"); break;
+        case "payRent":
+          p.rentPaid = true; p.rentMod = 1;
+          // v6: paying early covers the next cycle, so the rent-turn reset skips it
+          p.rentPaidThrough = isRentTurn(state) ? state.turn : nextRentTurn(state);
+          summary.push(isRentTurn(state) ? "rent settled" : "pre-paid through turn " + p.rentPaidThrough);
+          result.sfx.push("money");
+          break;
         case "rehouse":
           p.homeless = false; p.housing = "low"; p.rentPaid = true;
           log(state, p, "Back on their feet — rented a Low Cost room again.", "good");
@@ -792,14 +861,11 @@
     if (a.building === "regretBurger" && a.fx.some(function (f) { return f.kind === "eat"; }))
       p.turnFlags.ateRegret = true;
     if (p.location === "gym") p.turnFlags.gym = true;
-    // Work actions use the player's actual job numbers (Jobs_Named is canonical)
-    if (a.name === "Work" && p.job) { applyWork(state, p); result.sfx.push("money"); }
-    // Heelton's authored Work From Home action counts for weekly attendance,
-    // but keeps its own sheet-authored gains instead of paying a second salary.
-    if (a.id === "A015" && p.job) {
-      p.workedThisTurn = true;
-      p.jobShifts = (p.jobShifts || 0) + 1;
-      log(state, p, "Worked remotely for the week (attendance only — no pay or work click).", "work");
+    // Work actions use the player's actual job numbers (Jobs_Named is canonical).
+    // v6: Work From Home is a real work click too, paid at 0.85.
+    if (a.fx.some(function (f) { return f.kind === "workClick"; }) && p.job) {
+      applyWork(state, p, a.id);
+      result.sfx.push("money");
     }
     if (a.category === "Food" || a.fx.some(function (f) { return f.kind === "eat"; })) {
       if (a.building === "regretBurger") result.sfx.push("eat");
@@ -1006,6 +1072,7 @@
     if (!Number.isFinite(p.foodSupply)) p.foodSupply = 0;
     if (typeof p.premiumSupply !== "boolean") p.premiumSupply = false;
     p.autoAteStored = false;
+    p.actionCounts = {}; p.careerGrants = 0;   // v6: per-turn limits + career curve
     p.tu = DATA.settings.timeUnitsPerTurn;
     p.location = homeOf(p);   // every turn starts at home (Austin 2026-07-09)
     p.warnings = [];
@@ -1181,10 +1248,12 @@
       if (state.endAfterRound) { state.over = true; }
       if (state.maxRounds > 0 && state.turn > state.maxRounds) {
         state.over = true;
-        log(state, null, "Turn limit reached — final scoring!", "good");
+        log(state, null, "Turn " + state.maxRounds + " of " + state.maxRounds + " played — final scoring!", "good");
+      } else if (state.maxRounds > 0 && state.turn === state.maxRounds) {
+        log(state, null, "🏁 FINAL ROUND — turn " + state.turn + " of " + state.maxRounds + "!", "bad");
       }
       if (!state.over && isRentTurn(state)) {
-        state.players.forEach(function (q) { q.rentPaid = false; });
+        state.players.forEach(function (q) { q.rentPaid = (q.rentPaidThrough || 0) >= state.turn; });
         log(state, null, "📯 Turn " + state.turn + ": RENT IS DUE for everyone!", "bad");
       }
     }
@@ -1234,6 +1303,8 @@
     weekendStanding: weekendStanding, exitNodeOf: exitNodeOf,
     jobsWithStatus: jobsWithStatus, tierGate: tierGate, statName: statName,
     econ: econ, pctB: pctB, economyBaseFor: economyBaseFor, itemActive: itemActive,
+    payMultiplier: payMultiplier, nextRentTurn: nextRentTurn, careerShare: careerShare,
+    rentStatus: rentStatus,
     COURSES: COURSES, nextCourse: nextCourse, courseCatalog: courseCatalog, courseCostDue: courseCostDue,
     pathComplete: pathComplete, principalOf: principalOf, homeOf: homeOf,
     personalityMult: personalityMult, totalMult: totalMult, transportOf: transportOf,

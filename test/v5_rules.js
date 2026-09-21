@@ -58,6 +58,7 @@ test("Luxury-only items: unbuyable in Low Cost Housing, storage (no bonus) after
   assert.strictEqual(r.ok, false); assert.match(r.why, /Luxury/);
   p.housing = "lux"; p.location = "luxury";
   assert.ok(buy(st, p, "Hot Tub").ok);
+  assert.ok(buy(st, p, "Couch").ok);        // v6: Relax in Your Suite needs a couch
   p.location = "luxury"; rich(p);
   let hap = p.stats.happiness; E.perform(st, "A011");
   const withTub = p.stats.happiness - hap;

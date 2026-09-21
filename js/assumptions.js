@@ -152,16 +152,18 @@ var PP_ASSUMPTIONS = {
       req: [{ kind: "notHomeless" }],
       fx: [],
       note: "Scissors + confidence = fashion." },
+    // v6: Pay Rent is ALWAYS listed and never hidden. It shows four states
+    // (due / paid / not yet due / can't afford) and may be paid early.
     { id: "X006", building: "lowCost", name: "Pay Rent", category: "Rent",
       tu: 0, costPct: 1.0, gains: [], petGains: [], penalties: [],
-      req: [{ kind: "rentDue" }, { kind: "isLow" }, { kind: "rentUnpaid" }],
+      req: [{ kind: "isLow" }, { kind: "rentPayable" }],
       fx: [{ kind: "payRent", tier: "low" }],
-      note: "Rent is due every 4 turns." },
+      note: "Rent is due every 4 turns. You can pay early." },
     { id: "X007", building: "luxury", name: "Pay Luxury Rent", category: "Rent",
       tu: 0, costPct: 4.0, gains: [], petGains: [], penalties: [],
-      req: [{ kind: "rentDue" }, { kind: "isLux" }, { kind: "rentUnpaid" }],
+      req: [{ kind: "isLux" }, { kind: "rentPayable" }],
       fx: [{ kind: "payRent", tier: "lux" }],
-      note: "Heelton Heights does not do grace periods." },
+      note: "Heelton Heights does not do grace periods. You can pay early." },
     // Heelton tenants had no home "play with pet" action, so the Pet Bed / Pet
     // Toys trigger could never fire there. Mirror of A006 Hang With Pet:
     { id: "X014", building: "luxury", name: "Play With Pet", category: "Pet",

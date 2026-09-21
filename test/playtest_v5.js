@@ -129,7 +129,8 @@ function check(name, cond, detail) {
   check("same action away from home fires no fixtures", !/Bed|Bookshelf|Plants|Mirror|Stove/.test(log), log);
 
   // luxury: hot tub / dining table / cold plunge / ergonomic chair / desk / play with pet
-  await set("function (p) { p.housing = 'lux'; p.tu = 40; ['Hot Tub','Dining Table','Cold Plunge','Ergonomic Chair','Premium Bed'].forEach(function (n) { p.items.push(n); }); }");
+  // v6 gates: Relax in Your Suite needs a Couch, Host Friends needs Fancy Dinnerware
+  await set("function (p) { p.housing = 'lux'; p.tu = 40; ['Hot Tub','Dining Table','Cold Plunge','Ergonomic Chair','Premium Bed','Couch','Fancy Dinnerware'].forEach(function (n) { p.items.push(n); }); }");
   await openScene("luxury");
   before = await stats();
   await clickAction("A011");                       // Relax in Your Suite

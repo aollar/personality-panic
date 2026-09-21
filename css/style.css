@@ -979,3 +979,12 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
 .tier-chip.open { background: #d8f5dc; color: #145c14; }
 .tier-chip.locked { opacity: .75; }
 .job-progress-note { flex-basis: 100%; font-size: .78em; font-weight: 700; opacity: .8; }
+
+/* v6: final-round flag in the HUD */
+#hud-turn1.final-round { color: #ffd23d; text-shadow: 0 0 .35em rgba(255, 60, 60, .8); }
+
+/* v6 job board: one header per tier, whole ladder always visible */
+.job-tier-head { font-weight: 900; font-size: .85em; letter-spacing: .06em; margin: .5em 0 .15em;
+  padding: .15em .5em; border-radius: .35em; background: #efe3c2; color: #6b5a2e; }
+.job-tier-head.open { background: #d8f5dc; color: #145c14; }
+.job-tier-head span { font-weight: 700; opacity: .8; }

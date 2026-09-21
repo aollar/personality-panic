@@ -53,9 +53,11 @@ var URL = process.env.PP_URL || "http://localhost:8123/index.html";
   if (!lowResident.ids.every(function (id) { return id === "X006"; })) throw new Error("Low resident office: " + JSON.stringify(lowResident));
   if (!lowVisitor.ids.every(function (id) { return id === "X004"; })) throw new Error("Low visitor office: " + JSON.stringify(lowVisitor));
   if (!lowHomeless.ids.every(function (id) { return id === "X005"; })) throw new Error("Low homeless office: " + JSON.stringify(lowHomeless));
-  if (luxResident.ids.join(",") !== "X007") throw new Error("Luxury resident office: " + JSON.stringify(luxResident));
-  if (luxVisitor.ids.join(",") !== "X003") throw new Error("Luxury visitor office: " + JSON.stringify(luxVisitor));
-  if (luxHomeless.ids.join(",") !== "X009") throw new Error("Luxury homeless office: " + JSON.stringify(luxHomeless));
+  // v6: the painted PAY HEELTON RENT card is clickable too, so the office has two buttons
+  if (!luxResident.ids.every(function (id) { return id === "X007"; }) || luxResident.ids.length !== 2)
+    throw new Error("Luxury resident office: " + JSON.stringify(luxResident));
+  if (!luxVisitor.ids.every(function (id) { return id === "X003"; })) throw new Error("Luxury visitor office: " + JSON.stringify(luxVisitor));
+  if (!luxHomeless.ids.every(function (id) { return id === "X009"; })) throw new Error("Luxury homeless office: " + JSON.stringify(luxHomeless));
 
   // Real unpainted location actions still keep More available.
   var park = await open("park", "low", false, false);

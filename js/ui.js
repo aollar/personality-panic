@@ -149,7 +149,9 @@
   function openSetup(mode) {
     setup = {
       mode: mode, humans: mode === "single" ? 1 : 2, bots: 1,
-      length: "short", timer: 0, hints: true, skipCpu: true, maxRounds: 15,
+      length: "short", timer: 0, hints: true, skipCpu: true,
+      maxRounds: DATA.settings.turnsPerGame.short, maxRoundsTouched: false,
+      cpuLevel: "medium",
       tuPerTurn: DATA.settings.timeUnitsPerTurn,
       picks: [], activeSlot: 0
     };
@@ -192,7 +194,8 @@
       ["Hints", setup.hints ? "On" : "Off", "hints"],
       ["Skip CPU Turns", setup.skipCpu ? "On" : "Off", "skipCpu"],
       ["Weekend Cards", { full: "Full", essential: "Essential", off: "Off (debug)" }[weekendSetting()], "weekend"],
-      ["Game ends after", setup.maxRounds === 0 ? "— (only stat max)" : setup.maxRounds + " turns", "maxRounds"]
+      ["CPU Difficulty", setup.cpuLevel.charAt(0).toUpperCase() + setup.cpuLevel.slice(1), "cpuLevel"],
+      ["Turns per game", setup.maxRounds === 0 ? "Unlimited (stat max only)" : setup.maxRounds + " turns", "maxRounds"]
     ];
     el.innerHTML = rows.map(function (r) {
       return '<div class="opt-row"><label>' + r[0] + '</label><div class="value">' +
@@ -268,7 +271,9 @@
     if (k === "length") {
       var L = ["short", "medium", "long"], i = (L.indexOf(setup.length) + d + 3) % 3;
       setup.length = L[i];
-      setup.maxRounds = { short: 15, medium: 20, long: 25 }[setup.length];
+      // v6: the suggested default follows the game length, but never overrides
+      // a turn count the player picked themselves
+      if (!setup.maxRoundsTouched) setup.maxRounds = DATA.settings.turnsPerGame[setup.length];
     }
     if (k === "timer") {
       var T = [0, 30, 60, 90, 120], j = (T.indexOf(setup.timer) + d + T.length) % T.length;
@@ -286,9 +291,14 @@
       setup.weekend = W[(W.indexOf(weekendSetting()) + d + W.length) % W.length];
     }
     if (k === "maxRounds") {
-      var opts = [0, 20, 25, 30, 35, 40, 50, 60, 80];
-      var idx = opts.indexOf(setup.maxRounds); if (idx < 0) idx = 3;
+      var opts = DATA.settings.turnsPerGame.options.concat([60, 80, 100, 0]);   // 0 = unlimited
+      var idx = opts.indexOf(setup.maxRounds); if (idx < 0) idx = 0;
       setup.maxRounds = opts[(idx + d + opts.length) % opts.length];
+      setup.maxRoundsTouched = true;
+    }
+    if (k === "cpuLevel") {
+      var L = ["easy", "medium", "hard"], li = (L.indexOf(setup.cpuLevel) + d + 3) % 3;
+      setup.cpuLevel = L[li];
     }
     rebuildSlots(); renderSetup();
   }
@@ -297,7 +307,7 @@
     var players = setup.picks.map(function (p) { return { name: p.name, code: p.code, isBot: p.isBot }; });
     UI.cfg = { T: lengthT(), timerSeconds: setup.timer, maxRounds: setup.maxRounds,
                hints: setup.hints, skipCpu: setup.skipCpu, players: players,
-               weekendMode: weekendSetting() };
+               weekendMode: weekendSetting(), cpuDifficulty: setup.cpuLevel };
     UI.state = E.newGame(UI.cfg);
     UI.mode = (setup.mode === "host") ? "host" : "local";
     UI.mySlots = players.map(function (p, i) { return p.isBot ? -1 : i; }).filter(function (i) { return i >= 0; });
@@ -529,8 +539,11 @@
   function renderHud() {
     ensureHud();
     var st = UI.state, p = activeP(), T = st.T;
-    var maxT = st.maxRounds > 0 ? "/" + st.maxRounds : "";
-    $("#hud-turn1").textContent = "TURN " + st.turn + maxT + " \u00b7 " + p.name.toUpperCase() + (p.isBot ? " (CPU)" : "");
+    var maxT = st.maxRounds > 0 ? " OF " + st.maxRounds : "";
+    var finalRound = st.maxRounds > 0 && st.turn === st.maxRounds;
+    $("#hud-turn1").textContent = (finalRound ? "\ud83c\udfc1 FINAL ROUND \u00b7 " : "") +
+      "TURN " + st.turn + maxT + " \u00b7 " + p.name.toUpperCase() + (p.isBot ? " (CPU)" : "");
+    $("#hud-turn1").classList.toggle("final-round", !!finalRound);
     $("#hud-turn2").textContent = "\ud83d\udd50 " + dayClock(p) + " \u2014 " + p.tu + " TU left";
     $("#hud-money").textContent = "\ud83d\udcb5 $" + p.stats.money;
     ["connection", "health", "career", "happiness"].forEach(function (stat) {
@@ -1395,6 +1408,17 @@
       bodyHtml = '<div class="t-fx">🐾 Boosts <b>' + E.statName(pet.main) + "</b> & <b>" + E.statName(pet.upkeep) + "</b></div>" +
         '<div class="t-note">+10% to a neutral stat · +5% if it stacks a strength · halves a matching weakness · one pet at a time</div>';
       if (!ann.ok) whyHtml = '<div class="t-why">🔒 ' + ann.why + "</div>";
+    } else if (a.fx.some(function (f) { return f.kind === "payRent"; }) && !p.homeless) {
+      var rs = E.rentStatus(st, p);
+      nameLine = a.name;
+      bodyHtml = '<div class="t-fx">' + rs.text + "</div>" +
+        '<div class="t-note">💡 Rent is due every ' + DATA.settings.rentIntervalTurns + " turns. Miss it and you lose the flat.</div>";
+      if (!ann.ok) whyHtml = '<div class="t-why">🔒 ' + ann.why + "</div>";
+      else costBits.push("💵 $" + ann.cost);
+      tip.innerHTML = '<div class="t-name">' + nameLine + '</div><div class="t-cost">' + (costBits.join(" · ") || "Free") + "</div>" + bodyHtml + whyHtml;
+      tip.style.display = ""; tip.style.right = (100 - h.box[0] + 1) + "%"; tip.style.left = "auto";
+      tip.style.top = Math.min(h.box[1], 78) + "%";
+      return;
     } else if (ann.course) {
       // university: every painted class/degree button opens the 30-course catalog
       if (ann.cost) costBits.push("💵 $" + ann.cost);
@@ -1745,13 +1769,23 @@
       return '<span class="tier-chip ' + (g.ok ? "open" : "locked") + '" title="' + (g.why || t + " jobs unlocked") + '">' +
         (g.ok ? "✓ " : "🔒 ") + t + " · " + (clicks[t] || 0) + " clicks</span>";
     }).join("") + '<div class="job-progress-note">No promotions: switch to any job you qualify for. Tiers unlock with work clicks + the matching university path.</div></div>';
-    $("#job-list").innerHTML = header + rows.map(function (r, i) {
-      var j = r.job, pay = Math.round(j.basePayT100 * E.econ(st) / 100);
-      return '<button class="job-row ' + (r.current ? "current" : "") + '" data-i="' + i + '" ' + (r.why ? "disabled" : "") + ">" +
-        '<span class="j-name">' + j.name + " · " + DATA.buildings[j.building].name + "</span>" +
-        "<span>$" + pay + "/shift</span><span>" + j.tier + "</span>" +
-        '<span class="j-req ' + (r.why ? "blocked" : "") + '">' + (r.why ? "🔒 " + r.why : (j.reqText || "No requirements")) + "</span>" +
-        "</button>";
+    // v6: every tier group is always shown, in ladder order, so the player can
+    // see the whole ladder; locked rows stay visible with their exact reason.
+    var byTier = {};
+    rows.forEach(function (r, i) { (byTier[r.job.tier] = byTier[r.job.tier] || []).push({ r: r, i: i }); });
+    $("#job-list").innerHTML = header + E.DATA.jobProgression.order.map(function (tier) {
+      var group = byTier[tier] || [];
+      var gate = E.tierGate(st, p, tier);
+      return '<div class="job-tier-head' + (gate.ok ? " open" : "") + '">' + tier.toUpperCase() +
+        " <span>" + (gate.ok ? "unlocked" : "🔒 " + (gate.why || "")) + "</span></div>" +
+        group.map(function (g) {
+          var r = g.r, j = r.job, pay = Math.round(j.basePayT100 * (DATA.buildingPay[j.building] || 1) * E.econ(st) / 100);
+          return '<button class="job-row ' + (r.current ? "current" : "") + '" data-i="' + g.i + '" ' + (r.why ? "disabled" : "") + ">" +
+            '<span class="j-name">' + j.name + " · " + DATA.buildings[j.building].name + "</span>" +
+            "<span>$" + pay + "/shift</span><span>" + j.tier + "</span>" +
+            '<span class="j-req ' + (r.why ? "blocked" : "") + '">' + (r.why ? "🔒 " + r.why : (j.reqText || "No requirements")) + "</span>" +
+            "</button>";
+        }).join("");
     }).join("");
     openDialog("jobs");
     $$("#job-list .job-row").forEach(function (b) {
