@@ -6,9 +6,9 @@ site is https://aollar.github.io/personality-panic/ and deploys from `main`
 
 ## Source of truth for numbers
 
-`docs/Personality_Panic_Balance_Lock_v6-1.xlsx` is the spreadsheet every number
-comes from, and `docs/Personality_Panic_MVP_Master_Manual_v6-1.docx` is the
-rules manual. Both live in this repo so the newest copy can never be lost.
+`docs/Personality_Panic_Balance_Lock_v7.xlsx` is the spreadsheet every number
+comes from, and `docs/Personality_Panic_MVP_Master_Manual_v7.docx` is the
+rules manual (PDF copy alongside). The v6-1 files stay in `docs/` for diffing. Both live in this repo so the newest copy can never be lost.
 
     python scripts/build_data.py      # xlsx -> assets/data/gamedata.js
 
@@ -35,13 +35,15 @@ same commit as the code.**
 
 ## Testing
 
+    node test/v7_rules.js        # v7 rules (repricing, flat points, 0-TU mall/investments, gates)
     node test/v6_rules.js        # v6 rules (career curve, wages, rent, difficulty…)
     node test/v5_rules.js        # v5 rules (prices, fixtures, investments…)
     node test/kendrick_regressions.js
     node test/weekend.js
     node test/simulate.js 8 100  # full CPU games; check nothing stalls
 
-Browser suites need a server (`python -m http.server 8123`) and Chrome:
+Browser suites need a server (`python -m http.server 8123`), Chrome and
+`npm install --no-save puppeteer-core@23.11.1` (node_modules is gitignored):
 
     node test/playtest_v5.js                   # 65 checks, drives the real UI
     PP_URL=https://aollar.github.io/personality-panic/index.html node test/playtest_v5.js
@@ -61,9 +63,24 @@ Run the browser suites before pushing anything that touches `js/ui.js`,
   `assets/data/scene_hotspots.js` and `scene_visuals.js` are transparent boxes
   over them. After swapping art, re-measure every box and screenshot it.
 - Where art shows a stale price, the game draws a live tag over it
-  (`livePriceTags` in `js/ui.js`) rather than trusting the painting.
+  (`livePriceTags` in `js/ui.js`) rather than trusting the painting. A hotspot's
+  `price: { box, style, painted }` works for items and (v7) actions; the tag
+  only shows when the live price differs from `painted`. The club menu iframe
+  gets its prices by postMessage (`bdcPrices`).
 - `test/shots/` holds screenshots from the browser suites — handy for checking
   a menu without opening the game.
+
+## v7 build status
+
+Step 1 (spreadsheet-driven) DONE on `claude/v7-build`: prices, flat gym/flight
+points, 0-TU mall and investments, doubled job gates, Host Friends ungated, no
+work penalties (incl. Work From Home), Crocodile Sandals purchase trigger, live
+price tags on gym / airport / club / mall STYLE + GEAR.
+Still to build: step 2 (auto end turn at 0 TU incl. after travel; clock never
+covered, no infinity; free play with 0 bots), step 3 (investment stakes
+$100/$500/$1,000 with returns on the stake, savings 3%; efficiency 0.85 at Air
+One / Regret Burger / Club; Biggest Spender bonus; weaker Easy/Medium CPU),
+step 4 (remove the More drawer — needs art).
 
 ## Open decisions
 
@@ -71,5 +88,8 @@ Run the browser suites before pushing anything that touches `js/ui.js`,
 2. Low Cost Housing art shows a TV and couch that are Luxury-only, so that room
    can never look fully furnished.
 3. Mall HOME tab art still shows v4 prices (covered by live tags).
-4. Art pending: Group Fitness Class card, Heelton Play With Pet (now painted),
+4. v7 art drift (live tags cover the prices, not the icons): gym Chest Day and
+   Skip Leg Day icons, airport Japan/Backpacking show Enlightenment (purple
+   brain) where v7 gives Critical Thinking.
+5. Art pending: Group Fitness Class card, Heelton Play With Pet (now painted),
    weekend cards I09/I10, Pet Shop bribe card ($50 painted, $10 charged).

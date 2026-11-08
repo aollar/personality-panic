@@ -55,9 +55,16 @@
       arrows: { prev: [78.6, 75.8, 3.0, 5.4], next: [89.8, 75.8, 3.0, 5.4] },
       work: { a: "A118", box: [76.4, 82.9, 21.0, 14.5] },
       hotspots: grid3(STYLE_COLS, [[17.0, 35.8], [37.0, 55.6], [56.7, 75.4]], [
-        ["A115", "Casual Clothes"], ["A115", "Smart Clothes"], ["A115", "Business Clothes"],
-        ["A115", "Dressy Clothes"], ["A115", "Dress Shoes"], ["A115", "Sunglasses"],
-        ["A115", "Earrings"], ["A115", "Bracelet"], ["A115", "Rings"]
+        // painted prices are Short-game prices; live tags cover them in Medium/Long (and v7 jewelry)
+        ["A115", "Casual Clothes", { box: [75.6, 17.6, 5.1, 3.5], style: "cream", painted: 50 }],
+        ["A115", "Smart Clothes", { box: [84.7, 17.6, 5.1, 3.5], style: "cream", painted: 400 }],
+        ["A115", "Business Clothes", { box: [93.6, 17.6, 5.1, 3.5], style: "cream", painted: 500 }],
+        ["A115", "Dressy Clothes", { box: [75.6, 37.6, 5.1, 3.5], style: "cream", painted: 300 }],
+        ["A115", "Dress Shoes", { box: [84.7, 37.6, 5.1, 3.5], style: "cream", painted: 200 }],
+        ["A115", "Sunglasses", { box: [93.6, 37.6, 5.1, 3.5], style: "cream", painted: 100 }],
+        ["A115", "Earrings", { box: [75.6, 57.3, 5.1, 3.5], style: "cream", painted: 14 }],
+        ["A115", "Bracelet", { box: [84.7, 57.3, 5.1, 3.5], style: "cream", painted: 14 }],
+        ["A115", "Rings", { box: [93.6, 57.3, 5.1, 3.5], style: "cream", painted: 20 }]
       ])
     },
     {
@@ -67,7 +74,7 @@
       arrows: { prev: [78.6, 75.8, 3.0, 5.4], next: [89.8, 75.8, 3.0, 5.4] },
       work: { a: "A118", box: [76.4, 82.9, 21.0, 14.5] },
       hotspots: grid3(STYLE_COLS, [[16.4, 36.0], [37.3, 57.0]], [
-        ["A113", "Watch", { box: [76.2, 17.0, 4.5, 3.6], style: "text" }],
+        ["A113", "Luxury Watch", { box: [76.2, 17.0, 4.5, 3.6], style: "text" }],
         ["A115", "Cap", { box: [85.3, 17.0, 4.5, 3.6], style: "text" }],
         ["A115", "Durag", { box: [94.2, 17.0, 4.5, 3.6], style: "text" }],
         ["A115", "High Heels", { box: [76.2, 37.9, 4.5, 3.6], style: "text" }],
@@ -82,9 +89,16 @@
       arrows: { prev: [78.4, 76.4, 3.0, 5.4], next: [89.5, 76.4, 3.0, 5.4] },
       work: { a: "A118", box: [78.7, 82.2, 18.6, 15.6] },
       hotspots: grid3([[72.8, 81.0], [81.4, 89.8], [90.1, 98.4]], [[14.7, 35.1], [36.1, 55.0], [56.1, 76.5]], [
-        ["A112", "Bus Pass"], ["A112", "Bicycle"], ["A112", "Car"],
-        ["A113", "Mobile Phone"], ["A113", "Computer"], ["A113", "Camera"],
-        ["A113", "TV"], ["A113", "Blu-ray"], ["A113", "E-reader"]
+        // boxed painted prices (Short game); live tags cover them in Medium/Long
+        ["A112", "Bus Pass", { box: [77.4, 16.4, 3.6, 4.0], style: "chip", painted: 100 }],
+        ["A112", "Bicycle", { box: [85.6, 16.4, 4.0, 4.0], style: "chip", painted: 750 }],
+        ["A112", "Car", { box: [94.0, 16.4, 4.4, 4.0], style: "chip", painted: 2000 }],
+        ["A113", "Mobile Phone", { box: [77.4, 36.6, 3.6, 4.0], style: "chip", painted: 500 }],
+        ["A113", "Computer", { box: [85.6, 36.6, 4.0, 4.0], style: "chip", painted: 1000 }],
+        ["A113", "Camera", { box: [94.0, 36.6, 4.4, 4.0], style: "chip", painted: 800 }],
+        ["A113", "TV", { box: [77.4, 56.8, 3.6, 4.0], style: "chip", painted: 500 }],
+        ["A113", "Blu-ray", { box: [85.6, 56.8, 4.0, 4.0], style: "chip", painted: 300 }],
+        ["A113", "E-reader", { box: [94.0, 56.8, 4.4, 4.0], style: "chip", painted: 100 }]
       ])
     },
     {
@@ -231,11 +245,11 @@
         img: V3 + "airport.png",
         arrows: { prev: [0, 0, 0, 0], next: [89.60, 78.43, 3.40, 6.10] },
         hotspots: [
-          { a: "A093", box: [72.7, 11.4, 12.7, 23.3] },
-          { a: "A094", box: [85.6, 11.4, 13.5, 23.3] },
-          { a: "A095", box: [72.7, 35.4, 12.7, 21.1] },
-          { a: "A096", box: [85.6, 35.4, 13.5, 21.1] },
-          { a: "A097", box: [72.7, 57.3, 12.7, 20.4] },
+          { a: "A093", box: [72.7, 11.4, 12.7, 23.3], price: { box: [83.45, 11.85, 2.25, 3.6], style: "gold", painted: 18 } },
+          { a: "A094", box: [85.6, 11.4, 13.5, 23.3], price: { box: [95.95, 11.85, 2.65, 3.6], style: "gold", painted: 22 } },
+          { a: "A095", box: [72.7, 35.4, 12.7, 21.1], price: { box: [83.45, 35.85, 2.25, 3.6], style: "gold", painted: 20 } },
+          { a: "A096", box: [85.6, 35.4, 13.5, 21.1], price: { box: [95.95, 35.85, 2.65, 3.6], style: "gold", painted: 25 } },
+          { a: "A097", box: [72.7, 57.3, 12.7, 20.4], price: { box: [83.45, 57.85, 2.25, 3.6], style: "gold", painted: 35 } },
           { a: "A098", box: [85.6, 57.3, 13.5, 20.4] }
         ]
       },

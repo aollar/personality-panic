@@ -827,10 +827,13 @@
             var bd = addStat(state, p, it.bonus.stat, pctB(state, it.bonus.pct));
             if (bd) summary.push("+" + bd + " " + statName(it.bonus.stat));
           }
-          // v5 one-time purchase bonuses (Fridge, Vacuum) are fixed points
+          // v5 one-time purchase bonuses (Fridge, Vacuum) are fixed points;
+          // v7 Crocodile Sandals lists a second, negative stat in `also`
           if (it.trigger && it.trigger.on === "purchase") {
-            var td = addStat(state, p, it.trigger.stat, fixturePts(state, it.trigger.pts));
-            if (td) summary.push("+" + td + " " + statName(it.trigger.stat));
+            [it.trigger].concat(it.trigger.also || []).forEach(function (t) {
+              var td = addStat(state, p, t.stat, fixturePts(state, t.pts));
+              if (td) summary.push((td > 0 ? "+" : "") + td + " " + statName(t.stat));
+            });
           }
           result.sfx.push("money");
           log(state, p, "Bought " + it.name + " for $" + icost, "");
@@ -886,7 +889,9 @@
     return id ? pctB(state, ACTIONS[id].costPct) : 0;
   }
   function fixturePts(state, pts) {
-    return ASSUME.fixtureBonusScalesWithB ? Math.max(1, Math.round(pts * econ(state) / 100)) : pts;
+    if (!ASSUME.fixtureBonusScalesWithB) return pts;
+    var sign = pts < 0 ? -1 : 1;
+    return sign * Math.max(1, Math.round(Math.abs(pts) * econ(state) / 100));
   }
   // Items a player can USE right now: Luxury-only items sit in storage (no
   // bonus) while the owner lives in Low Cost Housing or is homeless.

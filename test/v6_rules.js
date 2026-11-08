@@ -119,10 +119,11 @@ test("luxury comfort actions need the matching purchase", () => {
   assert.match(why("A009"), /bed/i);
   assert.match(why("A010"), /Hot Tub/i);
   assert.match(why("A011"), /Couch/i);
-  assert.match(why("A014"), /Fancy Dinnerware/i);
+  // v7: Host Friends no longer needs Fancy Dinnerware
+  assert.ok(E.actionsAt(st, p).filter(a => a.id === "A014")[0].ok, "A014 open without dinnerware");
   ["Lumpy Bed", "Hot Tub", "Couch", "Fancy Dinnerware"].forEach(n => p.items.push(n));
   ["A009", "A010", "A011", "A014"].forEach(id => assert.ok(E.actionsAt(st, p).filter(a => a.id === id)[0].ok, id + " should open once bought"));
-  // Fancy Dinnerware also pays its own trigger bonus when you host
+  // Fancy Dinnerware is now optional but still pays its trigger bonus when you host
   const cool = p.stats.coolness;
   E.perform(st, "A014");
   assert.ok(p.stats.coolness - cool >= 1, "dinnerware fires on Host Friends");

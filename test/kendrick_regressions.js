@@ -115,27 +115,27 @@ function rich(p) { p.stats.money = 1000; p.tu = 999; }
   let r = E.perform(st, "A076", { job: "Teller", building: "debtstreet" });
   assert.ok(r.ok); assert.strictEqual(p.job.name, "Teller");
   p.items.push("Smart Clothes", "Business Clothes", "Computer"); p.stats.critical = 100; p.stats.career = 100;
-  for (let i = 0; i < 20; i++) { p.location = "debtstreet"; rich(p); assert.ok(E.perform(st, "A092").ok); }
-  assert.strictEqual(p.workClicks.Low, 20);
+  for (let i = 0; i < 40; i++) { p.location = "debtstreet"; rich(p); assert.ok(E.perform(st, "A092").ok); }
+  assert.strictEqual(p.workClicks.Low, 40);
   p.location = "soulExchange"; rich(p);
   r = E.perform(st, "A076", { job: "Junior Loan Shark", building: "debtstreet" });
-  assert.strictEqual(r.ok, false, "Mid needs Path 2 even with 20 Low clicks"); assert.match(r.why, /Path 2/);
+  assert.strictEqual(r.ok, false, "Mid needs Path 2 even with 40 Low clicks"); assert.match(r.why, /Path 2/);
   E.COURSES.filter(c => c.path <= 2).forEach(c => { p.edu.done.push(c.id); });
   r = E.perform(st, "A076", { job: "Junior Loan Shark", building: "debtstreet" });
-  assert.ok(r.ok, "Mid unlocked by 20 Low clicks + Path 2 (alternate route)"); assert.strictEqual(p.job.name, "Junior Loan Shark");
+  assert.ok(r.ok, "Mid unlocked by 40 Low clicks + Path 2 (alternate route)"); assert.strictEqual(p.job.name, "Junior Loan Shark");
   // switch straight back to an entry job and back again: no minimum time in a job
   r = E.perform(st, "A076", { job: "Teller", building: "debtstreet" }); assert.ok(r.ok);
   r = E.perform(st, "A076", { job: "Junior Loan Shark", building: "debtstreet" }); assert.ok(r.ok);
-  // Low+ gate: 10 Low clicks + Path 1 (have both)
+  // Low+ gate: 20 Low clicks + Path 1 (v7 doubled gates) (have both)
   assert.ok(E.tierGate(st, p, "Low+").ok);
-  // High needs 25 Mid+ OR 30 Mid clicks + Path 4
+  // High needs 50 Mid+ OR 60 Mid clicks + Path 4
   E.COURSES.filter(c => c.path <= 4).forEach(c => { if (!p.edu.done.includes(c.id)) p.edu.done.push(c.id); });
   r = E.perform(st, "A076", { job: "Mortgage Broker", building: "debtstreet" });
-  assert.strictEqual(r.ok, false); assert.match(r.why, /30 Mid work clicks \(0\/30\)/);
-  p.workClicks.Mid = 30;
+  assert.strictEqual(r.ok, false); assert.match(r.why, /60 Mid work clicks \(0\/60\)/);
+  p.workClicks.Mid = 60;
   r = E.perform(st, "A076", { job: "Mortgage Broker", building: "debtstreet" });
-  assert.ok(r.ok, "High unlocked via 30 Mid clicks + Path 4");
-  // Max needs 40 High clicks + Path 5
+  assert.ok(r.ok, "High unlocked via 60 Mid clicks + Path 4");
+  // Max needs 80 High clicks + Path 5
   r = E.perform(st, "A076", { job: "Chief Financial Officer", building: "debtstreet" });
   assert.strictEqual(r.ok, false); assert.match(r.why, /Path 5/);
   // pay is set by tier: $40 Low ... $400 Max at B=100

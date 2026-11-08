@@ -125,7 +125,7 @@ var PP_SCENE_PAGES = {
           { a: "A115", choice: { item: "Durag" }, box: [89.9, 35.2, 9.0, 16.6] }
         ]},
         { img: "mall_style_3.jpg", arrows: { prev: [77.7, 55.4, 4.8, 6.6], next: [85.6, 55.4, 4.8, 6.6] }, hotspots: [
-          { a: "A113", choice: { item: "Watch" }, box: [70.6, 16.8, 9.0, 16.6] },
+          { a: "A113", choice: { item: "Luxury Watch" }, box: [70.6, 16.8, 9.0, 16.6] },
           { a: "A115", choice: { item: "Cap" }, box: [80.2, 16.8, 9.0, 16.6] }
         ]}
       ]},

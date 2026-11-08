@@ -995,6 +995,8 @@
       frame.style.display = "";
       robot.style.display = "";
       if (!frame.src) frame.src = "assets/bdc-menu/index.html?embed=1&static=1";
+      if (!frame._pricesHooked) { frame._pricesHooked = true; frame.addEventListener("load", bdcPrices); }
+      bdcPrices();
     } else {
       vid.pause(); vid.style.display = "none";
       frame.style.display = "none";
@@ -1253,19 +1255,25 @@
   function livePriceTags(layer, page) {
     var tags = (page.priceTags || []).slice();
     page.hotspots.forEach(function (h) {
-      if (h.price && h.choice && h.choice.item) tags.push(Object.assign({ item: h.choice.item }, h.price));
+      if (!h.price) return;
+      if (h.choice && h.choice.item) tags.push(Object.assign({ item: h.choice.item }, h.price));
+      else if (h.a) tags.push(Object.assign({ action: h.a }, h.price));   // v7: repriced actions (gym, flights)
     });
     tags.forEach(function (t) {
-      var it = E.ITEMS[t.item];
-      if (!it) return;
-      var live = E.pctB(UI.state, it.costPct);
+      var src = t.item ? E.ITEMS[t.item] : E.ACTIONS[t.action];
+      if (!src) return;
+      var live = E.pctB(UI.state, src.costPct);
       if (t.painted != null && t.painted === live) return;
+      var text = live === 0 ? "FREE" : "$" + live.toLocaleString("en-US");
+      if (text.length > 5 && t.box[2] < 3.2) text = "$" + live;   // drop the comma in a narrow painted chip
       var el = document.createElement("div");
       el.className = "live-price " + (t.style || "tag");
-      el.textContent = "$" + live.toLocaleString("en-US");
+      el.textContent = text;
       el.style.left = t.box[0] + "%"; el.style.top = t.box[1] + "%";
       el.style.width = t.box[2] + "%"; el.style.height = t.box[3] + "%";
-      el.style.fontSize = "calc(var(--stage-w) * " + (t.box[3] * 0.0034).toFixed(4) + ")";
+      // as tall as the box allows, shrunk until the text fits its width
+      var fs = Math.min(t.box[3] * 0.0034, t.box[2] * 0.0148 / Math.max(3, text.length));
+      el.style.fontSize = "calc(var(--stage-w) * " + fs.toFixed(4) + ")";
       layer.appendChild(el);
     });
   }
@@ -1341,6 +1349,7 @@
       layer.appendChild(rides);
     }
     PAINT[id].forEach(function (h) { layer.appendChild(makePaintBtn(h)); });
+    livePriceTags(layer, { hotspots: PAINT[id] });
   }
   function annFor(actionId) {
     var st = UI.state, p = activeP();
@@ -1614,6 +1623,19 @@
     var last = UI.state.log[UI.state.log.length - 1];
     if (last && UI.mode !== "guest") bdcSay(last.text.slice(0, 90));
   });
+  // the club card art shows pre-v7 prices; send the live ones for its chips
+  function bdcPrices() {
+    var f = $("#bdc-frame");
+    if (!f || !f.contentWindow || !UI.state) return;
+    var prices = {};
+    Object.keys(BDC_MAP).forEach(function (card) {
+      var a = E.ACTIONS[BDC_MAP[card]];
+      if (card === "work" || card === "stranger" || !a) return;   // stranger's chip paints its time ("2 HR"), not a price
+      var live = E.pctB(UI.state, a.costPct);
+      prices[card] = live === 0 ? "FREE" : "$" + live.toLocaleString("en-US");
+    });
+    f.contentWindow.postMessage({ pp: "bdc-ctl", op: "setPrices", prices: prices }, "*");
+  }
   function bdcSay(text) {
     var f = $("#bdc-frame");
     if (f && f.contentWindow) f.contentWindow.postMessage({ pp: "bdc-ctl", op: "setMessage", text: text }, "*");

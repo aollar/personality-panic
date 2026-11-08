@@ -458,6 +458,7 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
   position: absolute; right: .25em; top: .25em;
   background: rgba(20, 12, 8, .85); color: #ffb3b3; border-radius: 999px;
   font-size: .8em; padding: .05em .4em; pointer-events: none; white-space: nowrap;
+  z-index: 5;   /* above .live-price tags */
 }
 /* one-time-buy item already owned: reads green "✓ OWNED", not a red lock */
 .paint-btn.owned { border-color: rgba(80, 200, 130, .5); }
@@ -972,6 +973,11 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
 .live-price.tag { background: #f7e6b4; color: #184d17; border: .14em solid #b98d3c; border-radius: .35em;
   box-shadow: 0 0 .2em .15em #f4dca3; }
 .live-price.dark { background: #1f4a10; color: #f5c542; border: .14em solid #d8a93a; border-radius: .35em; }
+/* v7: repriced items/actions painted with an older price */
+.live-price.cream { background: #fee7b5; color: #1f6b2c; justify-content: flex-end; padding-right: .1em; }
+.live-price.chip { background: #fdf0cf; color: #1f6b2c; border: .12em solid #c8a565; border-radius: .3em; }
+.live-price.bronze { background: #a8690f; color: #1b1206; border: .12em solid #5c3a0c; border-radius: .3em; }
+.live-price.gold { background: #f2a630; color: #1a1206; border: .12em solid #3a2a12; border-radius: .3em; }
 
 /* v5 job board: tier progress (work clicks + education, no promotions) */
 .job-progress { display: flex; flex-wrap: wrap; gap: .35em; margin-bottom: .3em; }

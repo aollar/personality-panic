@@ -591,3 +591,12 @@ body.force-reduced-motion .decision-card:hover,
 body.force-reduced-motion .decision-card.selected,
 body.force-reduced-motion .work-button:hover { transform: none; }
 body.force-reduced-motion * { transition-duration: 60ms !important; }
+
+/* live price chip over the painted one (PP v7: the card art shows older prices) */
+.decision-card .live-chip {
+  position: absolute; left: 66%; top: 2%; width: 31%; height: 22%; z-index: 6;
+  display: flex; align-items: center; justify-content: center; pointer-events: none;
+  background: #0b0b0d; color: #fff; border-radius: .35em;
+  font: 900 4.2vw / 1 system-ui, sans-serif; white-space: nowrap;
+}
+.decision-card .live-chip.free { color: #3ee64a; }

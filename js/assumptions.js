@@ -183,7 +183,7 @@ var PP_ASSUMPTIONS = {
   weekend: {
     eventStartTurn: 2,        // no "weekend" happened before turn 1 — first event card on turn 2
     // "Tech" vs "Appliance" split (Items sheet lumps them in one group):
-    techItems: ["Computer", "Mobile Phone", "Camera", "TV", "Blu-ray", "E-reader", "Stereo", "Watch"],
+    techItems: ["Computer", "Mobile Phone", "Camera", "TV", "Blu-ray", "E-reader", "Stereo", "Luxury Watch"],
     applianceItems: ["Fridge", "Stove", "Vacuum", "Cold Plunge", "Hot Tub"]
   },
   // Pet display names — canonical: painted on the Adopt pages of the pet shop art

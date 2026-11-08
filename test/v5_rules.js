@@ -44,11 +44,11 @@ test("mall prices match the manual's §16.3 list and scale x2.5 / x3.5", () => {
   });
 });
 
-test("no mall item carries a stat penalty (Durag, Crocodile Sandals)", () => {
+test("no mall item carries a stat penalty (Durag; v7 Crocodile Sandals is tested in v7_rules)", () => {
   E.DATA.items.forEach(it => assert.strictEqual(it.penalty, null, it.name));
   const st = game(), p = st.players[0]; rich(p);
   const before = Object.assign({}, p.stats);
-  assert.ok(buy(st, p, "Durag").ok); assert.ok(buy(st, p, "Crocodile Sandals").ok);
+  assert.ok(buy(st, p, "Durag").ok);
   ["critical", "coolness", "happiness", "health"].forEach(s => assert.ok(p.stats[s] >= before[s], s));
 });
 

@@ -214,7 +214,7 @@ function check(name, cond, detail) {
   check("Heelton pet spa $80", /\$80/.test(spa.tu), spa.tu);
   await set("function (p) { p.housing = 'low'; p.tu = 40; }");
   await openScene("gym");
-  var gym = { A042: 5, A043: 10, A044: 25, A045: 40, A048: 15 };
+  var gym = { A042: 5, A043: 10, A044: 100, A045: 50, A048: 250 };   // v7: Bootcamp $100, Test Booster $50, Personal Best $250
   for (var g in gym) { var gc = await chip(g); check("Gym " + g + " costs $" + gym[g], gc && gc.tu.indexOf("$" + gym[g]) !== -1, gc && gc.tu); }
   await set("function (p) { p.tu = 40; p.pet = { code: 'ENTP', health: 50, happiness: 50, fedThisTurn: true, dead: false, missed: 0 }; }");
   await openScene("petShop");

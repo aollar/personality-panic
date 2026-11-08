@@ -116,7 +116,7 @@ var SHOTS = path.join(__dirname, "shots");
   await page.evaluate(function () {
     var UI = window.PPUI, p = UI.state.players[0]; document.querySelector("#btn-leave-scene").click();
     p.location = "soulExchange"; p.tu = 999; UI.turnBegun = true;
-    p.workClicks = { Low: 12, "Low+": 0, Mid: 0, "Mid+": 0, High: 0, Max: 0 };
+    p.workClicks = { Low: 22, "Low+": 0, Mid: 0, "Mid+": 0, High: 0, Max: 0 };
     document.querySelector(".hotspot[data-id='soulExchange']").click();
     var promo = document.querySelectorAll("#paint-layer .paint-btn[data-a='A076']");
     promo[promo.length - 1].click();
