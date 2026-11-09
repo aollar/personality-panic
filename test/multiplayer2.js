@@ -86,6 +86,7 @@ var PORT = process.env.PORT || "8125";
 
   // host begins + walks to the park: guest should see the walk animate
   await host.bringToFront();
+  await host.waitForSelector("#btn-begin-turn", { timeout: 8000 });   // the weekend card builds the button after its animation
   await host.evaluate(function () { document.querySelector("#btn-begin-turn").click(); });
   await host.evaluate(function () { document.querySelector(".hotspot[data-id='park']").click(); });
   await guest.bringToFront();

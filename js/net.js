@@ -131,8 +131,27 @@
       NET.broadcastState();
       UI.renderAll();
       if (UI.state.over) UI.openPodium();
-      else UI.maybeRunBot();
+      else {
+        hostAutoEnd(c.slotIdx, msg.kind === "move" ? 1800 : 800);
+        UI.maybeRunBot();
+      }
     }
+  }
+  // v7: the host ends a guest's turn when their Time Units run out (after an
+  // action, or after travel spends the last of them); the delay lets the
+  // guest's walk and result play first
+  function hostAutoEnd(slot, delay) {
+    var p = UI.state.players[slot];
+    if (!p || p.isBot || p.tu > 0) return;
+    setTimeout(function () {
+      var st = UI.state;
+      if (!st || st.over || st.activeIdx !== slot || st.players[slot].tu > 0) return;
+      UI.toast("⏳ " + st.players[slot].name + " is out of time — turn over", "");
+      E.endTurn(st);
+      NET.broadcastState();
+      if (st.over) { UI.openPodium(); return; }
+      UI.turnIntro();
+    }, delay);
   }
   function hostDropGuest(c) {
     NET.conns = NET.conns.filter(function (x) { return x !== c; });

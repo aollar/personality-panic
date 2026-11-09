@@ -48,6 +48,8 @@ Browser suites need a server (`python -m http.server 8123`), Chrome and
     node test/playtest_v5.js                   # 65 checks, drives the real UI
     PP_URL=https://aollar.github.io/personality-panic/index.html node test/playtest_v5.js
     node test/e2e.js  node test/kendrick_ui.js  node test/manual_menu_ui.js
+    node test/v7_step2_ui.js   node test/multiplayer.js   # auto-end, clock, free play
+    PORT=8123 node test/multiplayer2.js   # stale: fails before its walk step (pre-v7)
 
 Run the browser suites before pushing anything that touches `js/ui.js`,
 `assets/data/scene_*.js` or scene art.
@@ -76,8 +78,12 @@ Step 1 (spreadsheet-driven) DONE on `claude/v7-build`: prices, flat gym/flight
 points, 0-TU mall and investments, doubled job gates, Host Friends ungated, no
 work penalties (incl. Work From Home), Crocodile Sandals purchase trigger, live
 price tags on gym / airport / club / mall STYLE + GEAR.
-Still to build: step 2 (auto end turn at 0 TU incl. after travel; clock never
-covered, no infinity; free play with 0 bots), step 3 (investment stakes
+Step 2 DONE (2026-11-08): turn auto-ends at 0 TU after actions AND travel
+(`autoEndIfOut` in ui.js; the host does it for online guests in net.js
+`hostAutoEnd`); the clock sits above every in-game dialog (z61) and dialogs
+reserve its band; the Unlimited timer shows Time Units left, not ∞; free play
+(1 human, 0 bots) on the setup screen.
+Still to build: step 3 (investment stakes
 $100/$500/$1,000 with returns on the stake, savings 3%; efficiency 0.85 at Air
 One / Regret Burger / Club; Biggest Spender bonus; weaker Easy/Medium CPU),
 step 4 (remove the More drawer — needs art).

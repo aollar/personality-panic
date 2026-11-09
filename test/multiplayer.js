@@ -89,13 +89,17 @@ var SHOTS = path.join(__dirname, "shots");
   console.log("guest happiness after Relax — host sees:", happiness[0], "guest sees:", happiness[1]);
   if (happiness[0] <= 0 || happiness[0] !== happiness[1]) { console.error("MP SYNC FAIL"); process.exit(1); }
 
-  // guest ends turn -> host gets turn 2
-  await guest.evaluate(function () { window.PPUI.dispatch("end", {}); });
+  // v7: guest spends their last Time Unit -> the HOST ends the guest's turn
+  // automatically (no End Turn click) -> host gets turn 2
+  await host.evaluate(function () { window.PPUI.state.players[1].tu = 1; window.PPNet.broadcastState(); });
+  await new Promise(function (r) { setTimeout(r, 600); });
+  await guest.evaluate(function () { window.PPUI.doAction("A002"); });
   await host.bringToFront();
   await host.waitForSelector("#dlg-turncard.show", { timeout: 15000 });
   var t = await host.evaluate(function () { return window.PPUI.state.turn; });
   console.log("host back on turn:", t);
-  if (t !== 2) { console.error("MP TURN FAIL"); process.exit(1); }
+  if (t !== 2) { console.error("MP TURN FAIL (guest out of Time Units should auto-end)"); process.exit(1); }
+  console.log("guest out of Time Units: turn ended automatically ✓");
   console.log("MULTIPLAYER PASS");
   await browser.close();
 })().catch(function (e) { console.error("MP CRASH:", e.message); process.exit(1); });

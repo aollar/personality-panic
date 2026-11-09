@@ -87,16 +87,19 @@
     if (UI.state.over) { renderAll(); openPodium(); return; }
     if (after) after(r);
     renderAll();
-    // out of Time Units (red ring full) -> automatically end the turn
-    if (kind !== "end" && UI.mode !== "guest" && !UI.state.over && isMyTurn() && activeP().tu <= 0) {
-      setTimeout(function () {
-        if (!UI.state.over && isMyTurn() && activeP().tu <= 0) {
-          toast("⏳ Out of Time Units — turn over", "");
-          endTurnClicked(true);
-        }
-      }, 800);
-    }
+    if (kind !== "end") autoEndIfOut(800);
     maybeRunBot();
+  }
+  // v7: out of Time Units (red ring full) -> the turn ends automatically, after
+  // actions AND after travel that spends the last Time Units (the playtest bug)
+  function autoEndIfOut(delay) {
+    if (UI.mode === "guest" || UI.state.over || !isMyTurn() || activeP().isBot || activeP().tu > 0) return;
+    setTimeout(function () {
+      if (!UI.state.over && isMyTurn() && activeP().tu <= 0) {
+        toast("⏳ Out of time — turn over", "");
+        endTurnClicked(true);
+      }
+    }, delay);
   }
 
   // ---------------- save / resume ----------------
@@ -251,22 +254,21 @@
       };
     });
 
-    var ready = setup.picks.length >= 2 && setup.picks.every(function (p) { return p.code; });
+    var ready = setup.picks.length >= 1 && setup.picks.every(function (p) { return p.code; });
     $("#btn-start-game").disabled = !ready;
-    $("#setup-hint").textContent = ready ? "" :
-      "Pick a character for every participant (tap a tab, then a card). Min 2 participants.";
+    $("#setup-hint").textContent = ready ? (setup.picks.length === 1 ? "Free play: just you against the turn limit." : "") :
+      "Pick a character for every participant (tap a tab, then a card).";
   }
   function bumpSetup(k, d) {
     if (k === "humans") {
       setup.humans = Math.max(setup.mode === "single" ? 1 : 1, Math.min(4, setup.humans + d));
       if (setup.mode === "single") setup.humans = 1;
       if (setup.humans + setup.bots > 4) setup.bots = 4 - setup.humans;
-      if (setup.humans + setup.bots < 2) setup.bots = 2 - setup.humans;
     }
     if (k === "bots") {
       setup.bots = Math.max(0, Math.min(3, setup.bots + d));
       if (setup.humans + setup.bots > 4) setup.humans = Math.max(1, 4 - setup.bots);
-      if (setup.humans + setup.bots < 2) setup.bots = 2 - setup.humans;
+      // v7 free play: 1 human and 0 CPU bots is a legal game (minimum 1 participant)
     }
     if (k === "length") {
       var L = ["short", "medium", "long"], i = (L.indexOf(setup.length) + d + 3) % 3;
@@ -402,6 +404,7 @@
       if (UI.mode === "host") window.PPNet.broadcastState();
       openScene(id);
       renderAll();
+      autoEndIfOut(1200);         // travel spent the last Time Units: show the arrival, then hand off
     });
   }
   function dispatchNoRender(kind, payload) {
@@ -478,9 +481,11 @@
     UI.clock.set({ total: total, used: Math.max(0, total - p.tu) });
     UI.clock.label(clockLabelText());
   }
-  // center number = the real-time turn countdown; ∞ only for the Unlimited setting.
+  // center number = the real-time turn countdown; with the Unlimited timer it
+  // shows the Time Units left (v7: the old ∞ read as "broken")
   function clockLabelText() {
-    if (!UI.state || !UI.state.timerSeconds) return "∞";
+    if (!UI.state) return "";
+    if (!UI.state.timerSeconds) return Math.max(0, activeP().tu);
     // before any timer has run on this client (e.g. spectating turn 1) show the
     // full allowance instead of NaN
     if (UI.timerLeft == null) return UI.state.timerSeconds;
@@ -695,7 +700,7 @@
     var secs = UI.state.timerSeconds;
     var bot = activeP().isBot;
     $("#turn-timer").style.display = (secs && !bot) ? "" : "none";
-    if (!secs) { renderTimer(); return; }          // Unlimited: no countdown (clock shows ∞)
+    if (!secs) { renderTimer(); return; }          // Unlimited: no countdown (clock shows Time Units left)
     UI.timerLeft = secs;                            // every turn (incl. CPU) gets the countdown
     renderTimer();
     UI.timerId = setInterval(function () {
