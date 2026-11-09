@@ -219,7 +219,8 @@
       workClicks: newWorkClicks(),           // v5 Job_Progression: permanent clicks per tier
       edu: { done: [], current: null },      // v5 Education_Paths: completed course ids + course in progress
       degrees: [],                           // display: names of completed education paths
-      principal: {},                         // v4 Investments: $ held in each asset
+      principal: {},                         // v4 Investments: $ held in each asset (v7: the stake)
+      spent: 0,                              // v7 Biggest Spender: every dollar paid out of the wallet
       flags: {}, debts: [], booster: null,
       actionCounts: {}, careerGrants: 0, difficulty: null,   // v6: per-turn limits, career curve, CPU level
       rentPaid: false, warnings: [],
@@ -539,14 +540,16 @@
   function payMultiplier(state, p, actionId) {
     if (actionId === "A015") return DATA.settings.workFromHomePay || 0.85;
     var where = (DATA.buildingPay || {})[p.location];
-    return where != null ? where : 1;
+    // v7: buildings where you can also eat pay 0.85 on top of their distance multiplier
+    var eff = (DATA.buildingEfficiency || {})[p.location] || 1;
+    return Math.round((where != null ? where : 1) * eff * 1000) / 1000;
   }
   function applyWork(state, p, actionId) {
     var j = p.job, scale = econ(state) / 100;
     var mult = payMultiplier(state, p, actionId);
     var pay = gainStat(state, p, "money", null, j.basePayT100 * scale * mult);
     var car = gainStat(state, p, "career", null, j.careerGainT100 * scale);
-    var bits = ["+$" + pay + (mult !== 1 ? " (x" + mult + ")" : ""), "+" + car + " Career"];
+    var bits = ["+$" + pay + (mult !== 1 ? " (x" + (Math.round(mult * 100) / 100) + ")" : ""), "+" + car + " Career"];
     j.effects.forEach(function (e) {
       var d = addStat(state, p, e.stat, Math.round(e.amtT100 * scale));
       if (d) bits.push((d > 0 ? "+" : "") + d + " " + statName(e.stat));
@@ -643,12 +646,25 @@
     }
     var buyFx = a.fx.filter(function (f) { return f.kind === "buyAsset"; })[0];
     var buysAsset = buyFx ? buyFx.asset : null;
+    // v7 stakes: Savings / Bonds / Stocks / Crypto are bought with a stake of
+    // 1x, 5x or 10x B ($100 / $500 / $1,000 in a Short game); bots pass theirs
+    if (buysAsset) {
+      if (!choice || choice.stake == null) {
+        if (!p.isBot) return { ok: true, needsChoice: "stake", asset: buysAsset, stakes: stakeOptions(state, p) };
+        choice = { stake: DATA.settings.investStakes[0] };
+      }
+      var mult = +choice.stake;
+      if (DATA.settings.investStakes.indexOf(mult) === -1) return { ok: false, why: "Pick a stake" };
+      var stakeCost = Math.round(mult * econ(state));
+      if (money(p) < stakeCost) return { ok: false, why: "Not enough money ($" + stakeCost + ")" };
+      ann.cost = stakeCost;
+    }
 
     // pay the bill
     if (!p.actionCounts) p.actionCounts = {};
     p.actionCounts[a.id] = (p.actionCounts[a.id] || 0) + 1;
     p.tu -= ann.tu;
-    if (ann.cost) { addStat(state, p, "money", -ann.cost); }
+    if (ann.cost) spend(state, p, ann.cost);
 
     var summary = [];
     if (ann.cost) summary.push("-$" + ann.cost);
@@ -667,7 +683,7 @@
       if (d) summary.push("+" + d + " " + statName(g.stat));
     });
     if (!isGenericWork) a.penalties.forEach(function (g) {
-      var d = addStat(state, p, g.stat, -pctB(state, g.pct));
+      var d = g.stat === "money" ? -spend(state, p, pctB(state, g.pct)) : addStat(state, p, g.stat, -pctB(state, g.pct));
       if (d) summary.push(d + " " + statName(g.stat));
     });
 
@@ -797,7 +813,7 @@
           if (p.principal) delete p.principal[sold];
           addStat(state, p, "money", refund);
           summary.push("cashed out " + sold + " (+$" + refund + ")");
-          log(state, p, "💰 Cashed out their " + sold + " for the full $" + refund + " principal.", "");
+          log(state, p, "💰 Cashed out their " + sold + " for the full $" + refund + " stake.", "");
           result.sfx.push("money");
           break;
         }
@@ -819,7 +835,7 @@
           var icost = pctB(state, it.costPct);
           if (!whyI && money(p) < icost) whyI = "Not enough money ($" + icost + ")";
           if (whyI) { result.ok = false; result.why = whyI; return; }
-          addStat(state, p, "money", -icost);
+          spend(state, p, icost);
           p.items.push(it.name);
           summary.push("bought " + it.name + " (-$" + icost + ")");
           // numeric stat grant: the sheet's bonus % of B lands ONCE as points
@@ -842,7 +858,8 @@
       }
     });
     if (!result.ok) { // refund a failed choice-action (job req failed etc.)
-      p.tu += ann.tu; if (ann.cost) addStat(state, p, "money", ann.cost);
+      p.tu += ann.tu;
+      if (ann.cost) { addStat(state, p, "money", ann.cost); p.spent = Math.max(0, (p.spent || 0) - ann.cost); }
       return result;
     }
 
@@ -855,7 +872,7 @@
       if (!p.principal) p.principal = {};
       p.principal[buysAsset] = ann.cost;
       summary.push("now holding " + buysAsset);
-      log(state, p, "📈 Opened a " + buysAsset + " holding ($" + ann.cost + " principal) — resolves every weekend.", "");
+      log(state, p, "📈 Opened a $" + ann.cost + " " + buysAsset + " stake — it pays out every weekend.", "");
       result.sfx.push("money");
     }
     // v5 home fixtures: flat bonuses when their trigger action happens at home
@@ -881,6 +898,21 @@
     return result;
   }
 
+  // v7 Biggest Spender: money leaving the wallet by the player's own choice
+  // (purchases, rent, fees, food, stakes). Card losses, rug pulls and loan
+  // repayments are not spending. Returns the amount actually paid.
+  function spend(state, p, amt) {
+    var paid = -addStat(state, p, "money", -amt);
+    p.spent = (p.spent || 0) + paid;
+    return paid;
+  }
+  // v7 investment stakes the player can choose right now
+  function stakeOptions(state, p) {
+    return DATA.settings.investStakes.map(function (m) {
+      var cost = Math.round(m * econ(state));
+      return { mult: m, cost: cost, ok: money(p) >= cost };
+    });
+  }
   function principalOf(state, p, asset) {
     if (p.principal && p.principal[asset] != null) return p.principal[asset];
     var id = Object.keys(ACTIONS).filter(function (k) {
@@ -994,8 +1026,9 @@
     p.holdings.slice().forEach(function (asset) {
       var odds = DATA.weekend.investOdds[asset], fx = DATA.weekend.investFx[asset];
       var pick, delta, cardId, extra = { asset: asset };
+      var stake = principalOf(state, p, asset);   // v7: every return is a share of the stake
       if (odds === "safe") {
-        cardId = fx.pay[0]; delta = pctB(state, fx.pay[1]);
+        cardId = fx.pay[0]; delta = Math.round(fx.pay[1] * stake);
       } else {
         var o = odds[weekendStanding(state, p)];   // [bigGain, smallGain, smallLoss, bigLoss, flat]
         var table = { bigGain: o[0], smallGain: o[1], smallLoss: o[2], bigLoss: o[3] };
@@ -1006,9 +1039,9 @@
           pick = "smallLoss"; p.flags.informed = false; extra.informed = true;
           log(state, p, "🔍 INFORMED — you read the tiny print, so the " + asset + " big loss was downgraded.", "good");
         }
-        cardId = fx[pick][0]; delta = pctB(state, fx[pick][1]);
+        cardId = fx[pick][0]; delta = Math.round(fx[pick][1] * stake);
         if (fx[pick][2] === "destroy") {           // crypto RUG PULL: the holding and its principal are gone
-          var lost = principalOf(state, p, asset);
+          var lost = stake;
           p.holdings.splice(p.holdings.indexOf(asset), 1);
           if (p.principal) delete p.principal[asset];
           extra.destroyed = true; extra.detail = "holding destroyed · $" + lost + " principal lost";
@@ -1280,11 +1313,18 @@
   function upkeepAvg(state, p) {
     return UPKEEP.reduce(function (s, k) { return s + scoreStat(state, p, k); }, 0) / UPKEEP.length;
   }
+  // v7 winning bonus: the top spender (ties share it, each taking the full
+  // bonus) gets biggestSpenderPct of T, awarded only at final scoring
+  function spenderBonus(state, p) {
+    if (!state.over) return 0;
+    var top = state.players.reduce(function (m, q) { return Math.max(m, q.spent || 0); }, 0);
+    return top > 0 && (p.spent || 0) === top ? Math.round((DATA.settings.biggestSpenderPct || 0) * state.T) : 0;
+  }
   function score(state, p) {
     var mains = MAIN.reduce(function (s, k) { return s + p.stats[k]; }, 0);
     var upkeep = upkeepAvg(state, p);
     var pet = (p.pet && !p.pet.dead) ? (p.pet.health + p.pet.happiness) / 2 : 0;
-    return Math.round(mains + upkeep + pet);
+    return Math.round(mains + upkeep + pet) + spenderBonus(state, p);
   }
   function podium(state) {
     return state.players.map(function (p) {
@@ -1293,7 +1333,8 @@
           connection: p.stats.connection, health: p.stats.health, career: p.stats.career,
           happiness: p.stats.happiness,
           upkeepAvg: Math.round(upkeepAvg(state, p)),
-          petAvg: (p.pet && !p.pet.dead) ? Math.round((p.pet.health + p.pet.happiness) / 2) : 0
+          petAvg: (p.pet && !p.pet.dead) ? Math.round((p.pet.health + p.pet.happiness) / 2) : 0,
+          spent: p.spent || 0, spenderBonus: spenderBonus(state, p)
         } };
     }).sort(function (a, b) { return b.score - a.score; });
   }
@@ -1304,7 +1345,7 @@
     TU_SCALE: TU_SCALE, tuCost: tuCost,
     newGame: newGame, active: active, actionsAt: actionsAt, perform: perform,
     moveTo: moveTo, moveCost: moveCost, endTurn: endTurn, startTurn: startTurn,
-    score: score, podium: podium, isRentTurn: isRentTurn, petState: petState, clubGate: clubGate,
+    score: score, podium: podium, spenderBonus: spenderBonus, stakeOptions: stakeOptions, isRentTurn: isRentTurn, petState: petState, clubGate: clubGate,
     weekendStanding: weekendStanding, exitNodeOf: exitNodeOf,
     jobsWithStatus: jobsWithStatus, tierGate: tierGate, statName: statName,
     econ: econ, pctB: pctB, economyBaseFor: economyBaseFor, itemActive: itemActive,

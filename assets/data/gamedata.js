@@ -23,7 +23,7 @@ var PP_DATA = {
    0
   ],
   "maxPlayers": 4,
-  "minParticipants": 2,
+  "minParticipants": 1,
   "incomeMultiplierCap": 1.25,
   "turnsPerGame": {
    "options": [
@@ -96,6 +96,12 @@ var PP_DATA = {
    "critical",
    "enlightenment",
    "money"
+  ],
+  "biggestSpenderPct": 0.1,
+  "investStakes": [
+   1.0,
+   5.0,
+   10.0
   ]
  },
  "personalities": {
@@ -2556,7 +2562,7 @@ var PP_DATA = {
    "name": "Open Savings Account",
    "category": "Money",
    "tu": 0,
-   "costPct": 0.1,
+   "costPct": 1.0,
    "gains": [
     {
      "stat": "money",
@@ -2582,7 +2588,7 @@ var PP_DATA = {
    "name": "Buy Bonds",
    "category": "Investment",
    "tu": 0,
-   "costPct": 0.15,
+   "costPct": 1.0,
    "gains": [
     {
      "stat": "money",
@@ -2608,7 +2614,7 @@ var PP_DATA = {
    "name": "Buy Stocks",
    "category": "Investment",
    "tu": 0,
-   "costPct": 0.2,
+   "costPct": 1.0,
    "gains": [
     {
      "stat": "money",
@@ -2634,7 +2640,7 @@ var PP_DATA = {
    "name": "Buy Crypto",
    "category": "Investment",
    "tu": 0,
-   "costPct": 0.25,
+   "costPct": 1.0,
    "gains": [
     {
      "stat": "money",
@@ -7465,15 +7471,15 @@ var PP_DATA = {
    "crypto": {
     "bigGain": [
      "I01",
-     0.15
+     0.5
     ],
     "smallGain": [
      "I03",
-     0.05
+     0.15
     ],
     "smallLoss": [
      "I03",
-     -0.05
+     -0.15
     ],
     "bigLoss": [
      "I02",
@@ -7484,11 +7490,11 @@ var PP_DATA = {
    "stocks": {
     "bigGain": [
      "I04",
-     0.08
+     0.2
     ],
     "smallGain": [
      "I06",
-     0.03
+     0.08
     ],
     "flat": [
      "I09",
@@ -7496,23 +7502,23 @@ var PP_DATA = {
     ],
     "smallLoss": [
      "I05",
-     -0.03
+     -0.08
     ],
     "bigLoss": [
      "I10",
-     -0.08
+     -0.2
     ]
    },
    "bonds": {
     "pay": [
      "I07",
-     0.02
+     0.04
     ]
    },
    "savings": {
     "pay": [
      "I08",
-     0.01
+     0.03
     ]
    }
   },
@@ -7601,12 +7607,12 @@ var PP_DATA = {
     "stats": [
      {
       "stat": "money",
-      "pct": 0.15
+      "pct": 0.5
      }
     ],
     "fx": [],
     "flavor": "Crypto big gain. Holding survives.",
-    "effectText": "Money +15%B"
+    "effectText": "Money +50% of stake"
    },
    {
     "id": "I02",
@@ -7618,7 +7624,7 @@ var PP_DATA = {
     "stats": [],
     "fx": [],
     "flavor": "Crypto big loss. This is the only outcome that destroys a holding.",
-    "effectText": "CRYPTO HOLDING DESTROYED: principal (25%B) is lost. No further crypto cards until repurchased."
+    "effectText": "CRYPTO HOLDING DESTROYED: the stake is lost. No further crypto cards until repurchased."
    },
    {
     "id": "I03",
@@ -7630,12 +7636,12 @@ var PP_DATA = {
     "stats": [
      {
       "stat": "money",
-      "pct": 0.05
+      "pct": 0.15
      }
     ],
     "fx": [],
     "flavor": "Crypto small swing. Holding survives.",
-    "effectText": "Money +5%B or -5%B per the odds table"
+    "effectText": "Money +15% of stake or -15% of stake per the odds table"
    },
    {
     "id": "I04",
@@ -7647,12 +7653,12 @@ var PP_DATA = {
     "stats": [
      {
       "stat": "money",
-      "pct": 0.08
+      "pct": 0.2
      }
     ],
     "fx": [],
     "flavor": "Stocks big gain.",
-    "effectText": "Money +8%B"
+    "effectText": "Money +20% of stake"
    },
    {
     "id": "I05",
@@ -7664,12 +7670,12 @@ var PP_DATA = {
     "stats": [
      {
       "stat": "money",
-      "pct": -0.03
+      "pct": -0.08
      }
     ],
     "fx": [],
     "flavor": "Stocks small loss.",
-    "effectText": "Money -3%B"
+    "effectText": "Money -8% of stake"
    },
    {
     "id": "I06",
@@ -7681,12 +7687,12 @@ var PP_DATA = {
     "stats": [
      {
       "stat": "money",
-      "pct": 0.03
+      "pct": 0.08
      }
     ],
     "fx": [],
     "flavor": "Stocks small gain.",
-    "effectText": "Money +3%B"
+    "effectText": "Money +8% of stake"
    },
    {
     "id": "I07",
@@ -7698,12 +7704,12 @@ var PP_DATA = {
     "stats": [
      {
       "stat": "money",
-      "pct": 0.02
+      "pct": 0.04
      }
     ],
     "fx": [],
     "flavor": "Safe. Never standing-weighted. Requires a BONDS holding.",
-    "effectText": "Money +2%B"
+    "effectText": "Money +4% of stake"
    },
    {
     "id": "I08",
@@ -7715,12 +7721,12 @@ var PP_DATA = {
     "stats": [
      {
       "stat": "money",
-      "pct": 0.01
+      "pct": 0.03
      }
     ],
     "fx": [],
     "flavor": "Safe. Never standing-weighted. Requires a SAVINGS holding.",
-    "effectText": "Money +1%B"
+    "effectText": "Money +3% of stake"
    },
    {
     "id": "I09",
@@ -7744,12 +7750,12 @@ var PP_DATA = {
     "stats": [
      {
       "stat": "money",
-      "pct": -0.08
+      "pct": -0.2
      }
     ],
     "fx": [],
     "flavor": "Stocks big loss. Unlike crypto, the holding SURVIVES a crash.",
-    "effectText": "Money -8%B"
+    "effectText": "Money -20% of stake"
    },
    {
     "id": "E01",
@@ -9091,6 +9097,11 @@ var PP_DATA = {
   "park": 1.0,
   "airport": 1.35,
   "temple": 1.35
+ },
+ "buildingEfficiency": {
+  "airOne": 0.85,
+  "regretBurger": 0.85,
+  "club": 0.85
  },
  "workFromHomePay": 0.85,
  "cpuDifficulty": {

@@ -35,7 +35,8 @@ same commit as the code.**
 
 ## Testing
 
-    node test/v7_rules.js        # v7 rules (repricing, flat points, 0-TU mall/investments, gates)
+    node test/v7_rules.js        # v7 rules (repricing, gates, stakes, efficiency, Biggest Spender)
+    node test/v7_cpu_sim.js      # CPU difficulty levels really differ (Easy flounders, bots invest)
     node test/v6_rules.js        # v6 rules (career curve, wages, rent, difficulty…)
     node test/v5_rules.js        # v5 rules (prices, fixtures, investments…)
     node test/kendrick_regressions.js
@@ -83,10 +84,16 @@ Step 2 DONE (2026-11-08): turn auto-ends at 0 TU after actions AND travel
 `hostAutoEnd`); the clock sits above every in-game dialog (z61) and dialogs
 reserve its band; the Unlimited timer shows Time Units left, not ∞; free play
 (1 human, 0 bots) on the setup screen.
-Still to build: step 3 (investment stakes
-$100/$500/$1,000 with returns on the stake, savings 3%; efficiency 0.85 at Air
-One / Regret Burger / Club; Biggest Spender bonus; weaker Easy/Medium CPU),
-step 4 (remove the More drawer — needs art).
+Step 3 DONE (2026-11-08): investment stakes 1x/5x/10x B picked in a dialog
+(`needsChoice: "stake"`; guests pick locally), returns a share of the stake
+(savings 3%, bonds 4%, stocks +20/+8/-8/-20, crypto +50/+-15/rug pull = whole
+stake), holdings + stakes on the HUD chip, efficiency 0.85 at Air One /
+Regret Burger / Club (Building_Map column I), money spent tracked
+(`p.spent`, engine `spend()`), Biggest Spender +10% of T at final scoring,
+Easy flounders / Medium plans one turn / Medium+Hard invest. Debtstreet shows a
+"$100+" live tag until its art is redone.
+Still to build: step 4 (remove the More menu) — needs the art pass first.
+`node test/v7_cpu_sim.js` checks the CPU levels really differ.
 
 ## Open decisions
 

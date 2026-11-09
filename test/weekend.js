@@ -76,12 +76,12 @@ console.log("2b) eviction: pet leaves, no tombstone, only the homelessness Happi
 console.log("3) investment holdings: buy once, weekly resolution, EV by standing, sell");
 (function () {
   var s = fresh(), a = s.players[0];
-  a.location = "debtstreet"; a.stats.money = 60;
-  var r = E.perform(s, "A088");
+  a.location = "debtstreet"; a.stats.money = 1200;
+  var r = E.perform(s, "A088", { stake: 1 });
   ok(r.ok && a.holdings.indexOf("crypto") !== -1, "buy crypto = open position");
-  ok(a.stats.money === 60 - 25 && a.principal.crypto === 25, "principal 25%B moved into the holding, no free Money");
+  ok(a.stats.money === 1200 - 100 && a.principal.crypto === 100, "v7: the $100 stake moved into the holding, no free Money");
   ok(!/tanked/.test(JSON.stringify(r.summary)), "no instant gamble on portfolio buy");
-  var r2 = E.perform(s, "A088");
+  var r2 = E.perform(s, "A088", { stake: 1 });
   ok(!r2.ok && /Already holding/.test(r2.why), "second buy blocked");
   // EV harness: force standings via money, resolve many weekends
   function ev(standing, seedBase) {
@@ -92,11 +92,11 @@ console.log("3) investment holdings: buy once, weekly resolution, EV by standing
       // stack B's score so A lands where we want
       if (standing === "last") t.players[1].stats.happiness = 90;
       else { p.stats.happiness = 90; }  // A first
-      p.principal = { crypto: 25 };
+      p.principal = { crypto: 100 };
       var before = p.stats.money;
       E.endTurn(t); E.endTurn(t);       // back to A; investments resolve
       // a RUG PULL destroys the holding: its principal is the loss
-      total += (p.stats.money - before) - (p.holdings.indexOf("crypto") === -1 ? 25 : 0);
+      total += (p.stats.money - before) - (p.holdings.indexOf("crypto") === -1 ? 100 : 0);
     }
     return total / n;
   }
@@ -106,12 +106,12 @@ console.log("3) investment holdings: buy once, weekly resolution, EV by standing
   ok(evFirst < -3, "first-place crypto EV strongly negative (pressure on the leader)");
   // cash out (A119) returns 100% of principal
   var s2 = fresh(), a2 = s2.players[0];
-  a2.location = "debtstreet"; a2.stats.money = 60;
-  E.perform(s2, "A087");
+  a2.location = "debtstreet"; a2.stats.money = 1200;
+  E.perform(s2, "A087", { stake: 1 });
   var cash = a2.stats.money;
   var r3 = E.perform(s2, "A119");
   ok(r3.ok && a2.holdings.length === 0, "cash out empties the holding");
-  ok(a2.stats.money === cash + 20, "cash out refunds 100% of the 20%B principal");
+  ok(a2.stats.money === cash + 100, "cash out refunds 100% of the $100 stake");
   var r4 = E.perform(s2, "A119");
   ok(!r4.ok, "nothing left to cash out");
 })();
@@ -175,8 +175,8 @@ console.log("7) weekend cards Off (debug) / Essential never change outcomes");
   var s = fresh({ weekendCards: false }), a = s.players[0];
   cycle(s);
   ok(a.weekend.length === 0, "no cards shown when off");
-  a.location = "debtstreet"; a.stats.money = 60;
-  E.perform(s, "A086");
+  a.location = "debtstreet"; a.stats.money = 500;
+  E.perform(s, "A086", { stake: 1 });
   ok(a.holdings.indexOf("bonds") !== -1, "buys still open holdings when off");
   var before = a.stats.money;
   a.ate = true; a.turnsSinceRelax = 0;
@@ -184,7 +184,7 @@ console.log("7) weekend cards Off (debug) / Essential never change outcomes");
   ok(a.stats.money - before >= 2 && a.weekend.length === 0, "bond coupon still paid silently (+" + (a.stats.money - before) + ")");
   ok(s.log.some(function (l) { return /BOND COUPON/.test(l.text); }), "investment result written to the log");
   var e = E.newGame({ T: 100, seed: 9, weekendMode: "essential", players: [{ name: "A", code: "ENFP" }, { name: "B", code: "INTJ" }] });
-  e.players[0].holdings = ["savings"]; e.players[0].principal = { savings: 10 };
+  e.players[0].holdings = ["savings"]; e.players[0].principal = { savings: 100 };
   for (var i = 0; i < 6; i++) { E.endTurn(e); E.endTurn(e); }
   ok(e.players[0].weekend.some(function (c) { return c.id === "I08"; }) &&
      !e.players[0].weekend.some(function (c) { return c.id[0] === "E"; }), "essential: investment cards, no life events");

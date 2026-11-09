@@ -591,7 +591,8 @@
       flags.push('<span class="flag-chip bad">\ud83e\udea6 RIP ' + p.tombstones[p.tombstones.length - 1] + "</span>");
     }
     if (p.holdings && p.holdings.length)
-      flags.push('<span class="flag-chip">\ud83d\udcc8 ' + p.holdings.join(" \u00b7 ") + "</span>");
+      flags.push('<span class="flag-chip" title="Your investments: the stake in each (Cash Out at Debtstreet returns it)">\ud83d\udcc8 ' +
+        p.holdings.map(function (h) { return h.toUpperCase() + " $" + E.principalOf(st, p, h).toLocaleString("en-US"); }).join(" \u00b7 ") + "</span>");
     if (p.ate && p.foodSupply > 0)
       flags.push('<span class="flag-chip">\ud83e\udd55 FED \u00b7 ' + p.foodSupply + " LEFT</span>");
     else if (p.autoAteStored)
@@ -1271,6 +1272,7 @@
       if (t.painted != null && t.painted === live) return;
       var text = live === 0 ? "FREE" : "$" + live.toLocaleString("en-US");
       if (text.length > 5 && t.box[2] < 3.2) text = "$" + live;   // drop the comma in a narrow painted chip
+      if (t.suffix) text += t.suffix;                              // "$100+" = the smallest investment stake
       var el = document.createElement("div");
       el.className = "live-price " + (t.style || "tag");
       el.textContent = text;
@@ -1658,6 +1660,11 @@
         if (a.fx.some(function (f) { return f.kind === "openJobDialog"; })) { openJobs(id); return; }
         if (a.fx.some(function (f) { return f.kind === "adoptPet"; })) { openPetChoice(id); return; }
         if (a.fx.some(function (f) { return f.kind === "attendCourse"; })) { openCourses(id); return; }
+        var buyFx = a.fx.filter(function (f) { return f.kind === "buyAsset"; })[0];
+        if (buyFx) { openStakeChoice(id, buyFx.asset, E.stakeOptions(UI.state, activeP())); return; }
+        if (a.fx.some(function (f) { return f.kind === "cashOut"; }) && activeP().holdings.length > 1) {
+          openSellChoice(id, activeP().holdings.slice()); return;
+        }
       }
       dispatch("action", { id: id, choice: choice }); return;
     }
@@ -1668,6 +1675,7 @@
     if (r.needsChoice === "pet") { openPetChoice(id); return; }
     if (r.needsChoice === "course") { openCourses(id); return; }
     if (r.needsChoice === "sell") { openSellChoice(id, r.assets); return; }
+    if (r.needsChoice === "stake") { openStakeChoice(id, r.asset, r.stakes); return; }
     if (id === "A018") A.footsteps(1800);          // Take a Walk: audible footsteps
     afterDispatch("action", { id: id }, r);
     if (UI.inScene && activeP().location !== UI.inScene) closeScene(true);
@@ -1736,6 +1744,31 @@
       b.onclick = function () {
         click(); closeDialog("shop");
         doAction(actionId, { asset: b.dataset.a });
+      };
+    });
+  }
+
+  // v7: Savings / Bonds / Stocks / Crypto are bought with a stake; returns are
+  // a share of it (Cards sheet I01-I10), so the picker spells the payout out
+  var STAKE_BLURB = {
+    savings: "pays 3% of the stake every week, guaranteed",
+    bonds: "pays 4% of the stake every week, guaranteed",
+    stocks: "swings with your standing: +20% / +8% / -8% / -20% of the stake",
+    crypto: "big swings: +50% / \u00b115% of the stake, or a RUG PULL takes it all"
+  };
+  function openStakeChoice(actionId, asset, stakes) {
+    $("#shop-title").textContent = "\ud83d\udcc8 " + asset.charAt(0).toUpperCase() + asset.slice(1) + " \u2014 pick your stake";
+    $("#shop-grid").innerHTML = stakes.map(function (o) {
+      return '<button class="shop-item" data-m="' + o.mult + '"' + (o.ok ? "" : " disabled") + ">" +
+        '<div class="s-name">$' + o.cost.toLocaleString("en-US") + " stake</div>" +
+        '<div class="s-fx">' + STAKE_BLURB[asset] + "</div>" +
+        '<div class="s-cost">' + (o.ok ? "0 TU \u00b7 cash it out any time" : "\ud83d\udd12 not enough money") + "</div></button>";
+    }).join("");
+    openDialog("shop");
+    $$("#shop-grid .shop-item:not([disabled])").forEach(function (b) {
+      b.onclick = function () {
+        click(); closeDialog("shop");
+        doAction(actionId, { stake: +b.dataset.m });
       };
     });
   }
@@ -1970,12 +2003,15 @@
         '<div class="pedestal" style="height:' + hts[i] + '"></div></div>';
     }).join("");
     $("#podium-table").innerHTML =
-      "<tr><th>Player</th><th>Connection</th><th>Health</th><th>Career</th><th>Happiness</th><th>Upkeep avg</th><th>Pet avg</th><th>Total</th></tr>" +
+      "<tr><th>Player</th><th>Connection</th><th>Health</th><th>Career</th><th>Happiness</th><th>Upkeep avg</th><th>Pet avg</th>" +
+      "<th>Money spent</th><th>Biggest Spender</th><th>Total</th></tr>" +
       pod.map(function (e) {
         var b = e.breakdown;
         return "<tr><td><b>" + e.player.name + "</b></td><td>" + b.connection + "</td><td>" + b.health +
           "</td><td>" + b.career + "</td><td>" + b.happiness + "</td><td>" + b.upkeepAvg +
-          "</td><td>" + b.petAvg + "</td><td><b>" + e.score + "</b></td></tr>";
+          "</td><td>" + b.petAvg + "</td><td>$" + b.spent.toLocaleString("en-US") +
+          "</td><td>" + (b.spenderBonus ? "\ud83d\udcb8 +" + b.spenderBonus : "\u2014") +
+          "</td><td><b>" + e.score + "</b></td></tr>";
       }).join("");
     show("podium");
     A.playMusic(DATA.music.overmap);

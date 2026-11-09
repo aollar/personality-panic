@@ -109,10 +109,11 @@ var PP_HOTSPOTS = {
     { a: "A077", work: true, box: [73.6, 83.3, 25.7, 13.1] }
   ],
   debtstreet: [
-    { a: "A085", box: [68.5, 16.0, 13.0, 14.0] },
-    { a: "A086", box: [82.0, 16.0, 16.0, 14.0] },
-    { a: "A087", box: [68.5, 31.0, 13.0, 15.0] },
-    { a: "A088", box: [82.0, 31.0, 16.0, 15.0] },
+    // v7 stakes: the painted $10-$25 predate stakes; a "$100+" tag shows the smallest stake until the repaint
+    { a: "A085", box: [68.5, 16.0, 13.0, 14.0], price: { box: [79.6, 16.3, 2.9, 3.15], style: "tan", painted: 10, suffix: "+" } },
+    { a: "A086", box: [82.0, 16.0, 16.0, 14.0], price: { box: [94.05, 16.3, 2.95, 3.15], style: "tan", painted: 15, suffix: "+" } },
+    { a: "A087", box: [68.5, 31.0, 13.0, 15.0], price: { box: [79.6, 32.0, 2.9, 3.15], style: "tan", painted: 20, suffix: "+" } },
+    { a: "A088", box: [82.0, 31.0, 16.0, 15.0], price: { box: [94.05, 32.0, 2.95, 3.15], style: "tan", painted: 25, suffix: "+" } },
     { a: "A089", box: [68.5, 47.0, 13.0, 15.0] },
     { a: "A090", box: [82.0, 47.0, 16.0, 15.0] },
     { a: "A119", box: [68.5, 63.0, 29.5, 11.0] },   // v5 repaint: Cash Out replaced Buy Penny Stocks (now in More)

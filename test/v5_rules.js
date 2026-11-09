@@ -144,14 +144,14 @@ test("rent $100 / $400, homeless cheque $200 covers rent + casual clothes + food
   assert.ok(200 - 100 - 50 >= 3 * 15, "rent + clothes + three Regret Burger meals fit in the cheque");
 });
 
-test("investments: principal, no free money, one per type, all four at once, cash out 100%", () => {
+test("investments: stake moved in, no free money, one per type, all four at once, cash out 100%", () => {
   const st = game(), p = st.players[0]; rich(p, 1000); p.location = "debtstreet";
-  ["A085", "A086", "A087", "A088"].forEach(id => assert.ok(E.perform(st, id).ok, id));
-  assert.strictEqual(p.stats.money, 1000 - 10 - 15 - 20 - 25);
+  ["A085", "A086", "A087", "A088"].forEach(id => assert.ok(E.perform(st, id, { stake: 1 }).ok, id));   // v7: $100 stakes
+  assert.strictEqual(p.stats.money, 1000 - 4 * 100);
   assert.deepStrictEqual(p.holdings.slice().sort(), ["bonds", "crypto", "savings", "stocks"]);
-  assert.strictEqual(E.perform(st, "A085").ok, false);
+  assert.strictEqual(E.perform(st, "A085", { stake: 1 }).ok, false);
   assert.ok(E.perform(st, "A119", { asset: "stocks" }).ok);
-  assert.strictEqual(p.stats.money, 1000 - 10 - 15 - 25);
+  assert.strictEqual(p.stats.money, 1000 - 3 * 100);
 });
 
 test("INFORMED downgrades the next big loss and is consumed; rug pull destroys crypto", () => {

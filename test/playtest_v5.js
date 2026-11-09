@@ -245,13 +245,27 @@ function check(name, cond, detail) {
 
   console.log("\n=== DEBTSTREET ===");
   await newGame();
-  await set("function (p) { p.stats.money = 1000; p.tu = 40; }");
+  await set("function (p) { p.stats.money = 3000; p.tu = 40; }");
   await openScene("debtstreet");
   before = await stats();
-  await clickAction("A085"); await clickAction("A086"); await clickAction("A087"); await clickAction("A088");
+  // v7: each buy opens the stake picker; pick $100, $500, $100, $1,000
+  var stakeRows = [];
+  for (var [aid, stakeIdx] of [["A085", 0], ["A086", 1], ["A087", 0], ["A088", 2]]) {
+    await clickAction(aid);
+    stakeRows.push(await page.evaluate(function (i) {
+      var rows = document.querySelectorAll("#dlg-shop.show #shop-grid .shop-item");
+      var txt = Array.prototype.map.call(rows, function (b) { return b.querySelector(".s-name").textContent; }).join("/");
+      rows[i].click();
+      return txt;
+    }, stakeIdx));
+    await new Promise(function (r) { setTimeout(r, 300); });
+  }
   after = await stats();
-  check("all four investments cost $10/$15/$20/$25 and pay nothing back",
-    before.s.money - after.s.money === 70 && after.holdings.length === 4, "-$" + (before.s.money - after.s.money) + " " + after.holdings.join(","));
+  check("investments open a stake picker: $100 / $500 / $1,000", /\$100 stake\/\$500 stake\/\$1,000 stake/.test(stakeRows[0]), stakeRows[0]);
+  check("the chosen stakes leave the wallet and pay nothing back up front",
+    before.s.money - after.s.money === 1700 && after.holdings.length === 4, "-$" + (before.s.money - after.s.money) + " " + after.holdings.join(","));
+  var chipTxt = await page.$eval("#hud-flags", function (e) { return e.textContent; });
+  check("holdings and their stakes show on the main screen", /CRYPTO \$1,000/.test(chipTxt) && /BONDS \$500/.test(chipTxt), chipTxt.slice(0, 120));
   var dup = await chip("A085");
   check("one holding per asset type", dup.locked, dup.tu);
   before = await stats();
@@ -260,13 +274,13 @@ function check(name, cond, detail) {
     return Array.prototype.map.call(document.querySelectorAll("#dlg-shop.show #shop-grid .shop-item"), function (b) { return b.dataset.a + ":" + b.querySelector(".s-cost").textContent; });
   });
   check("Cash Out asks which holding to sell, showing each payout",
-    sellChoices.length === 4 && sellChoices.join(",").indexOf("crypto:get back $25") !== -1, sellChoices.join(" "));
+    sellChoices.length === 4 && sellChoices.join(",").indexOf("crypto:get back $1000") !== -1, sellChoices.join(" "));
   await page.evaluate(function () {
     Array.prototype.find.call(document.querySelectorAll("#dlg-shop #shop-grid .shop-item"), function (b) { return b.dataset.a === "crypto"; }).click();
   });
   await new Promise(function (r) { setTimeout(r, 300); });
   after = await stats();
-  check("Cash Out returns the full principal", after.s.money - before.s.money === 25 && after.holdings.indexOf("crypto") === -1,
+  check("Cash Out returns the full stake", after.s.money - before.s.money === 1000 && after.holdings.indexOf("crypto") === -1,
     "+$" + (after.s.money - before.s.money));
   // loan (engine: spans 4 turns)
   var loan = await page.evaluate(function () {
@@ -320,7 +334,7 @@ function check(name, cond, detail) {
     var E = window.PPEngine;
     var st = E.newGame({ T: 100, seed: 9, maxRounds: 0, weekendMode: "off", players: [{ name: "A", code: "ISTJ" }, { name: "B", code: "INTJ" }] });
     var p = st.players[0];
-    p.holdings = ["bonds"]; p.principal = { bonds: 15 };
+    p.holdings = ["bonds"]; p.principal = { bonds: 100 };   // v7: a $100 stake pays 4% = $4
     var money = p.stats.money;
     p.ate = false;                                  // skip a meal: hunger penalty should still bite
     E.endTurn(st); E.endTurn(st);
@@ -328,7 +342,7 @@ function check(name, cond, detail) {
       log: st.log.filter(function (l) { return /BOND COUPON|FORGOT TO EAT|Didn't eat/i.test(l.text); }).map(function (l) { return l.text; }) };
   });
   check("cards Off shows no cards", off.cards === 0);
-  check("cards Off still pays investments (+$2 bonds)", off.gained >= 2, "+$" + off.gained);
+  check("cards Off still pays investments (+$4 bonds on a $100 stake)", off.gained >= 4, "+$" + off.gained);
   check("cards Off still applies the hunger penalty", off.tu < 40, off.tu + " TU");
   check("cards Off writes results to the log", off.log.length >= 1, off.log.join(" | "));
   var score = await page.evaluate(function () {

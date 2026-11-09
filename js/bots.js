@@ -8,13 +8,17 @@
   var E = (typeof window !== "undefined") ? window.PPEngine : require("./engine.js");
   var DATA = E.DATA, ASSUME = E.ASSUME;
 
-  // ---- v6 CPU difficulty ----------------------------------------------------
-  // Easy plays loosely and forgets the basics, Medium plays the old script,
-  // Hard plans ahead and travels for the best wage. The only number difficulty
-  // touches is the bot-only gain multiplier, which the engine applies.
+  // ---- v6/v7 CPU difficulty ------------------------------------------------
+  // v7: Easy visibly flounders (random action where it stands, wanders when
+  // there is nothing to do, no planned purchases, no studying, no investing,
+  // never chases promotions). Medium plans the current turn only (no saving
+  // across turns for a goal) and keeps money safe (Savings / Bonds). Hard plans
+  // ahead, travels for the best wage and plays investments by standing. The
+  // only number difficulty touches is the bot-only gain multiplier.
   function level(state, p) {
     return DATA.cpuDifficulty[p.difficulty || state.cpuDifficulty || "medium"] || DATA.cpuDifficulty.medium;
   }
+  function levelName(state, p) { return p.difficulty || state.cpuDifficulty || "medium"; }
   function slips(state, p, kind) {
     var chance = level(state, p)[kind] || 0;
     if (!chance) return false;
@@ -112,6 +116,7 @@
   // What the bot still needs to buy, in priority order.
   // Returns {item|adopt, cost, affordable} — an unaffordable goal is a reason to WORK.
   function shoppingGoal(state, p) {
+    if (levelName(state, p) === "easy") return null;   // v7: Easy never plans a purchase
     var T = state.T, B = E.econ(state), cash = p.stats.money;
     var wants = [];
     function owns(n) { return p.items.indexOf(n) !== -1; }
@@ -144,6 +149,26 @@
     }
     return { item: wants[0] === "__adopt__" ? null : wants[0], adopt: wants[0] === "__adopt__",
              cost: costOf(wants[0]), affordable: false };
+  }
+
+  // v7: a bot puts real surplus into one holding at a time, picking the
+  // largest stake that leaves its rent/food reserve plus a cushion untouched
+  var BUY_ID = { savings: "A085", bonds: "A086", stocks: "A087", crypto: "A088" };
+  function investPlan(state, p) {
+    var lvl = level(state, p);
+    if (!lvl.invests) return null;
+    var B = E.econ(state), standing = E.weekendStanding(state, p);
+    // Hard cashes crypto out before it can rug-pull a lead away
+    if (levelName(state, p) === "hard" && standing === "first" && p.holdings.indexOf("crypto") !== -1)
+      return { sell: "crypto" };
+    var order = levelName(state, p) === "hard"
+      ? (standing === "last" ? ["crypto", "stocks", "bonds", "savings"] : ["bonds", "savings"])
+      : ["savings", "bonds"];
+    var asset = order.filter(function (a) { return p.holdings.indexOf(a) === -1; })[0];
+    if (!asset) return null;
+    var surplus = p.stats.money - reserveOf(state, p) - 6 * B;
+    var stake = DATA.settings.investStakes.slice().reverse().filter(function (m) { return m * B <= surplus; })[0];
+    return stake ? { asset: asset, stake: stake } : null;
   }
 
   // Decide ONE step. Returns {type:"perform",id,choice} | {type:"move",to} | {type:"end"}
@@ -260,7 +285,7 @@
     }
     // 5) get a (better) job: none yet, or a higher tier is now unlocked
     var betterJob = bestJobChoice(state, p);
-    var wantJob = !p.job || (betterJob && betterJob.basePayT100 > p.job.basePayT100);
+    var wantJob = !p.job || (levelName(state, p) !== "easy" && betterJob && betterJob.basePayT100 > p.job.basePayT100);
     if (wantJob && betterJob) {
       if (p.location !== "soulExchange") {
         if (E.moveCost(state, p, "soulExchange").tu + Math.round(E.TU_SCALE) <= p.tu) return { type: "move", to: "soulExchange" };
@@ -272,9 +297,11 @@
     // 5b) work when cash is low OR the next purchase goal needs funding
     var goal = shoppingGoal(state, p);
     var nextFee = course ? E.courseCostDue(state, p, course) : 0;
-    var needCash = p.stats.money < 4 * B || (goal && !goal.affordable) || p.stats.money < nextFee + reserveOf(state, p) ||
+    var plansAhead = levelName(state, p) === "hard";   // v7: only Hard saves across turns
+    var needCash = p.stats.money < 4 * B ||
+      (plansAhead && ((goal && !goal.affordable) || p.stats.money < nextFee + reserveOf(state, p))) ||
       // keep earning tier clicks — but never grind a stat-draining job into the ground
-      (p.job && p.stats.health > 0.3 * T && p.stats.happiness > 0.3 * T &&
+      (levelName(state, p) !== "easy" && p.job && p.stats.health > 0.3 * T && p.stats.happiness > 0.3 * T &&
         Object.keys(DATA.jobProgression.tiers).some(function (t) {
           var g = E.tierGate(state, p, t); return g.pathOk && !g.clicksOk;
         }));
@@ -284,6 +311,19 @@
         if (work && work.ok) return { type: "perform", id: work.id };
       } else if (E.moveCost(state, p, p.job.building).tu + Math.round(2 * E.TU_SCALE) <= p.tu) {
         return { type: "move", to: p.job.building };
+      }
+    }
+    // 5c) v7 investing: surplus cash into a stake (Medium safe, Hard by standing)
+    var inv = investPlan(state, p);
+    if (inv) {
+      if (p.location !== "debtstreet") {
+        if (E.moveCost(state, p, "debtstreet").tu + Math.round(E.TU_SCALE) <= p.tu) return { type: "move", to: "debtstreet" };
+      } else if (inv.sell) {
+        var out = findHere(function (x) { return x.id === "A119"; });
+        if (out) return { type: "perform", id: out.id, choice: { asset: inv.sell } };
+      } else {
+        var buyInv = findHere(function (x) { return x.id === BUY_ID[inv.asset]; });
+        if (buyInv) return { type: "perform", id: buyInv.id, choice: { stake: inv.stake } };
       }
     }
     // 6) shopping goals (clothes chain / pet / fridge)
@@ -317,9 +357,14 @@
     });
     // Easy: pick at random from what it can afford where it is standing.
     // Medium: pick at random from its top 3. Hard: always the best.
-    if (lvl.topChoices === 0 && scored.length) {
-      var pick = scored[Math.floor(Math.abs(Math.sin(state.seed + state.turn * 31 + p.id)) * scored.length) % scored.length];
-      return pick.step;
+    if (lvl.topChoices === 0) {
+      var roll = Math.abs(Math.sin(state.seed + state.turn * 31 + p.id * 7 + p.tu * 13));
+      if (scored.length) return scored[Math.floor(roll * scored.length) % scored.length].step;
+      // v7: nothing to do here -> wander to a random reachable building (not the best one)
+      var reach = Object.keys(DATA.buildings).filter(function (b) {
+        return b !== p.location && !(b === "club" && E.clubGate(state, p)) && E.moveCost(state, p, b).tu < p.tu;
+      });
+      return reach.length ? { type: "move", to: reach[Math.floor(roll * 997) % reach.length] } : { type: "end" };
     }
     var best = null;
     if (lvl.topChoices > 1 && scored.length) {

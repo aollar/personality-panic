@@ -179,10 +179,11 @@ CARD_FX = {
 STAT_RE = re.compile(
     r"(Money|Health|Career|Connection|Happiness|Coolness|Critical Thinking|Enlightenment"
     r"|Pet Happiness|Pet Health)\s*(\+/-|[+-])\s*\w+\s*\((\d+(?:\.\d+)?)%[TB]\)")
-# v4+ investment cards print effects as "Money +15%B" / "Money +5%B or -5%B"
+# v4+ investment cards print effects as "Money +15%B" / "Money +5%B or -5%B";
+# v7 prints them as a share of the stake: "Money +15% of stake"
 STAT_RE_B = re.compile(
     r"(Money|Health|Career|Connection|Happiness|Coolness|Critical Thinking|Enlightenment"
-    r"|Pet Happiness|Pet Health)\s*([+-])(\d+(?:\.\d+)?)%B")
+    r"|Pet Happiness|Pet Health)\s*([+-])(\d+(?:\.\d+)?)%(?:B| of stake)")
 # The v5 workbook lost E30's row contents (ID only). Restore it from v3 so the
 # 30-card event deck stays intact.
 CARD_FALLBACK = {
@@ -258,7 +259,7 @@ def parse_weekend(wb):
     # Which card face shows for each investment outcome (Investments + Cards
     # sheets, v4): crypto I01 / I03 (+/-) / I02 RUG PULL (destroys the holding,
     # no Money delta); stocks I04 / I06 / I09 flat / I05 / I10 MARKET CRASH.
-    # Values are %B.
+    # v7: values are a share of the holding's STAKE, not of B.
     by_id = {c["id"]: c for c in cards}
     def mag(cid, sign=1):
         pcts = [s["pct"] for s in by_id[cid]["stats"] if s["stat"] == "money"]
@@ -340,7 +341,7 @@ def main():
         "baseTimeUnits": 40,  # costs used AS AUTHORED (1-3 TU): 40 TU/turn = many actions per day (Austin 2026-07-06)
         "rentIntervalTurns": 4,
         "turnTimerOptions": [30, 60, 90, 120, 0],  # 0 = Unlimited
-        "maxPlayers": 4, "minParticipants": 2,
+        "maxPlayers": 4, "minParticipants": 1,   # v7 free play: 1 human, 0 bots
         "incomeMultiplierCap": 1.25,
         # v6: turn limit is a setup value, never a constant
         "turnsPerGame": {"options": [10, 15, 20, 30, 50], "short": 20, "medium": 40, "long": 60},
@@ -355,6 +356,16 @@ def main():
         for mode in ("Short", "Medium", "Long"):
             if label.startswith(mode + " Game T"): settings["gameLengths"][mode.lower()] = int(num(r[1]))
             if label.startswith(mode + " Game B"): settings["economyBase"][mode.lower()] = int(num(r[1]))
+        # v7 winning bonus: "10% of T" (a still-PROPOSED value is refused, not guessed)
+        if label.strip() == "Biggest Spender":
+            m = re.match(r"^\s*(\d+(?:\.\d+)?)\s*% of T\s*$", str(r[1] or ""))
+            assert m, "Biggest Spender value not confirmed/readable: %r" % r[1]
+            settings["biggestSpenderPct"] = float(m.group(1)) / 100.0
+        # v7 investment stakes: "1x / 5x / 10x B"
+        if label.strip() == "Investment stakes":
+            settings["investStakes"] = [float(x) for x in re.findall(r"(\d+(?:\.\d+)?)x", str(r[1] or ""))]
+    assert settings.get("biggestSpenderPct") == 0.10, settings.get("biggestSpenderPct")
+    assert settings.get("investStakes") == [1.0, 5.0, 10.0], settings.get("investStakes")
 
     # ---- Actions_Master ----
     ws = wb["Actions_Master"]
@@ -520,13 +531,17 @@ def main():
 
     # ---- Building_Map (v6): wages rise with distance from the hub ----
     ws = wb["Building_Map"]
-    building_pay, wfh_pay = {}, 0.85
+    building_pay, wfh_pay, building_eff = {}, 0.85, {}
     for row in ws.iter_rows(min_row=3, values_only=True):
         name = str(row[0] or "").strip()
         if name in BUILDING_ID and isinstance(row[4], (int, float)):
             building_pay[BUILDING_ID[name]] = float(row[4])
+            # v7: Efficiency Multiplier column (0.85 where the player can also eat)
+            if len(row) > 8 and isinstance(row[8], (int, float)) and row[8] != 1:
+                building_eff[BUILDING_ID[name]] = float(row[8])
     assert len(building_pay) >= 12, "Building_Map not parsed: %r" % building_pay
     assert building_pay["soulExchange"] == 1 and building_pay["airport"] == 1.35, building_pay
+    assert building_eff == {"airOne": 0.85, "regretBurger": 0.85, "club": 0.85}, building_eff
 
     # ---- CPU_Difficulty (v6) ----
     ws = wb["CPU_Difficulty"]
@@ -776,7 +791,7 @@ def main():
         "buildings": buildings, "roadNodes": roadNodes, "roadEdges": roadEdges,
         "weekend": parse_weekend(wb),
         "education": education, "jobProgression": job_progression,
-        "buildingPay": building_pay, "workFromHomePay": wfh_pay, "cpuDifficulty": cpu,
+        "buildingPay": building_pay, "buildingEfficiency": building_eff, "workFromHomePay": wfh_pay, "cpuDifficulty": cpu,
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:

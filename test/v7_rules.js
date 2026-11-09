@@ -60,7 +60,7 @@ test("mall purchases and investments cost 0 Time Units", () => {
   const tu = p.tu;
   assert.ok(buy(st, p, "Sunglasses").ok);
   p.location = "debtstreet";
-  assert.ok(E.perform(st, "A086").ok);
+  assert.ok(E.perform(st, "A086", { stake: 1 }).ok);
   assert.ok(E.perform(st, "A119", { asset: "bonds" }).ok);
   assert.strictEqual(p.tu, tu);
 });
@@ -118,6 +118,67 @@ test("job gates doubled: 20 / 30 (or 40 Low) / 40 / 50 (or 60 Mid) / 80", () => 
   assert.deepStrictEqual(t["Mid+"].routes, [{ tier: "Mid", clicks: 40 }]);
   assert.deepStrictEqual(t.High.routes, [{ tier: "Mid+", clicks: 50 }, { tier: "Mid", clicks: 60 }]);
   assert.deepStrictEqual(t.Max.routes, [{ tier: "High", clicks: 80 }]);
+});
+
+// ---- v7 step 3 ----
+test("stakes: a human picks $100 / $500 / $1,000, scaled by game length", () => {
+  const st = game(), p = st.players[0]; rich(p, 800); p.location = "debtstreet";
+  const r = E.perform(st, "A087");
+  assert.strictEqual(r.needsChoice, "stake");
+  assert.deepStrictEqual(r.stakes.map(s => [s.cost, s.ok]), [[100, true], [500, true], [1000, false]]);
+  assert.strictEqual(E.perform(st, "A087", { stake: 10 }).ok, false, "can't afford $1,000");
+  assert.ok(E.perform(st, "A087", { stake: 5 }).ok);
+  assert.strictEqual(p.principal.stocks, 500);
+  assert.strictEqual(p.stats.money, 300);
+  const long = game({ T: 1000 });
+  assert.deepStrictEqual(E.stakeOptions(long, long.players[0]).map(s => s.cost), [350, 1750, 3500]);
+});
+
+test("returns are a share of the stake: savings 3%, bonds 4%", () => {
+  const st = game({ weekendMode: "essential" }), p = st.players[0];   // essential: investment cards, no life events
+  p.holdings = ["savings", "bonds"]; p.principal = { savings: 1000, bonds: 500 };
+  p.stats.happiness = 90;
+  const before = p.stats.money;
+  E.endTurn(st); E.endTurn(st);
+  const paid = p.weekend.filter(c => c.id === "I07" || c.id === "I08").reduce((t, c) => t + c.delta, 0);
+  assert.strictEqual(paid, 1000 * 0.03 + 500 * 0.04);
+  assert.ok(p.stats.money - before >= paid - 20, "payouts reached the wallet");
+});
+
+test("efficiency: Air One, Regret Burger and the Club pay 0.85 on top of distance", () => {
+  const st = game(), p = st.players[0];
+  const at = b => { p.location = b; return E.payMultiplier(st, p, "A033"); };
+  assert.strictEqual(at("airOne"), 0.935);
+  assert.strictEqual(at("regretBurger"), 0.935);
+  assert.strictEqual(at("club"), 1.02);
+  assert.strictEqual(at("airport"), 1.35);
+  assert.strictEqual(at("soulExchange"), 1);
+});
+
+test("Biggest Spender: spending tracked, top spender +10% of T at final scoring, ties share", () => {
+  const st = game({ maxRounds: 1 }), a = st.players[0], b = st.players[1];
+  rich(a, 2000); a.location = "mall";
+  const spentBefore = a.spent;
+  assert.ok(E.perform(st, "A115", { item: "Sunglasses" }).ok);   // $100
+  a.location = "debtstreet";
+  assert.ok(E.perform(st, "A085", { stake: 5 }).ok);              // $500 stake
+  assert.strictEqual(a.spent - spentBefore, 600);
+  assert.strictEqual(E.spenderBonus(st, a), 0, "no bonus before the game ends");
+  while (!st.over) { st.players.forEach(p => { p.ate = true; p.turnsSinceRelax = 0; }); E.endTurn(st); }
+  const pod = E.podium(st), top = pod.find(r => r.player === a), other = pod.find(r => r.player === b);
+  assert.strictEqual(top.breakdown.spenderBonus, 10);
+  assert.strictEqual(other.breakdown.spenderBonus, 0);
+  b.spent = a.spent;                                               // a tie: both take the full bonus
+  assert.strictEqual(E.spenderBonus(st, b), 10);
+});
+
+test("card losses and loan repayments are not spending", () => {
+  const st = game(), p = st.players[0]; rich(p, 1000);
+  p.holdings = ["crypto"]; p.principal = { crypto: 1000 };
+  const s0 = p.spent;
+  p.debts.push({ pct: 0.05, dueTurn: st.turn + 1, loan: true });
+  E.endTurn(st); E.endTurn(st);
+  assert.strictEqual(p.spent, s0);
 });
 
 console.log(passed + " passed");
