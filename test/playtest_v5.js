@@ -239,7 +239,7 @@ function check(name, cond, detail) {
   await set("function (p, s) { p.homeless = true; p.housing = 'low'; p.stats.money = 0; p.tu = 40; s.turn = 4; p.rentPaid = false; }");
   await openScene("park");
   before = await stats();
-  await clickMore("Homeless Support Cheque");        // Park: lives in the More drawer by design
+  await clickAction("A024");                         // Park: painted HOMELESS SUPPORT CHEQUE card (2026-11-08 repaint)
   after = await stats();
   check("homeless cheque pays $200", after.s.money - before.s.money === 200, "+$" + (after.s.money - before.s.money));
 

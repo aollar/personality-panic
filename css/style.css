@@ -976,7 +976,7 @@ input[type="range"] { width: 14em; accent-color: var(--orange); }
 /* v7: repriced items/actions painted with an older price */
 .live-price.cream { background: #fee7b5; color: #1f6b2c; justify-content: flex-end; padding-right: .1em; }
 .live-price.chip { background: #fdf0cf; color: #1f6b2c; border: .12em solid #c8a565; border-radius: .3em; }
-.live-price.bronze { background: #a8690f; color: #1b1206; border: .12em solid #5c3a0c; border-radius: .3em; }
+.live-price.bronze { background: #be7406; color: #140c02; border: .12em solid #3a2405; border-radius: .3em; }
 .live-price.gold { background: #f2a630; color: #1a1206; border: .12em solid #3a2a12; border-radius: .3em; }
 
 /* v5 job board: tier progress (work clicks + education, no promotions) */

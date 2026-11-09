@@ -33,10 +33,11 @@ var URL = process.env.PP_URL || "http://localhost:8123/index.html";
     }, building);
   }
   var checks = {
-    park: { ids: ["A018","A019","A020","A021","A022","A023"], more: true },
+    // the cheque and sleep-in-park cards are painted now; only the X010 extra (Skate the Fountain Edge) stays in More
+    park: { ids: ["A018","A019","A020","A021","A022","A023","A024","A025"], more: true },
     regretBurger: { ids: ["A034","A035","A036","A037","A038","A040","A039","A041"], more: true },
-    // v6 added Group Fitness Class (A122); it has no painted card yet, so the gym keeps a More drawer
-    gym: { ids: ["A042","A043","A044","A045","A046","A047","A048","A049"], more: true },
+    // 2026-11-08 repaint: Group Fitness Class (A122) has its own painted card, so the gym needs no More drawer
+    gym: { ids: ["A042","A043","A044","A045","A046","A047","A048","A122","A049"], more: false },
     temple: { ids: ["A058","A059","A060","A061","A062","A063","A064","A065","A066"], more: false },
     soulExchange: { ids: ["A076","A078","A079","A080","A081","A082","A083","A076","A077"], more: false },
     airOne: { ids: ["A026","A027","A028","A029","A031","A032","A121","A030","A033"], more: false }

@@ -59,9 +59,9 @@ var URL = process.env.PP_URL || "http://localhost:8123/index.html";
   if (!luxVisitor.ids.every(function (id) { return id === "X003"; })) throw new Error("Luxury visitor office: " + JSON.stringify(luxVisitor));
   if (!luxHomeless.ids.every(function (id) { return id === "X009"; })) throw new Error("Luxury homeless office: " + JSON.stringify(luxHomeless));
 
-  // Real unpainted location actions still keep More available.
-  var park = await open("park", "low", false, false);
-  if (!park.more) throw new Error("Park real extras lost their More drawer: " + JSON.stringify(park));
+  // Real unpainted location actions still keep More available (the park lost its last ones in the 2026-11-08 repaint).
+  var park = await open("mall", "low", false, false);
+  if (!park.more) throw new Error("Mall real extras lost their More drawer: " + JSON.stringify(park));
 
   await browser.close();
   if (errors.length) throw new Error("Page errors: " + errors.join(" | "));

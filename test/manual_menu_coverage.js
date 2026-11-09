@@ -11,14 +11,14 @@ var ranges = {
   airport: [93, 101], petShop: [102, 110], mall: [111, 118]
 };
 var intentionalMore = {
-  park: ["A024", "A025"], club: ["A056"], mall: ["A111", "A116", "A117"],
+  club: ["A056"], mall: ["A111", "A116", "A117"],
   // v4/v5 additions with no painted button yet: Cash Out, 2-week groceries
   debtstreet: ["A091"]   // 2026-09-16 repaint: Cash Out painted, Penny Stocks moved to More
 };
 // v5 removed Take Class / Finish Undergrad / Master's / PhD / Ask for Promotion
 var removed = ["A067", "A070", "A071", "A072", "A084"];
 // v4/v5 actions appended after the original numbering, by building
-var appended = { debtstreet: ["A119"], university: ["A120"], airOne: ["A121"] };
+var appended = { debtstreet: ["A119"], university: ["A120"], airOne: ["A121"], gym: ["A122"] };
 function actionId(n) { return "A" + String(n).padStart(3, "0"); }
 function painted(building) {
   if (building === "club") return Object.keys(HOT.PP_BDC_MAP).map(function (k) { return HOT.PP_BDC_MAP[k]; });
@@ -60,10 +60,11 @@ if (["A067", "A070", "A071", "A072"].some(function (id) { return uni.indexOf(id)
   failures.push("University degree/class buttons must open the v5 course catalog (A120)");
 }
 var park = HOT.PP_HOTSPOTS.park.map(function (h) { return h.a; });
-if (park.length !== 6 || new Set(park).size !== 6) failures.push("Park has a phantom/duplicate hotspot over the blank lower panel");
+// 2026-11-08 repaint: the support cheque and sleep-in-park cards fill the old blank lower panel
+if (park.length !== 8 || new Set(park).size !== 8) failures.push("Park needs exactly its 8 painted cards");
 
 if (failures.length) {
   failures.forEach(function (msg) { console.error("FAIL", msg); });
   process.exit(1);
 }
-console.log("MANUAL MENU COVERAGE PASS: only Park A024/A025, Club A056, Mall A111/A116/A117, and Debtstreet A091 remain in More");
+console.log("MANUAL MENU COVERAGE PASS: only Club A056, Mall A111/A116/A117, and Debtstreet A091 remain in More");

@@ -31,12 +31,16 @@ var PP_HOTSPOTS = {
     { a: "A009", box: [76.5, 79.0, 21.5, 17.0] }  // featured: Fancy Bed
   ],
   park: [
-    { a: "A018", box: [72.2, 12.2, 11.5, 19.7] },
-    { a: "A019", box: [85.4, 12.2, 13.0, 19.7] },
-    { a: "A020", box: [72.2, 34.2, 11.5, 19.1] },
-    { a: "A021", box: [85.4, 34.2, 13.0, 19.1] },
-    { a: "A022", box: [72.2, 55.0, 11.5, 19.4] },
-    { a: "A023", box: [85.4, 55.0, 13.0, 19.4] }
+    // re-measured 2026-11-08 for the repaint that added the cheque and sleep-in-park cards
+    { a: "A018", box: [73.3, 12.9, 12.0, 20.1] },
+    { a: "A019", box: [85.8, 12.9, 12.2, 20.1] },
+    { a: "A020", box: [73.3, 34.0, 12.0, 19.6] },
+    { a: "A021", box: [85.8, 34.0, 12.2, 19.6] },
+    { a: "A022", box: [73.3, 54.6, 12.0, 19.6] },
+    { a: "A023", box: [85.8, 54.6, 12.2, 19.6] },
+    // support cheque and sleeping rough moved out of the More drawer onto painted cards
+    { a: "A024", box: [73.3, 75.2, 12.0, 19.6] },
+    { a: "A025", box: [85.8, 75.2, 12.2, 19.6] }
   ],
   airOne: [
     // re-measured for the v5 repaint (2026-09-16): 4 rows, bottom row split
@@ -61,13 +65,15 @@ var PP_HOTSPOTS = {
     { a: "A041", work: true, box: [70.5, 84.5, 25.3, 13.5] }
   ],
   gym: [
-    { a: "A042", box: [74.3, 11.5, 11.0, 19.5], price: { box: [84.2, 11.9, 2.4, 3.0], style: "bronze", painted: 5 } },
-    { a: "A043", box: [86.0, 11.5, 11.7, 19.5], price: { box: [94.7, 11.9, 2.6, 3.0], style: "bronze", painted: 10 } },
-    { a: "A044", box: [74.3, 32.2, 11.0, 19.6], price: { box: [83.9, 31.2, 2.6, 3.3], style: "bronze", painted: 25 } },
-    { a: "A045", box: [86.0, 32.2, 11.7, 19.6], price: { box: [94.6, 31.5, 2.6, 3.0], style: "bronze", painted: 40 } },
-    { a: "A046", box: [74.3, 52.9, 11.0, 14.9] },
-    { a: "A047", box: [86.0, 52.9, 11.7, 14.9] },
-    { a: "A048", box: [74.3, 69.1, 23.4, 10.1], price: { box: [94.6, 70.0, 2.6, 3.0], style: "bronze", painted: 15 } },
+    // 2026-11-08 v7 repaint: 2 x 4 grid incl. Group Fitness Class; chips are Short-game prices
+    { a: "A042", box: [76.0, 10.9, 10.6, 17.2], price: { box: [83.9, 11.95, 2.3, 3.05], style: "bronze", painted: 5 } },
+    { a: "A043", box: [87.2, 10.9, 10.6, 17.2], price: { box: [94.7, 11.95, 2.7, 3.05], style: "bronze", painted: 10 } },
+    { a: "A044", box: [76.0, 28.9, 10.6, 17.2], price: { box: [83.2, 29.8, 3.05, 3.2], style: "bronze", painted: 100 } },
+    { a: "A045", box: [87.2, 28.9, 10.6, 17.2], price: { box: [94.95, 29.8, 2.5, 3.2], style: "bronze", painted: 50 } },
+    { a: "A046", box: [76.0, 46.8, 10.6, 17.1] },
+    { a: "A047", box: [87.2, 46.8, 10.6, 17.1] },
+    { a: "A048", box: [76.0, 64.8, 10.6, 17.2], price: { box: [83.4, 65.85, 2.85, 3.15], style: "bronze", painted: 250 } },
+    { a: "A122", box: [87.2, 64.8, 10.6, 17.2], price: { box: [95.25, 65.85, 2.2, 3.15], style: "bronze", painted: 4 } },
     { a: "A049", work: true, box: [77.7, 85.3, 20.7, 12.7] }
   ],
   temple: [
