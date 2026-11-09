@@ -1505,15 +1505,9 @@
     });
     // fallback panel (buildings without painted menus — should be none)
     if ($("#fallback-panel").style.display !== "none") renderFallbackPanel();
-    // "More" drawer count: real actions not painted into the art
-    var extra = here ? extraActions() : [];
-    var okCount = extra.filter(function (x) { return x.ok; }).length;
-    $("#btn-more").textContent = "✚ More (" + okCount + ")";
-    // Do not leave a misleading More (0) button in every completed painted
-    // menu merely because global recovery actions exist but are locked. The
-    // drawer returns automatically whenever at least one unpainted action is
-    // actually usable (including re-housing after eviction).
-    $("#btn-more").style.display = okCount ? "" : "none";
+    // v7 step 4: every building action has a painted card, so the More drawer
+    // is retired (test/manual_menu_coverage.js keeps it that way)
+    $("#btn-more").style.display = "none";
     // Live player card covering the baked mockup. The center clock already
     // owns TU/time, so this card stays focused on money and player metrics.
     var mains = ["connection", "health", "career", "happiness"];

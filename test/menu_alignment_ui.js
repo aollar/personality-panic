@@ -37,8 +37,8 @@ var URL = process.env.PP_URL || "http://localhost:8123/index.html";
 
   await open("lowCost");
   var low = await buttons();
-  if (low.map(function (r) { return r.id; }).join(",") !== "A001,A002,A003,A004,A005,A006,A007" ||
-      !boxEq(find(low, "A007").box, ["72.8%","77.7%","25.5%","17%"])) throw new Error("Low-Cost grid: " + JSON.stringify(low));
+  if (low.map(function (r) { return r.id; }).join(",") !== "A001,A002,A003,A004,A005,A006,A007,X001" ||
+      !boxEq(find(low, "A007").box, ["72.4%","77.4%","12.6%","17.2%"])) throw new Error("Low-Cost grid: " + JSON.stringify(low));
 
   await open("luxury");
   var luxury = await buttons();

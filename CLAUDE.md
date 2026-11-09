@@ -92,7 +92,13 @@ Regret Burger / Club (Building_Map column I), money spent tracked
 (`p.spent`, engine `spend()`), Biggest Spender +10% of T at final scoring,
 Easy flounders / Medium plans one turn / Medium+Hard invest. Debtstreet shows a
 "$100+" live tag until its art is redone.
-Still to build: step 4 (remove the More menu) — needs the art pass first.
+Step 4 DONE (2026-11-09): the More drawer is retired (`#btn-more` always
+hidden); every action has a painted card. Debtstreet 8-card grid ($100+ chips,
+Penny Stocks back), club Brag card (bdc-menu iframe `brag` -> A056), Regret
+Burger Order Off-Menu, Eat at Home at Low Cost + Heelton p2, mall ACTIVITIES
+tab (`mall_activities.png`; X010 / X012 moved to building "mall").
+`test/manual_menu_coverage.js` fails if any action loses its card.
+v7 is fully built.
 `node test/v7_cpu_sim.js` checks the CPU levels really differ.
 
 ## Open decisions

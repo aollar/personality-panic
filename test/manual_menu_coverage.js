@@ -1,4 +1,5 @@
 /* Master Manual v5 building actions versus effective painted-menu coverage. */
+var failuresX = [];
 var HOT = require("../assets/data/scene_hotspots.js");
 global.PP_DATA = require("../assets/data/gamedata.js");
 global.PP_SCENE_PAGES = require("../assets/data/scene_pages.js").PP_SCENE_PAGES;
@@ -10,11 +11,8 @@ var ranges = {
   university: [67, 75], soulExchange: [76, 84], debtstreet: [85, 92],
   airport: [93, 101], petShop: [102, 110], mall: [111, 118]
 };
-var intentionalMore = {
-  club: ["A056"], mall: ["A111", "A116", "A117"],
-  // v4/v5 additions with no painted button yet: Cash Out, 2-week groceries
-  debtstreet: ["A091"]   // 2026-09-16 repaint: Cash Out painted, Penny Stocks moved to More
-};
+// v7 step 4 (2026-11-09): every action has a painted card; the More drawer is retired
+var intentionalMore = {};
 // v5 removed Take Class / Finish Undergrad / Master's / PhD / Ask for Promotion
 var removed = ["A067", "A070", "A071", "A072", "A084"];
 // v4/v5 actions appended after the original numbering, by building
@@ -33,8 +31,20 @@ function painted(building) {
   }
   return Array.from(new Set((HOT.PP_HOTSPOTS[building] || []).map(function (h) { return h.a; })));
 }
+// game extras (assumptions.js X-ids) must be painted too: nothing may need a More drawer
+var E = require("../js/engine.js");
+Object.keys(E.ACTIONS).forEach(function (id) {
+  var a = E.ACTIONS[id];
+  if (!/^X/.test(id) || a.building === "anywhere") return;
+  if (a.category === "Housing" || a.category === "Rent") return;   // housing offices, not menus
+  var ids = painted(a.building);
+  if (a.building === "luxury" || a.building === "lowCost") {
+    var pg = global.PP_SCENE_PAGES[a.building];
+  }
+  if (ids.indexOf(id) === -1) failuresX.push(a.building + " extra " + id + " (" + a.name + ") has no painted card");
+});
 
-var failures = [];
+var failures = failuresX;
 Object.keys(ranges).forEach(function (building) {
   var range = ranges[building], manual = [];
   for (var n = range[0]; n <= range[1]; n++) if (removed.indexOf(actionId(n)) === -1) manual.push(actionId(n));
@@ -60,6 +70,8 @@ if (["A067", "A070", "A071", "A072"].some(function (id) { return uni.indexOf(id)
   failures.push("University degree/class buttons must open the v5 course catalog (A120)");
 }
 var park = HOT.PP_HOTSPOTS.park.map(function (h) { return h.a; });
+if (["X010", "X012", "A111", "A116", "A117"].some(function (id) { return painted("mall").indexOf(id) === -1; }))
+  failures.push("Mall ACTIVITIES tab must paint Browse, Hang Out, Window Shop, Thrift-Flip and Skate");
 // 2026-11-08 repaint: the support cheque and sleep-in-park cards fill the old blank lower panel
 if (park.length !== 8 || new Set(park).size !== 8) failures.push("Park needs exactly its 8 painted cards");
 
@@ -67,4 +79,4 @@ if (failures.length) {
   failures.forEach(function (msg) { console.error("FAIL", msg); });
   process.exit(1);
 }
-console.log("MANUAL MENU COVERAGE PASS: only Club A056, Mall A111/A116/A117, and Debtstreet A091 remain in More");
+console.log("MANUAL MENU COVERAGE PASS: every building action has a painted card (no More drawer)");

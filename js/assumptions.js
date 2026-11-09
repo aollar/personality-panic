@@ -134,7 +134,8 @@ var PP_ASSUMPTIONS = {
       req: [{ kind: "homeless" }],
       fx: [{ kind: "rehouse" }, { kind: "moveIn", tier: "lux" }],
       note: "Deposit + rent. From park bench to penthouse." },
-    { id: "X010", building: "park", name: "Skate the Fountain Edge", category: "Coolness",
+    // 2026-11-09: moved to the mall's ACTIVITIES tab (the park menu had no room)
+    { id: "X010", building: "mall", name: "Skate the Fountain Edge", category: "Coolness",
       tu: 1, costPct: 0, gains: [{ stat: "coolness", pct: 0.05 }], petGains: [],
       penalties: [{ stat: "health", pct: 0.015 }],
       req: [],
@@ -147,7 +148,8 @@ var PP_ASSUMPTIONS = {
       req: [],
       fx: [{ kind: "eat" }],
       note: "Fills hunger. The staff pretends to know you." },
-    { id: "X012", building: "lowCost", name: "Thrift-Flip Your Outfit", category: "Coolness",
+    // 2026-11-09: moved to the mall's ACTIVITIES tab (the Low Cost menu had no room)
+    { id: "X012", building: "mall", name: "Thrift-Flip Your Outfit", category: "Coolness",
       tu: 1, costPct: 0.10, gains: [{ stat: "coolness", pct: 0.04 }], petGains: [], penalties: [],
       req: [{ kind: "notHomeless" }],
       fx: [],

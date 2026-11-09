@@ -17,33 +17,38 @@
   <div class="menu-stage" id="menuStage">
 
     <!-- Six decision cards. data-card = id, data-cost = price (placeholder hook). -->
-    <button class="decision-card card--dance"    data-card="dance"    data-cost="5"  style="--l:4.294%;  --t:12.434%; --w:43.354%; --h:21.148%;" aria-label="Dance — $5 at T=100">
+    <button class="decision-card card--dance"    data-card="dance"    data-cost="5"  style="--l:11.8%; --t:13.7%; --w:33.4%; --h:16.2%;" aria-label="Dance — $5 at T=100">
       <img class="card-art" src="assets/dance.png" alt="Dance" draggable="false" />
       <span class="icon-idle"></span>
     </button>
 
-    <button class="decision-card card--flirt"    data-card="flirt"    data-cost="3" style="--l:51.329%; --t:12.434%; --w:43.967%; --h:21.148%;" aria-label="Flirt Recklessly — $3 at T=100">
+    <button class="decision-card card--flirt"    data-card="flirt"    data-cost="0" style="--l:55.4%; --t:13.9%; --w:33.6%; --h:16.0%;" aria-label="Flirt Recklessly — $3 at T=100">
       <img class="card-art" src="assets/flirt.png" alt="Flirt Recklessly" draggable="false" />
       <span class="icon-idle"></span>
     </button>
 
-    <button class="decision-card card--digits"   data-card="digits"   data-cost="2"  style="--l:4.294%;  --t:34.006%; --w:43.354%; --h:20.829%;" aria-label="Get Digits — $2 at T=100">
+    <button class="decision-card card--digits"   data-card="digits"   data-cost="0"  style="--l:11.8%; --t:30.7%; --w:33.4%; --h:15.7%;" aria-label="Get Digits — $2 at T=100">
       <img class="card-art" src="assets/digits.png" alt="Get Digits" draggable="false" />
       <span class="icon-idle"></span>
     </button>
 
-    <button class="decision-card card--shots"    data-card="shots"    data-cost="8" style="--l:51.329%; --t:34.006%; --w:43.967%; --h:20.829%;" aria-label="Order Shots — $8 at T=100">
+    <button class="decision-card card--shots"    data-card="shots"    data-cost="8" style="--l:55.4%; --t:30.9%; --w:33.6%; --h:15.5%;" aria-label="Order Shots — $8 at T=100">
       <img class="card-art" src="assets/shots.png" alt="Order Shots" draggable="false" />
       <span class="icon-idle"></span>
     </button>
 
-    <button class="decision-card card--vip"      data-card="vip"      data-cost="16" style="--l:4.294%;  --t:55.260%; --w:43.354%; --h:20.510%;" aria-label="VIP Lounge — $16 at T=100">
+    <button class="decision-card card--vip"      data-card="vip"      data-cost="500" style="--l:11.8%; --t:48.0%; --w:33.4%; --h:15.4%;" aria-label="VIP Lounge — $16 at T=100">
       <img class="card-art" src="assets/vip.png" alt="VIP Lounge" draggable="false" />
       <span class="icon-idle"></span>
     </button>
 
-    <button class="decision-card card--stranger" data-card="stranger" data-cost="0"  style="--l:51.329%; --t:55.260%; --w:43.967%; --h:20.510%;" aria-label="Go Home With Stranger — Free">
+    <button class="decision-card card--stranger" data-card="stranger" data-cost="0"  style="--l:55.4%; --t:48.0%; --w:33.6%; --h:15.4%;" aria-label="Go Home With Stranger — Free">
       <img class="card-art" src="assets/stranger.png" alt="Go Home With Stranger" draggable="false" />
+      <span class="icon-idle"></span>
+    </button>
+
+    <!-- 2026-11-09: painted in the static menu art (bdc_menu.png); no animated slice yet -->
+    <button class="decision-card card--brag" data-card="brag" data-cost="0" style="--l:7.4%; --t:65.0%; --w:86.1%; --h:10.1%;" aria-label="Brag About Side Hustle — Free">
       <span class="icon-idle"></span>
     </button>
 

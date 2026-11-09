@@ -40,11 +40,13 @@
       return h;
     });
   }
+  // 2026-11-09: four tabs, ACTIVITIES added (the mall's non-shopping actions)
   var NEW_TABS = function (y, h) {
     return [
-      { tab: "style", box: [72.9, y, 8.5, h] },
-      { tab: "gear",  box: [81.8, y, 8.0, h] },
-      { tab: "home",  box: [90.3, y, 8.0, h] }
+      { tab: "style", box: [73.6, y, 6.1, h] },
+      { tab: "gear",  box: [79.8, y, 6.1, h] },
+      { tab: "home",  box: [86.0, y, 6.1, h] },
+      { tab: "activities", box: [92.2, y, 6.1, h] }
     ];
   };
   var STYLE_COLS = [[72.8, 81.0], [81.4, 90.0], [90.5, 98.9]];
@@ -140,7 +142,31 @@
     ], { prev: [74.6, 67.8, 4.6, 4.8], next: [88.2, 67.8, 4.6, 4.8] },
     { item: "Fridge", box: [92.8, 74.8, 4.4, 5.0], style: "dark", painted: 20 })
   ];
-  PAGES.mall.tabs[2].pages.forEach(function (pg, i) { pg.img = homeImgs[i]; });
+  PAGES.mall.tabs[2].pages.forEach(function (pg, i) {
+    pg.img = homeImgs[i];
+    // the HOME art's own tab bar now paints four tabs too
+    pg.tabBar = [
+      { tab: "style", box: [70.8, 8.7, 6.4, 5.2] },
+      { tab: "gear", box: [77.4, 8.7, 6.4, 5.2] },
+      { tab: "home", box: [84.0, 8.7, 6.4, 5.2] },
+      { tab: "activities", box: [90.6, 8.7, 6.6, 5.2] }
+    ];
+  });
+  // ACTIVITIES (2026-11-09): the mall's non-shopping actions, painted cards
+  // instead of the old More drawer (Thrift-Flip and Skate moved here too)
+  PAGES.mall.tabs.push({ id: "activities", label: "ACTIVITIES", pages: [{
+    img: V3 + "mall_activities.png",
+    tabBar: NEW_TABS(10.0, 4.6),
+    arrows: { prev: [0, 0, 0, 0], next: [0, 0, 0, 0] },
+    work: { a: "A118", box: [76.4, 82.4, 21.0, 14.5] },
+    hotspots: [
+      { a: "A111", box: [72.8, 15.7, 8.3, 18.9] },
+      { a: "A116", box: [81.4, 15.7, 8.5, 18.9] },
+      { a: "A117", box: [90.2, 15.7, 8.5, 18.9] },
+      { a: "X012", box: [72.8, 35.5, 8.3, 18.9] },
+      { a: "X010", box: [81.4, 35.5, 8.5, 18.9] }
+    ]
+  }]});
 
   // Low-Cost Housing: ghosted starter unit plus the redesigned rent office.
   PAGES.lowCost.tabs[0].pages[0].img = V3 + "low-cost/unit_empty.png";
@@ -156,7 +182,9 @@
     { a: "A004", box: [85.2, 36.8, 13.1, 19.3] },
     { a: "A005", box: [72.8, 58.0, 12.1, 18.0] },
     { a: "A006", box: [85.2, 58.0, 13.1, 18.0] },
-    { a: "A007", box: [72.8, 77.7, 25.5, 17.0] }
+    // 2026-11-09 repaint: the wide Feed Pet card split into Feed Pet + Eat at Home
+    { a: "A007", box: [72.4, 77.4, 12.6, 17.2] },
+    { a: "X001", box: [85.4, 77.4, 12.6, 17.2] }
   ];
   PAGES.lowCost.tabs[1].pages[0].img = V3 + "low-cost/rent_office.png";
   PAGES.lowCost.tabs[1].pages[0].hotspots = [
@@ -195,7 +223,12 @@
       img: V3 + "heelton/lounge_empty.png",
       homeLayer: "luxuryLounge",
       arrows: { prev: SUITE_ARROWS.prev, next: [0, 0, 0, 0] },
-      hotspots: [{ a: "X014", box: [76.2, 16.5, 10.3, 19.4] }]
+      // 2026-11-09 repaint: Eat at Home and Feed Pet joined Play With Pet
+      hotspots: [
+        { a: "X014", box: [76.2, 16.5, 10.3, 19.4] },
+        { a: "X002", box: [87.2, 16.5, 10.7, 19.4] },
+        { a: "X008", box: [76.2, 38.2, 10.3, 19.4] }
+      ]
     }
   ];
   PAGES.luxury.tabs[1].pages[0].img = V3 + "heelton/rent_office.png";

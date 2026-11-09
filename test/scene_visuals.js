@@ -26,7 +26,7 @@ assert.strictEqual(data.buildings.park.scene, "v3/park.png");
 assert.strictEqual(data.buildings.petShop.scene, "ethical_pet_shop.jpg", "Ethical Pet Shop stays unchanged");
 assert.strictEqual(pages.mall.tabs[0].pages[0].img, "v3/mall_style_page_1.png");
 assert.strictEqual(pages.lowCost.tabs[0].pages[0].homeLayer, "lowCost");
-assert.deepStrictEqual(Array.from(pages.lowCost.tabs[0].pages[0].hotspots, h => h.a), ["A001", "A002", "A003", "A004", "A005", "A006", "A007"]);
+assert.deepStrictEqual(Array.from(pages.lowCost.tabs[0].pages[0].hotspots, h => h.a), ["A001", "A002", "A003", "A004", "A005", "A006", "A007", "X001"]);
 assert.strictEqual(pages.luxury.tabs[0].pages.length, 2, "Heelton must expose both rooms");
 assert.strictEqual(pages.luxury.tabs[0].pages[0].homeLayer, "luxuryBedroom");
 assert.strictEqual(pages.luxury.tabs[0].pages[1].homeLayer, "luxuryLounge");
@@ -34,7 +34,7 @@ assert.strictEqual(pages.luxury.tabs[0].pages[1].homeLayer, "luxuryLounge");
 // holds Play With Pet, and the menu's own painted arrows flip between them
 assert.deepStrictEqual(Array.from(pages.luxury.tabs[0].pages[0].hotspots, h => h.a),
   ["A009", "A010", "A011", "A012", "A013", "A014", "A015", "A016"]);
-assert.deepStrictEqual(Array.from(pages.luxury.tabs[0].pages[1].hotspots, h => h.a), ["X014"]);
+assert.deepStrictEqual(Array.from(pages.luxury.tabs[0].pages[1].hotspots, h => h.a), ["X014", "X002", "X008"]);
 assert.ok(pages.luxury.tabs[0].pages[0].arrows.next[2] > 0 && pages.luxury.tabs[0].pages[1].arrows.prev[2] > 0,
   "both rooms need a working page arrow");
 assert.strictEqual(pages.university.tabs[0].pages.length, 2);
@@ -58,7 +58,7 @@ function walk(dir) {
 }
 const v3Files = walk(path.join(root, "assets", "scenes", "v3"))
   .filter(file => file.endsWith(".png") && !path.basename(file).includes("_source"));
-assert.strictEqual(v3Files.length, 37, "only deployable scene and transparent overlay assets should be published");
+assert.strictEqual(v3Files.length, 38, "only deployable scene and transparent overlay assets should be published");
 v3Files.forEach(file => {
   const header = fs.readFileSync(file).subarray(0, 24);
   assert.strictEqual(header.toString("ascii", 1, 4), "PNG", `${file} is not a PNG`);

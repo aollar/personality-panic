@@ -153,7 +153,7 @@ function check(name, cond, detail) {
   await page.evaluate(function () { document.querySelector("#paint-layer .nav-btn.next").click(); });
   await new Promise(function (r) { setTimeout(r, 800); });
   var p2ids = await page.$$eval("#paint-layer .paint-btn", function (bs) { return bs.map(function (b) { return b.dataset.a; }); });
-  check("suite page 2 holds Play With Pet", p2ids.join(",") === "X014", p2ids.join(","));
+  check("suite page 2 holds Play With Pet, Eat at Home and Feed Pet", p2ids.join(",") === "X014,X002,X008", p2ids.join(","));
   await clickAction("X014");
   after = await stats(); log = (await lastLog(1))[0];
   check("Heelton Play With Pet fires pet fixtures", /Pet Bed/.test(log) && /Pet Toys/.test(log), log);

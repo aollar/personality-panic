@@ -60,8 +60,10 @@ var PP_HOTSPOTS = {
     { a: "A036", box: [89.1, 12.2, 9.7, 25.5] },
     { a: "A037", box: [67.9, 39.5, 14.8, 23.0] },
     { a: "A038", box: [83.3, 39.5, 15.4, 23.0] },
-    { a: "A040", box: [67.9, 64.6, 14.8, 16.7] },
-    { a: "A039", box: [83.3, 64.6, 15.4, 16.7] },
+    // 2026-11-09 repaint: bottom row is three cards, the new one is Order Off-Menu (X011)
+    { a: "A040", box: [67.5, 63.6, 10.6, 17.1] },
+    { a: "A039", box: [78.4, 63.6, 10.6, 17.1] },
+    { a: "X011", box: [89.3, 63.6, 9.6, 17.1] },
     { a: "A041", work: true, box: [70.5, 84.5, 25.3, 13.5] }
   ],
   gym: [
@@ -109,14 +111,16 @@ var PP_HOTSPOTS = {
     { a: "A077", work: true, box: [73.6, 83.3, 25.7, 13.1] }
   ],
   debtstreet: [
-    // v7 stakes: the painted $10-$25 predate stakes; a "$100+" tag shows the smallest stake until the repaint
-    { a: "A085", box: [68.5, 16.0, 13.0, 14.0], price: { box: [79.6, 16.3, 2.9, 3.15], style: "tan", painted: 10, suffix: "+" } },
-    { a: "A086", box: [82.0, 16.0, 16.0, 14.0], price: { box: [94.05, 16.3, 2.95, 3.15], style: "tan", painted: 15, suffix: "+" } },
-    { a: "A087", box: [68.5, 31.0, 13.0, 15.0], price: { box: [79.6, 32.0, 2.9, 3.15], style: "tan", painted: 20, suffix: "+" } },
-    { a: "A088", box: [82.0, 31.0, 16.0, 15.0], price: { box: [94.05, 32.0, 2.95, 3.15], style: "tan", painted: 25, suffix: "+" } },
-    { a: "A089", box: [68.5, 47.0, 13.0, 15.0] },
-    { a: "A090", box: [82.0, 47.0, 16.0, 15.0] },
-    { a: "A119", box: [68.5, 63.0, 29.5, 11.0] },   // v5 repaint: Cash Out replaced Buy Penny Stocks (now in More)
+    // 2026-11-09 repaint (v7 stakes): 2 x 4 grid; the painted "$100+" chips name
+    // the smallest stake, so no live tags are needed. Penny Stocks has a card again.
+    { a: "A085", box: [69.3, 15.3, 13.7, 13.6] },
+    { a: "A086", box: [83.9, 15.3, 13.7, 13.6] },
+    { a: "A087", box: [69.3, 29.8, 13.7, 13.6] },
+    { a: "A088", box: [83.9, 29.8, 13.7, 13.6] },
+    { a: "A089", box: [69.3, 44.4, 13.7, 13.6] },
+    { a: "A090", box: [83.9, 44.4, 13.7, 13.6] },
+    { a: "A091", box: [69.3, 58.9, 13.7, 13.6] },
+    { a: "A119", box: [83.9, 58.9, 13.7, 13.6] },
     { a: "A092", work: true, box: [68.5, 83.0, 29.5, 13.5] }
   ],
   airport: [
@@ -170,7 +174,7 @@ var PP_MAP_BOXES = {
 // BDC side-menu card ids -> engine actions
 var PP_BDC_MAP = {
   dance: "A050", flirt: "A051", digits: "A052",
-  shots: "A053", vip: "A054", stranger: "A055", work: "A057"
+  shots: "A053", vip: "A054", stranger: "A055", brag: "A056", work: "A057"
 };
 if (typeof window !== "undefined") { window.PP_HOTSPOTS = PP_HOTSPOTS; window.PP_BDC_MAP = PP_BDC_MAP; window.PP_MAP_BOXES = PP_MAP_BOXES; }
 if (typeof module !== "undefined") module.exports = { PP_HOTSPOTS: PP_HOTSPOTS, PP_BDC_MAP: PP_BDC_MAP, PP_MAP_BOXES: PP_MAP_BOXES };
