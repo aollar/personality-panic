@@ -101,6 +101,7 @@
       var card = document.querySelector('.decision-card[data-card="' + id + '"]');
       if (!card) return;
       var tag = card.querySelector(".live-chip");
+      if (m.prices[id] == null) { if (tag) tag.remove(); return; }
       if (!tag) { tag = document.createElement("span"); tag.className = "live-chip"; card.appendChild(tag); }
       tag.textContent = m.prices[id];
       tag.classList.toggle("free", m.prices[id] === "FREE");

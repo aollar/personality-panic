@@ -88,10 +88,9 @@ step 4 (remove the More drawer — needs art).
 2. Low Cost Housing art shows a TV and couch that are Luxury-only, so that room
    can never look fully furnished.
 3. Mall HOME tab art still shows v4 prices (covered by live tags).
-4. v7 art drift (live tags cover the prices, not the icons): airport France /
-   Australia / Backpacking icons, club card prices, mall STYLE p1 jewelry
-   prices, STYLE p2 "WATCH" label + Crocs Coolness, GEAR p1 leftover "-" marks,
-   Debtstreet Cash Out "1HR", Low Cost yard and Heelton condo gym Health "++",
-   Heelton Work From Home penalty icons, Air One 2-week groceries Happiness,
-   Pet Shop bribe $50. Gym and park were repainted 2026-11-08 (done).
-5. Art pending: weekend cards I09/I10, Pet Shop bribe card ($50 painted, $10 charged).
+4. v7 art: all menus match v7 as of 2026-11-08 (gym + park repaint, then a
+   12-image icon/price pass: Heelton, Low Cost, airport, mall STYLE/GEAR, club,
+   Debtstreet, Air One, Pet Shop). Painted prices are Short-game prices; live
+   tags cover them only when the price differs (Medium/Long). Next art is tied
+   to v7 step 3 (Debtstreet stakes) and step 4 (removing More).
+5. Art pending: weekend cards I09/I10.

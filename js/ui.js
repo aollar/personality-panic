@@ -1623,16 +1623,18 @@
     var last = UI.state.log[UI.state.log.length - 1];
     if (last && UI.mode !== "guest") bdcSay(last.text.slice(0, 90));
   });
-  // the club card art shows pre-v7 prices; send the live ones for its chips
+  // the club card art paints Short-game prices; send live ones only where they
+  // differ (null clears a chip left over from a previous game length)
+  var BDC_PAINTED = { dance: 5, flirt: 0, digits: 0, shots: 8, vip: 500 };
   function bdcPrices() {
     var f = $("#bdc-frame");
     if (!f || !f.contentWindow || !UI.state) return;
     var prices = {};
-    Object.keys(BDC_MAP).forEach(function (card) {
+    Object.keys(BDC_PAINTED).forEach(function (card) {
       var a = E.ACTIONS[BDC_MAP[card]];
-      if (card === "work" || card === "stranger" || !a) return;   // stranger's chip paints its time ("2 HR"), not a price
+      if (!a) return;
       var live = E.pctB(UI.state, a.costPct);
-      prices[card] = live === 0 ? "FREE" : "$" + live.toLocaleString("en-US");
+      prices[card] = live === BDC_PAINTED[card] ? null : live === 0 ? "FREE" : "$" + live.toLocaleString("en-US");
     });
     f.contentWindow.postMessage({ pp: "bdc-ctl", op: "setPrices", prices: prices }, "*");
   }

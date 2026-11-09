@@ -55,16 +55,16 @@
       arrows: { prev: [78.6, 75.8, 3.0, 5.4], next: [89.8, 75.8, 3.0, 5.4] },
       work: { a: "A118", box: [76.4, 82.9, 21.0, 14.5] },
       hotspots: grid3(STYLE_COLS, [[17.0, 35.8], [37.0, 55.6], [56.7, 75.4]], [
-        // painted prices are Short-game prices; live tags cover them in Medium/Long (and v7 jewelry)
+        // painted prices are Short-game prices; live tags cover them in Medium/Long
         ["A115", "Casual Clothes", { box: [75.6, 17.6, 5.1, 3.5], style: "cream", painted: 50 }],
         ["A115", "Smart Clothes", { box: [84.7, 17.6, 5.1, 3.5], style: "cream", painted: 400 }],
         ["A115", "Business Clothes", { box: [93.6, 17.6, 5.1, 3.5], style: "cream", painted: 500 }],
         ["A115", "Dressy Clothes", { box: [75.6, 37.6, 5.1, 3.5], style: "cream", painted: 300 }],
         ["A115", "Dress Shoes", { box: [84.7, 37.6, 5.1, 3.5], style: "cream", painted: 200 }],
         ["A115", "Sunglasses", { box: [93.6, 37.6, 5.1, 3.5], style: "cream", painted: 100 }],
-        ["A115", "Earrings", { box: [75.6, 57.3, 5.1, 3.5], style: "cream", painted: 14 }],
-        ["A115", "Bracelet", { box: [84.7, 57.3, 5.1, 3.5], style: "cream", painted: 14 }],
-        ["A115", "Rings", { box: [93.6, 57.3, 5.1, 3.5], style: "cream", painted: 20 }]
+        ["A115", "Earrings", { box: [76.1, 57.2, 5.0, 4.2], style: "cream", painted: 1500 }],
+        ["A115", "Bracelet", { box: [85.0, 57.2, 5.0, 4.2], style: "cream", painted: 1000 }],
+        ["A115", "Rings", { box: [94.3, 57.2, 4.7, 4.2], style: "cream", painted: 500 }]
       ])
     },
     {
@@ -245,11 +245,11 @@
         img: V3 + "airport.png",
         arrows: { prev: [0, 0, 0, 0], next: [89.60, 78.43, 3.40, 6.10] },
         hotspots: [
-          { a: "A093", box: [72.7, 11.4, 12.7, 23.3], price: { box: [83.45, 11.85, 2.25, 3.6], style: "gold", painted: 18 } },
-          { a: "A094", box: [85.6, 11.4, 13.5, 23.3], price: { box: [95.95, 11.85, 2.65, 3.6], style: "gold", painted: 22 } },
-          { a: "A095", box: [72.7, 35.4, 12.7, 21.1], price: { box: [83.45, 35.85, 2.25, 3.6], style: "gold", painted: 20 } },
-          { a: "A096", box: [85.6, 35.4, 13.5, 21.1], price: { box: [95.95, 35.85, 2.65, 3.6], style: "gold", painted: 25 } },
-          { a: "A097", box: [72.7, 57.3, 12.7, 20.4], price: { box: [83.45, 57.85, 2.25, 3.6], style: "gold", painted: 35 } },
+          { a: "A093", box: [72.7, 11.4, 12.7, 23.3], price: { box: [82.83, 11.58, 2.99, 4.25], style: "gold", painted: 500 } },
+          { a: "A094", box: [85.6, 11.4, 13.5, 23.3], price: { box: [94.92, 11.58, 3.65, 4.25], style: "gold", painted: 1000 } },
+          { a: "A095", box: [72.7, 35.4, 12.7, 21.1], price: { box: [83.01, 35.6, 2.81, 4.25], style: "gold", painted: 800 } },
+          { a: "A096", box: [85.6, 35.4, 13.5, 21.1], price: { box: [95.75, 35.6, 2.85, 4.1], style: "gold", painted: 1500 } },
+          { a: "A097", box: [72.7, 57.3, 12.7, 20.4], price: { box: [83.0, 57.6, 2.85, 4.14], style: "gold", painted: 5000 } },
           { a: "A098", box: [85.6, 57.3, 13.5, 20.4] }
         ]
       },
